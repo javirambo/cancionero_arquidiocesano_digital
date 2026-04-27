@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -sS -o /dev/null -w \"HTTP %{http_code} in %{time_total}s\\\\n\" http://localhost:3000/)",
+      "PowerShell(Get-Process -Name node -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 1; Get-Process -Name node -ErrorAction SilentlyContinue | Select-Object Id)",
+      "Bash(npx next *)",
+      "Bash(curl -sS -o /tmp/home.html -w \"HTTP %{http_code} in %{time_total}s\\\\nLength: %{size_download}\\\\n\" http://localhost:3000/)"
+    ]
+  }
+}
