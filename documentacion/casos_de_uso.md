@@ -120,7 +120,17 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
   4. El usuario puede restablecer al tono original.
 - **Flujos alternativos:**
   - 2a. Acorde no estándar: el sistema preserva el acorde tal cual y registra advertencia (no bloqueante).
-- **Postcondiciones:** El tono elegido se persiste en `localStorage` por canción para esa sesión.
+  - 1a. **Usuario autenticado:** el tono elegido se persiste en `user_song_keys` (server-side) y queda asociado a su cuenta; al volver a abrir la canción desde cualquier dispositivo se restaura automáticamente.
+  - 1b. **Usuario anónimo:** el tono elegido se persiste solo en `localStorage` por canción mientras dure el navegador.
+- **Precedencia del tono inicial al abrir una canción** (de mayor a menor prioridad):
+  1. **Contexto de playlist** — si la canción se abre desde una playlist y `playlist_songs.key_override` está definido, se usa ese tono. El coordinador armó la playlist pensando esa tonalidad para la celebración.
+  2. **Preferencia del usuario** — `user_song_keys` (si está autenticado) o `localStorage` (si es anónimo).
+  3. **Tono original** — `songs.original_key`.
+  - Si el usuario transpone mientras está en contexto de playlist, el cambio se aplica solo a la sesión actual y **no** sobreescribe `playlist_songs.key_override` ni `user_song_keys`.
+- **Postcondiciones:**
+  - Anónimo: tono guardado en `localStorage` por canción.
+  - Autenticado fuera de playlist: tono guardado en `user_song_keys (user_id, song_id)` y disponible en cualquier dispositivo.
+  - Dentro de playlist: ningún cambio persistido (override sólo en sesión).
 
 ---
 
@@ -344,22 +354,55 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ---
 
-## CU-16: ABM de canción
+## CU-16: ABM de canción (flujo editorial `draft → review → published`)
 
 - **Fase:** 2
 - **RF:** RF1
-- **Actor primario:** Editor de contenido
-- **Precondiciones:** Sesión con permiso de edición de canciones.
-- **Disparador:** El editor accede a `/admin/canciones`.
-- **Flujo principal:**
-  1. El editor crea/edita una canción: título, autor, categoría, letra, acordes, link YT, partitura, audio.
-  2. El sistema valida formato de acordes y campos obligatorios.
-  3. El sistema sube los archivos a Supabase Storage (`partituras`, `audios`) y persiste los metadatos.
-  4. El editor confirma y la canción queda publicada (o en borrador, si aplica un flujo de aprobación).
-- **Flujos alternativos:**
-  - 2a. Acordes mal formados: se muestra error inline.
-  - 4a. Baja: se confirma con doble paso; las playlists que la contenían marcan la canción como "no disponible".
-- **Postcondiciones:** Canción persistida; archivos en Storage.
+- **Actores primarios:**
+  - **Coordinador parroquial:** crea/edita y envía a revisión.
+  - **Editor de contenido:** aprueba o rechaza.
+- **Precondiciones:** Sesión activa con uno de los roles indicados.
+- **Disparadores:**
+  - Coordinador: accede a `/admin/canciones` y crea/edita un borrador.
+  - Editor: accede a `/admin/canciones?estado=review` y revisa pendientes.
+
+### Flujo principal — Coordinador parroquial (envía)
+
+1. El coordinador crea una canción nueva o edita una existente: título, autor, categoría, letra, acordes (ChordPro), tonalidad original, tempo, tags, link YT, partituras y audios.
+2. El sistema valida formato de acordes y campos obligatorios.
+3. El sistema sube los archivos a Supabase Storage (`partituras`, `audios`) en estado `draft` (no son visibles públicamente).
+4. La canción queda persistida con `status = 'draft'`. El coordinador puede seguir editándola.
+5. Cuando considera que está lista, hace clic en **"Enviar a revisión"**.
+6. El sistema cambia `status` a `'review'`, registra `submitted_by` y `submitted_at`, y notifica a los Editores. La canción queda bloqueada para edición salvo por el Editor.
+
+### Flujo principal — Editor de contenido (aprueba / rechaza)
+
+1. El editor abre la cola de revisión y ve la canción con sus archivos.
+2. **Aprobar:**
+   1. El editor confirma "Aprobar".
+   2. El sistema cambia `status` a `'published'`, registra `reviewed_by`, `reviewed_at`, `published_at`.
+   3. El sistema inserta una nueva fila en `song_versions` con el snapshot del contenido aprobado e incrementa `songs.current_version`.
+   4. Los archivos asociados (`song_files`) pasan también a `'published'` y quedan accesibles públicamente.
+   5. La canción aparece en búsquedas (CU-01) y vistas públicas (CU-02).
+3. **Rechazar:**
+   1. El editor escribe `review_notes` (obligatorio) explicando los cambios solicitados.
+   2. El sistema cambia `status` a `'rejected'`, registra `reviewed_by` y `reviewed_at`.
+   3. La canción vuelve a ser editable por el coordinador (puede pasar nuevamente a `'draft'` al editarla).
+   4. El sistema notifica al coordinador.
+
+### Flujos alternativos
+
+- **2a (validación):** Acordes mal formados → error inline; no se permite enviar a revisión.
+- **6a (sin permisos):** Un usuario sin rol Coordinador o Editor no puede acceder a `/admin/canciones` (RLS rechaza).
+- **Edición concurrente:** Si la canción está en `'review'`, el coordinador no puede editarla; debe esperar a que el editor decida o "retirar de revisión" (vuelve a `'draft'`).
+- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar. Se confirma con doble paso. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva.
+- **Edición de canción ya publicada:** Editar una canción `'published'` crea una nueva edición que pasa por el flujo `draft → review → published`. La versión publicada anterior sigue activa en `song_versions` hasta que se apruebe la nueva.
+
+### Postcondiciones
+
+- Canción persistida en `songs` con su estado actual.
+- Si fue aprobada: nueva fila en `song_versions` con `published_at`, `current_version` incrementado, archivos en Storage públicos.
+- Traza completa de la transición editorial (`submitted_by/at`, `reviewed_by/at`, `review_notes`).
 
 ---
 

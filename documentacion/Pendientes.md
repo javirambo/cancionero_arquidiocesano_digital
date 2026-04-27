@@ -6,3 +6,5 @@
 
 [ ] crear tablas en supabase
 
+[ ] crear cada CU
+
