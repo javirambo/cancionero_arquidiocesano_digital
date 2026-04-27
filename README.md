@@ -1,31 +1,33 @@
 # **🕊️ PROYECTO:** **CANCIONERO ARQUIDIOCESANO DIGITAL**
 
-## Impulsado por la Arquidiócesis de Rosario y la Comisión Episcopal de Liturgia
+Impulsado por la Arquidiócesis de Rosario y la Comisión Episcopal de Liturgia
 
-# VISIÓN
+## VISIÓN
 
-#### "Evangelizar a través de la música mediante una plataforma digital unificada que centralice, preserve y distribuya el patrimonio musical litúrgico de nuestra Iglesia. Buscamos empoderar a los ministerios de música y comunidades parroquiales con herramientas de alta fidelidad técnica y facilidad de uso, promoviendo la participación activa de la asamblea en el canto.
+"Evangelizar a través de la música mediante una plataforma digital unificada que centralice, preserve y distribuya el patrimonio musical litúrgico de nuestra Iglesia. Buscamos empoderar a los ministerios de música y comunidades parroquiales con herramientas de alta fidelidad técnica y facilidad de uso, promoviendo la participación activa de la asamblea en el canto.
 
-#### A su vez, brindamos a los coros un entorno profesional para la interpretación, donde puedan acceder a acordes precisos, partituras descargables y versiones de referencia (vía YouTube y audio), garantizando la fidelidad a las versiones aprobadas y facilitando el ensayo y la formación musical constante."
+A su vez, brindamos a los coros un entorno profesional para la interpretación, donde puedan acceder a acordes precisos, partituras descargables y versiones de referencia (vía YouTube y audio), garantizando la fidelidad a las versiones aprobadas y facilitando el ensayo y la formación musical constante."
 
-# VALORES
+## VALORES
 
-#### Para que el Cancionero Arquidiocesano cumpla su misión pastoral, se rige por los siguientes principios:
+Para que el Cancionero Arquidiocesano cumpla su misión pastoral, se rige por los siguientes principios:
 
-1. #### Fidelidad Litúrgica: Garantizar que el repertorio disponible respete las normas de la Iglesia, asegurando que las letras y formas musicales sean adecuadas para la celebración del misterio pascual.
+1. Fidelidad Litúrgica: Garantizar que el repertorio disponible respete las normas de la Iglesia, asegurando que las letras y formas musicales sean adecuadas para la celebración del misterio pascual.
 
-2. #### Comunión y Unidad: Facilitar que las distintas parroquias y movimientos hablen un "mismo lenguaje musical", fortaleciendo la identidad de la Arquidiócesis y la conexión entre comunidades.
+2. Comunión y Unidad: Facilitar que las distintas parroquias y movimientos hablen un "mismo lenguaje musical", fortaleciendo la identidad de la Arquidiócesis y la conexión entre comunidades.
 
-3. #### Accesibilidad y Gratuidad: Democratizar el acceso a recursos musicales de calidad (partituras, audios, acordes) para que ningún coro, por humilde que sea, carezca de herramientas para alabar a Dios.
+3. Accesibilidad y Gratuidad: Democratizar el acceso a recursos musicales de calidad (partituras, audios, acordes) para que ningún coro, por humilde que sea, carezca de herramientas para alabar a Dios.
 
-4. #### Excelencia Técnica: Ofrecer una plataforma moderna, estable y estética (al nivel de los estándares actuales de la industria), porque el servicio a la liturgia merece nuestra mejor ejecución técnica.
+4. Excelencia Técnica: Ofrecer una plataforma moderna, estable y estética (al nivel de los estándares actuales de la industria), porque el servicio a la liturgia merece nuestra mejor ejecución técnica.
 
-5. #### Espíritu de Servicio: El sistema no es un fin en sí mismo, sino una herramienta para que el músico se olvide de la técnica y pueda centrarse en la oración y en guiar a la asamblea.
+5. Espíritu de Servicio: El sistema no es un fin en sí mismo, sino una herramienta para que el músico se olvide de la técnica y pueda centrarse en la oración y en guiar a la asamblea.
 
-## Desarrollo
 
-Acceder al documento de análisis:
-[Análisis y Desarrollo](documentacion/analisis_&_desarrollo.md)
+## Desarrollo
+
+Acceder al documento de especificación técnica:
+[Especificación técnica](documentacion/especificacion_tecnica.md)
+
 
 ## Licencia
 
