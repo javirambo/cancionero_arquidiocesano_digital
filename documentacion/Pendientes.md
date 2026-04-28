@@ -6,3 +6,6 @@
 
 [ ] Probar las policies con la anon key + un usuario autenticado, idealmente con tests automatizados o al menos un script manual.
 
+[ ] verificar que mis favoritos no esten el local storage (dene estar en la base)
+
+[ ] verificar que las preferencias del usuario no sean en local storage, sino en base de datos. (como sugerir acordes)

@@ -6,6 +6,7 @@ import {
   youtubeEmbedUrl,
 } from "@/lib/songs";
 import { SongView } from "./song-view";
+import { QrButton } from "@/app/components/qr-button";
 
 export default async function CancionPage({
   params,
@@ -71,17 +72,20 @@ export default async function CancionPage({
         )}
       </nav>
 
-      <header className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-          {song.number !== null ? `Nº ${song.number}` : "Canción"}
-          {song.category && ` · ${song.category}`}
-        </p>
-        <h1 className="text-3xl leading-tight">{song.title}</h1>
-        {song.author && (
-          <p className="text-sm normal-case text-muted-foreground">
-            Autor: {song.author}
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+            {song.number !== null ? `Nº ${song.number}` : "Canción"}
+            {song.category && ` · ${song.category}`}
           </p>
-        )}
+          <h1 className="text-3xl leading-tight">{song.title}</h1>
+          {song.author && (
+            <p className="text-sm normal-case text-muted-foreground">
+              Autor: {song.author}
+            </p>
+          )}
+        </div>
+        <QrButton path={`/canciones/${song.slug}`} filename={`cancion-${song.slug}`} />
       </header>
 
       <SongView

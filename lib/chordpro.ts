@@ -6,17 +6,23 @@
 export type ChordToken = { chord: string; index: number };
 export type ChordLine = { lyrics: string; chords: ChordToken[] };
 
-const CHORD_RE = /\[([^\]]+)\]/g;
+// Cada llamada crea su propia regex para evitar bugs de `lastIndex`
+// compartido al reusar un regex global entre `matchAll`/`exec`/`test`.
+function chordRe(): RegExp {
+  return /\[([^\]]+)\]/g;
+}
 
 export function parseLine(line: string): ChordLine {
   const chords: ChordToken[] = [];
   let lyrics = "";
   let lastEnd = 0;
-  for (const match of line.matchAll(CHORD_RE)) {
-    const matchStart = match.index ?? 0;
+  const re = chordRe();
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line)) !== null) {
+    const matchStart = m.index;
     lyrics += line.slice(lastEnd, matchStart);
-    chords.push({ chord: match[1], index: lyrics.length });
-    lastEnd = matchStart + match[0].length;
+    chords.push({ chord: m[1], index: lyrics.length });
+    lastEnd = matchStart + m[0].length;
   }
   lyrics += line.slice(lastEnd);
   return { lyrics, chords };
@@ -27,8 +33,7 @@ export function parseBody(body: string): ChordLine[] {
 }
 
 export function hasAnyChord(body: string): boolean {
-  CHORD_RE.lastIndex = 0;
-  return CHORD_RE.test(body);
+  return chordRe().test(body);
 }
 
 // ---------- Transposición ----------
@@ -61,26 +66,65 @@ function splitChord(chord: string): { root: string; quality: string; bass?: stri
   return { root: m[1], quality: m[2] ?? "", bass: m[3] };
 }
 
-function transposeNote(note: string, semitones: number): string {
+export type ChordSystem = "latin" | "english" | "auto";
+
+function transposeNote(
+  note: string,
+  semitones: number,
+  system: ChordSystem = "auto"
+): string {
   const idx = NOTE_INDEX[note];
   if (idx === undefined) return note;
   const target = ((idx + semitones) % 12 + 12) % 12;
-  return isLatin(note) ? SHARP_NAMES_ES[target] : SHARP_NAMES_EN[target];
+  const useLatin =
+    system === "latin" ? true : system === "english" ? false : isLatin(note);
+  return useLatin ? SHARP_NAMES_ES[target] : SHARP_NAMES_EN[target];
 }
 
-export function transposeChord(chord: string, semitones: number): string {
-  if (semitones === 0) return chord;
+export function transposeChord(
+  chord: string,
+  semitones: number,
+  system: ChordSystem = "auto"
+): string {
+  // Si solo cambiamos sistema (sin transponer), igual hay que reescribir.
   const parts = splitChord(chord);
   if (!parts) return chord;
-  const root = transposeNote(parts.root, semitones);
-  const bass = parts.bass ? "/" + transposeNote(parts.bass, semitones) : "";
+  if (semitones === 0 && system === "auto") return chord;
+  const root = transposeNote(parts.root, semitones, system);
+  const bass = parts.bass
+    ? "/" + transposeNote(parts.bass, semitones, system)
+    : "";
   return root + parts.quality + bass;
 }
 
-export function transposeLine(line: ChordLine, semitones: number): ChordLine {
-  if (semitones === 0) return line;
+export function transposeLine(
+  line: ChordLine,
+  semitones: number,
+  system: ChordSystem = "auto"
+): ChordLine {
+  if (semitones === 0 && system === "auto") return line;
   return {
     lyrics: line.lyrics,
-    chords: line.chords.map((c) => ({ chord: transposeChord(c.chord, semitones), index: c.index })),
+    chords: line.chords.map((c) => ({
+      chord: transposeChord(c.chord, semitones, system),
+      index: c.index,
+    })),
   };
+}
+
+// Detecta el sistema de cifrado dominante en una lista de líneas parseadas.
+// Útil para inicializar el toggle en el sistema "natural" de la canción.
+export function detectSystem(lines: ChordLine[]): "latin" | "english" {
+  let latin = 0;
+  let english = 0;
+  for (const line of lines) {
+    for (const c of line.chords) {
+      const parts = splitChord(c.chord);
+      if (!parts) continue;
+      if (isLatin(parts.root)) latin++;
+      else english++;
+    }
+  }
+  // Empate o vacío → latino (más común en el cancionero litúrgico en español).
+  return english > latin ? "english" : "latin";
 }

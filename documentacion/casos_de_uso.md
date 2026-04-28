@@ -8,7 +8,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 
 | ID      | Nombre                                               | RF        | Hecho |
 | ------- | ---------------------------------------------------- | --------- | ----- |
-| CU-01   | Buscar cualquier cosa (parroquia, canción, playlist) | RF4       |       |
+| CU-01   | Buscar cualquier cosa (parroquia, canción, playlist) | RF4       | [x]   |
 | CU-02.1 | Ver canción con letra                                | RF5       | [x]   |
 | CU-02.2 | Ver canción con letra y acordes                      | RF5       | [x]   |
 | CU-03   | Transponer tonalidad                                 | RF6       | [x]   |
@@ -21,7 +21,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-09   | Descargar partitura                                  | RF7       |       |
 | CU-10   | Descargar canción para imprimir                      | RF14      |       |
 | CU-11   | Descargar playlist como cancionero                   | RF15      |       |
-| CU-12   | Descargar QR de la página actual                     | RF13      |       |
+| CU-12   | Descargar QR de la página actual                     | RF13      | [x]   |
 | CU-13   | Login con Google                                     | RF16      |       |
 | CU-14   | Vincular usuario a parroquia                         | RF17      |       |
 | CU-15   | Marcar favoritos                                     | RF18      |       |
@@ -32,8 +32,8 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-20   | Gestionar permisos                                   | RF21      |       |
 | CU-21   | Gestionar anuncios programados                       | RF19      |       |
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      |       |
-| CU-23   | Lista de canciones con badges y menú contextual      | RF4       |       |
-| CU-24   | Barra de acciones global en el header                | RF4, RF18 |       |
+| CU-23   | Lista de canciones con badges y menú contextual      | RF4       | [x]   |
+| CU-24   | Barra de acciones global en el header                | RF4, RF18 | [x]   |
 
 ---
 
@@ -196,13 +196,17 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 - **Precondiciones:** Existe contenido marcado como "novedad" o "festividad" para la fecha actual.
 - **Disparador:** El usuario abre la home `/`.
 - **Flujo principal:**
-  1. El sistema calcula la festividad litúrgica del día (si aplica).
-  2. El sistema muestra la playlist asociada y novedades destacadas.
-  3. El usuario navega al contenido de su interés.
-  4. El usuario puede cerrar la novedad.
+  1. El sistema busca un evento en `liturgical_events` con `event_date = hoy`. Si existe, lo muestra como "Festividad de hoy" con su descripción y CTA a la playlist asociada (si aplica).
+  2. Si no hay evento en la base, el sistema **calcula la festividad litúrgica del día** usando la librería `romcal` con calendario `argentina` (ver `lib/liturgical.ts`). Si el rango de la celebración es ≥ memoria (solemnidad, domingo, fiesta, memoria), la muestra como título; si es feria, muestra el tiempo litúrgico (Adviento, Cuaresma, Tiempo Ordinario, etc.).
+  3. El sistema muestra novedades activas (`featured_content` con ventana vigente) en una sección separada.
+  4. El usuario navega al contenido de su interés.
 - **Flujos alternativos:**
-  - 1a. Sin festividad ni novedades: la home muestra acceso al buscador y al catálogo.
+  - 1a. Sin festividad ni novedades: la home muestra el tiempo litúrgico calculado y acceso al buscador y al catálogo.
 - **Postcondiciones:** Ninguna persistente.
+
+### Sobre los nombres en español
+
+`romcal` no incluye locale en español. El módulo `lib/liturgical.ts` mantiene un mapa local (`NAME_ES`) con las solemnidades, fiestas y memorias más comunes (general + Argentina). Las que no están mapeadas se muestran en inglés. A medida que se necesite, se agregan claves al mapa.
 
 ---
 

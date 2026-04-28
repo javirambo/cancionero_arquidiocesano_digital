@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { searchSongs } from "@/lib/songs";
+import { listSongsWithCapabilities } from "@/lib/songs";
+import { SongRow } from "@/app/components/song-row";
 
 export const metadata = {
   title: "Canciones · Cancionero Arquidiocesano",
@@ -12,7 +12,7 @@ export default async function CancionesPage({
 }) {
   const { q } = await searchParams;
   const term = (q ?? "").trim();
-  const songs = await searchSongs(term);
+  const songs = await listSongsWithCapabilities(term);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
@@ -57,22 +57,7 @@ export default async function CancionesPage({
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
           {songs.map((s) => (
-            <li key={s.id}>
-              <Link
-                href={`/canciones/${s.slug}`}
-                className="flex items-baseline gap-4 px-5 py-3 transition-colors hover:bg-sidebar"
-              >
-                <span className="w-10 shrink-0 text-sm normal-case text-muted-foreground">
-                  {s.number !== null ? String(s.number).padStart(3, "0") : "—"}
-                </span>
-                <span className="flex-1 text-lg text-primary">{s.title}</span>
-                {s.author && (
-                  <span className="hidden text-xs normal-case text-muted-foreground sm:block">
-                    {s.author}
-                  </span>
-                )}
-              </Link>
-            </li>
+            <SongRow key={s.id} song={s} />
           ))}
         </ul>
       )}

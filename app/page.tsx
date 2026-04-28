@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { version } from "@/package.json";
 import { getEventForToday, listActiveFeatured } from "@/lib/songs";
+import { getLiturgicalDay } from "@/lib/liturgical";
 
 type AccesoRapido = {
   href: string;
@@ -31,6 +32,7 @@ export default async function Home() {
     getEventForToday(),
     listActiveFeatured(),
   ]);
+  const litDay = getLiturgicalDay();
 
   const today = new Date().toLocaleDateString("es-AR", {
     weekday: "long",
@@ -38,6 +40,27 @@ export default async function Home() {
     month: "long",
     year: "numeric",
   });
+
+  // Datos a mostrar: la festividad cargada en DB tiene prioridad porque
+  // suele venir con playlist asociada. Si no hay, caemos al calendario
+  // litúrgico calculado por romcal.
+  const headline = event
+    ? { kicker: "Festividad de hoy", title: event.name, description: event.description, season: null as string | null }
+    : litDay
+    ? {
+        kicker: today,
+        // Si es feria mostramos el tiempo litúrgico como título.
+        title:
+          litDay.rank <= 4 // solemnidad / domingo / fiesta / memoria
+            ? litDay.name
+            : litDay.seasonName,
+        description:
+          litDay.rank <= 4
+            ? `${litDay.seasonName} · ${litDay.date}`
+            : "Hoy no hay festividad destacada. Explorá el repertorio o las playlists de las parroquias.",
+        season: litDay.seasonName,
+      }
+    : { kicker: today, title: "Tiempo Ordinario", description: null, season: null };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -86,20 +109,14 @@ export default async function Home() {
           className="rounded-2xl border border-border bg-sidebar p-8"
         >
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            {event ? "Festividad de hoy" : today}
+            {headline.kicker}
           </p>
           <h2 id="festividad-heading" className="mt-2 text-2xl">
-            {event ? event.name : "Tiempo ordinario"}
+            {headline.title}
           </h2>
-          {event?.description && (
+          {headline.description && (
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
-              {event.description}
-            </p>
-          )}
-          {!event && (
-            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
-              Hoy no hay festividad destacada en el calendario. Explorá el
-              repertorio o las playlists de las parroquias.
+              {headline.description}
             </p>
           )}
           <div className="mt-6 flex flex-wrap gap-3">

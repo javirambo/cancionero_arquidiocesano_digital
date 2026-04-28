@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Cardo } from "next/font/google";
+import Script from "next/script";
 import { SiteHeader } from "./components/site-header";
 import { ThemeProvider, themeInitScript } from "./components/theme";
+import { FavoritesProvider } from "./components/favorites";
+import { PreferencesProvider } from "./components/preferences";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -26,13 +29,19 @@ export default function RootLayout({
       lang="es"
       className={`${cardo.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="min-h-full flex flex-col font-serif bg-background text-foreground">
+        <Script
+          id="theme-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
         <ThemeProvider>
-          <SiteHeader />
-          {children}
+          <PreferencesProvider>
+            <FavoritesProvider>
+              <SiteHeader />
+              {children}
+            </FavoritesProvider>
+          </PreferencesProvider>
         </ThemeProvider>
       </body>
     </html>

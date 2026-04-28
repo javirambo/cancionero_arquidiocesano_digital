@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getParishBySlug, listPlaylists } from "@/lib/songs";
+import { QrButton } from "@/app/components/qr-button";
 
 export default async function ParroquiaPage({
   params,
@@ -21,21 +22,24 @@ export default async function ParroquiaPage({
         </Link>
       </nav>
 
-      <header className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Parroquia
-        </p>
-        <h1 className="text-3xl">{parish.name}</h1>
-        {(parish.address || parish.city) && (
-          <p className="text-sm normal-case text-muted-foreground">
-            {[parish.address, parish.city].filter(Boolean).join(" · ")}
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+            Parroquia
           </p>
-        )}
-        {parish.description && (
-          <p className="max-w-2xl text-base normal-case text-muted-foreground">
-            {parish.description}
-          </p>
-        )}
+          <h1 className="text-3xl">{parish.name}</h1>
+          {(parish.address || parish.city) && (
+            <p className="text-sm normal-case text-muted-foreground">
+              {[parish.address, parish.city].filter(Boolean).join(" · ")}
+            </p>
+          )}
+          {parish.description && (
+            <p className="max-w-2xl text-base normal-case text-muted-foreground">
+              {parish.description}
+            </p>
+          )}
+        </div>
+        <QrButton path={`/parroquias/${parish.slug}`} filename={`parroquia-${parish.slug}`} />
       </header>
 
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">

@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  detectSystem,
   hasAnyChord,
   parseBody,
   transposeLine,
   type ChordLine,
+  type ChordSystem,
 } from "@/lib/chordpro";
 import { WakeLockToggle } from "@/app/components/wake-lock-toggle";
+import { usePreferences } from "@/app/components/preferences";
 
 type Props = {
   songId: string;
@@ -21,10 +24,21 @@ const STORAGE_KEY_PREFIX = "song:transpose:";
 export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
+  const { suggestChords } = usePreferences();
+  // El usuario debe activar "Sugerir acordes" en su perfil para ver acordes.
+  const chordsAvailable = chordsExist && suggestChords;
 
   const [showChords, setShowChords] = useState(true);
   const [showVideo, setShowVideo] = useState(false);
   const [semitones, setSemitones] = useState(0);
+  const detected = useMemo<"latin" | "english">(
+    () => detectSystem(lines),
+    [lines]
+  );
+  const [system, setSystem] = useState<ChordSystem>("auto");
+  // Sistema efectivo: "auto" usa el detectado.
+  const effectiveSystem: "latin" | "english" =
+    system === "auto" ? detected : (system as "latin" | "english");
 
   // Restaurar tono persistido (anónimo: localStorage por canción).
   useEffect(() => {
@@ -42,11 +56,11 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
   }, [songId, semitones, chordsExist]);
 
   const transposed: ChordLine[] = useMemo(
-    () => lines.map((l) => transposeLine(l, semitones)),
-    [lines, semitones]
+    () => lines.map((l) => transposeLine(l, semitones, system)),
+    [lines, semitones, system]
   );
 
-  const chordsDisabled = !chordsExist;
+  const chordsDisabled = !chordsAvailable;
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,14 +69,31 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
         aria-label="Controles de la canción"
         className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-sidebar px-4 py-3"
       >
+        {chordsAvailable && (
+          <>
         <button
           type="button"
           onClick={() => setShowChords((v) => !v)}
-          disabled={chordsDisabled}
-          aria-pressed={showChords && !chordsDisabled}
-          className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+          aria-pressed={showChords}
+          className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
         >
-          {showChords && !chordsDisabled ? "Ocultar acordes" : "Mostrar acordes"}
+          {showChords ? "Ocultar acordes" : "Mostrar acordes"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setSystem(effectiveSystem === "latin" ? "english" : "latin")
+          }
+          title={
+            effectiveSystem === "latin"
+              ? "Cambiar a cifrado americano (C, D, E…)"
+              : "Cambiar a cifrado latino (Do, Re, Mi…)"
+          }
+          aria-label="Cambiar sistema de cifrado"
+          className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
+        >
+          {effectiveSystem === "latin" ? "Do · Re · Mi" : "C · D · E"}
         </button>
 
         <div
@@ -72,9 +103,8 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
           <button
             type="button"
             onClick={() => setSemitones((s) => s - 1)}
-            disabled={chordsDisabled}
             aria-label="Bajar un semitono"
-            className="h-8 w-8 rounded-full border border-border text-foreground transition-colors hover:border-primary disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-8 w-8 rounded-full border border-border text-foreground transition-colors hover:border-primary"
           >
             −
           </button>
@@ -89,9 +119,8 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
           <button
             type="button"
             onClick={() => setSemitones((s) => s + 1)}
-            disabled={chordsDisabled}
             aria-label="Subir un semitono"
-            className="h-8 w-8 rounded-full border border-border text-foreground transition-colors hover:border-primary disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-8 w-8 rounded-full border border-border text-foreground transition-colors hover:border-primary"
           >
             +
           </button>
@@ -105,6 +134,8 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
             </button>
           )}
         </div>
+          </>
+        )}
 
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <WakeLockToggle />

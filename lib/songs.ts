@@ -9,6 +9,14 @@ export type SongSummary = {
   author: string | null;
 };
 
+// Capacidades de una canción mostradas como badges (CU-23). Las computamos
+// junto al listado para evitar N+1; quedan asociadas por song.id.
+export type SongCapabilities = {
+  hasChords: boolean;
+  hasYoutube: boolean;
+  hasFiles: boolean;
+};
+
 type Named = { name: string } | { name: string }[] | null;
 function firstName(rel: Named): string | null {
   if (!rel) return null;
@@ -67,6 +75,63 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   };
 }
 
+// Devuelve canciones publicadas con sus capacidades para badges (CU-23).
+// Si `q` está vacío, devuelve el catálogo completo.
+// Si `term` es solo dígitos, devuelve el entero (sin ceros a la izquierda).
+// Ej: "2" → 2, "002" → 2, "abc" → null, "12a" → null.
+function parseSongNumber(term: string): number | null {
+  if (!/^\d+$/.test(term)) return null;
+  const n = Number.parseInt(term, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Construye la cláusula OR para Supabase combinando match por número
+// (si aplica) y match por título/letra.
+function buildSongMatchOr(term: string): string {
+  const like = `%${term}%`;
+  const num = parseSongNumber(term);
+  const parts = [`title.ilike.${like}`, `body.ilike.${like}`];
+  if (num !== null) parts.unshift(`number.eq.${num}`);
+  return parts.join(",");
+}
+
+export async function listSongsWithCapabilities(
+  q: string = "",
+  limit = 100
+): Promise<(SongSummary & SongCapabilities)[]> {
+  const supabase = await createClient();
+  const term = q.trim();
+  let query = supabase
+    .from("songs")
+    .select(
+      "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id, status)"
+    )
+    .eq("status", "published")
+    .order("number", { ascending: true, nullsFirst: false })
+    .limit(limit);
+  if (term) {
+    query = query.or(buildSongMatchOr(term));
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const body = (row.body as string | null) ?? "";
+    const files = (row.song_files as { status: string }[] | null) ?? [];
+    return {
+      id: row.id as string,
+      number: row.number as number | null,
+      title: row.title as string,
+      slug: row.slug as string,
+      category: firstName(row.categories as Named),
+      author: firstName(row.authors as Named),
+      hasChords: /\[[^\]]+\]/.test(body),
+      hasYoutube: Boolean(row.youtube_url),
+      hasFiles: files.some((f) => f.status === "published"),
+    };
+  });
+}
+
 export async function searchSongs(q: string, limit = 50): Promise<SongSummary[]> {
   const supabase = await createClient();
   const term = q.trim();
@@ -75,7 +140,7 @@ export async function searchSongs(q: string, limit = 50): Promise<SongSummary[]>
     .from("songs")
     .select("id, number, title, slug, categories(name), authors(name)")
     .eq("status", "published")
-    .or(`title.ilike.%${term}%,body.ilike.%${term}%`)
+    .or(buildSongMatchOr(term))
     .order("number", { ascending: true, nullsFirst: false })
     .limit(limit);
   if (error) throw error;
@@ -87,6 +152,64 @@ export async function searchSongs(q: string, limit = 50): Promise<SongSummary[]>
     category: firstName(row.categories as Named),
     author: firstName(row.authors as Named),
   }));
+}
+
+export type GlobalSearchResults = {
+  songs: SongSummary[];
+  playlists: PlaylistSummary[];
+  parishes: Parish[];
+};
+
+export async function searchGlobal(q: string, limit = 8): Promise<GlobalSearchResults> {
+  const term = q.trim();
+  if (!term) return { songs: [], playlists: [], parishes: [] };
+  const supabase = await createClient();
+  const like = `%${term}%`;
+
+  const [songsRes, playlistsRes, parishesRes] = await Promise.all([
+    supabase
+      .from("songs")
+      .select("id, number, title, slug, categories(name), authors(name)")
+      .eq("status", "published")
+      .or(buildSongMatchOr(term))
+      .limit(limit),
+    supabase
+      .from("playlists")
+      .select("id, slug, name, description, event_date, parishes(name, slug)")
+      .eq("visibility", "public")
+      .ilike("name", like)
+      .limit(limit),
+    supabase
+      .from("parishes")
+      .select("id, slug, name, address, city, description")
+      .eq("is_active", true)
+      .or(`name.ilike.${like},city.ilike.${like}`)
+      .limit(limit),
+  ]);
+
+  if (songsRes.error) throw songsRes.error;
+  if (playlistsRes.error) throw playlistsRes.error;
+  if (parishesRes.error) throw parishesRes.error;
+
+  return {
+    songs: (songsRes.data ?? []).map((row) => ({
+      id: row.id as string,
+      number: row.number as number | null,
+      title: row.title as string,
+      slug: row.slug as string,
+      category: firstName(row.categories as Named),
+      author: firstName(row.authors as Named),
+    })),
+    playlists: (playlistsRes.data ?? []).map((row) => ({
+      id: row.id as string,
+      slug: row.slug as string,
+      name: row.name as string,
+      description: (row.description as string | null) ?? null,
+      event_date: (row.event_date as string | null) ?? null,
+      parish: firstParish(row.parishes as ParishRel),
+    })),
+    parishes: (parishesRes.data ?? []) as Parish[],
+  };
 }
 
 // =====================================================================
@@ -103,7 +226,7 @@ export type PlaylistSummary = {
 };
 
 export type PlaylistWithSongs = PlaylistSummary & {
-  songs: (SongSummary & { position: number })[];
+  songs: (SongSummary & SongCapabilities & { position: number; created_at: string })[];
 };
 
 type ParishRel = { name: string; slug: string } | { name: string; slug: string }[] | null;
@@ -165,20 +288,31 @@ export async function getPlaylistBySlug(
   const { data: items, error: iErr } = await supabase
     .from("playlist_songs")
     .select(
-      "position, songs(id, number, title, slug, categories(name), authors(name))"
+      "position, created_at, songs(id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(status))"
     )
     .eq("playlist_id", pl.id)
     .order("position", { ascending: true });
   if (iErr) throw iErr;
 
+  type SongRow = {
+    id: string;
+    number: number | null;
+    title: string;
+    slug: string;
+    body: string | null;
+    youtube_url: string | null;
+    categories: Named;
+    authors: Named;
+    song_files: { status: string }[] | null;
+  };
+
   const songs = (items ?? [])
     .map((row) => {
-      const songRel = row.songs as
-        | { id: string; number: number | null; title: string; slug: string; categories: Named; authors: Named }
-        | { id: string; number: number | null; title: string; slug: string; categories: Named; authors: Named }[]
-        | null;
+      const songRel = row.songs as SongRow | SongRow[] | null;
       const s = Array.isArray(songRel) ? songRel[0] : songRel;
       if (!s) return null;
+      const body = s.body ?? "";
+      const files = s.song_files ?? [];
       return {
         id: s.id,
         number: s.number,
@@ -186,10 +320,17 @@ export async function getPlaylistBySlug(
         slug: s.slug,
         category: firstName(s.categories),
         author: firstName(s.authors),
+        hasChords: /\[[^\]]+\]/.test(body),
+        hasYoutube: Boolean(s.youtube_url),
+        hasFiles: files.some((f) => f.status === "published"),
         position: row.position as number,
+        created_at: row.created_at as string,
       };
     })
-    .filter((x): x is SongSummary & { position: number } => x !== null);
+    .filter(
+      (x): x is SongSummary & SongCapabilities & { position: number; created_at: string } =>
+        x !== null
+    );
 
   return {
     id: pl.id as string,

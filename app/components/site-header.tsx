@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTheme } from "./theme";
+import { SearchDialog } from "./search-dialog";
+import { FavoritesDialog } from "./favorites-dialog";
+import { useFavorites } from "./favorites";
+import { usePreferences } from "./preferences";
+import { ChordsIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 type MenuItemProps = {
   href?: string;
@@ -38,6 +43,45 @@ function MenuItem({ href, icon, label, onSelect, destructive }: MenuItemProps) {
   );
 }
 
+function MenuToggleItem({
+  icon,
+  label,
+  checked,
+  onChange,
+}: {
+  icon: ReactNode;
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={checked}
+      onClick={onChange}
+      className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+    >
+      <span aria-hidden="true" className="text-muted-foreground">
+        {icon}
+      </span>
+      <span className="flex-1">{label}</span>
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+          checked ? "bg-primary" : "bg-border"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 rounded-full bg-background shadow transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0.5"
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
 const iconProps = {
   width: 18,
   height: 18,
@@ -69,18 +113,21 @@ const ModoClaroIcon = () => (
   </svg>
 );
 
-const FavoritosIcon = () => (
-  <svg {...iconProps}>
-    <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" />
-  </svg>
-);
-
 const ListasIcon = () => (
   <svg {...iconProps}>
     <path d="M8 6h12M8 12h12M8 18h12" />
     <circle cx="4" cy="6" r="1" />
     <circle cx="4" cy="12" r="1" />
     <circle cx="4" cy="18" r="1" />
+  </svg>
+);
+
+const ParroquiasIcon = () => (
+  <svg {...iconProps}>
+    <path d="M12 3l4 3v4h4v11H4V10h4V6z" />
+    <path d="M12 3v3" />
+    <path d="M11 6h2" />
+    <path d="M10 21v-5h4v5" />
   </svg>
 );
 
@@ -92,42 +139,46 @@ const CerrarSesionIcon = () => (
   </svg>
 );
 
-const UsuarioTriggerIcon = () => (
-  <svg {...iconProps} width={20} height={20}>
-    <circle cx="12" cy="8" r="3.5" />
-    <path d="M5 20c1.5-3.5 4.2-5 7-5s5.5 1.5 7 5" />
-  </svg>
-);
-
 export function SiteHeader() {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [favOpen, setFavOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggle } = useTheme();
+  const { favorites } = useFavorites();
+  const { suggestChords, setPreference } = usePreferences();
 
   useEffect(() => {
-    if (!open) return;
-
+    if (!menuOpen) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") setMenuOpen(false);
     };
-
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [menuOpen]);
 
-  const close = () => setOpen(false);
+  // Atajo Cmd/Ctrl+K abre la búsqueda.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className="border-b border-border bg-sidebar">
@@ -136,83 +187,138 @@ export function SiteHeader() {
           <span className="text-2xl font-bold tracking-wide text-primary">
             Cancionero
           </span>
-          <span className="text-sm normal-case tracking-normal text-muted-foreground">
+          <span className="hidden text-sm normal-case tracking-normal text-muted-foreground sm:inline">
             Arquidiócesis de Rosario
           </span>
         </Link>
 
-        <div ref={containerRef} className="relative">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={open}
-            aria-label="Abrir menú de usuario"
-            onClick={() => setOpen((value) => !value)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <UsuarioTriggerIcon />
-          </button>
+        <div className="flex items-center gap-2">
+          <CircleButton
+            label="Buscar"
+            onClick={() => setSearchOpen(true)}
+            icon={<SearchIcon />}
+          />
+          <CircleButton
+            label="Mis favoritos"
+            onClick={() => setFavOpen(true)}
+            icon={
+              <span className={favorites.length > 0 ? "text-primary" : undefined}>
+                <HeartIcon filled={favorites.length > 0} />
+              </span>
+            }
+          />
 
-          {open && (
-            <div
-              role="menu"
-              aria-label="Menú de usuario"
-              className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
-            >
-              <div className="border-b border-border px-4 py-3 normal-case">
-                <p className="text-sm text-foreground">Invitado</p>
-                <p className="text-xs text-muted-foreground">
-                  Iniciá sesión para acceder a tu perfil
-                </p>
+          <div ref={menuRef} className="relative">
+            <CircleButton
+              label="Mi cuenta"
+              onClick={() => setMenuOpen((v) => !v)}
+              icon={<UserIcon />}
+              ariaHaspopup="menu"
+              ariaExpanded={menuOpen}
+            />
+
+            {menuOpen && (
+              <div
+                role="menu"
+                aria-label="Menú de usuario"
+                className="absolute right-0 top-12 z-40 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+              >
+                <div className="border-b border-border px-4 py-3 normal-case">
+                  <p className="text-sm text-foreground">Invitado</p>
+                  <p className="text-xs text-muted-foreground">
+                    Iniciá sesión para acceder a tu perfil
+                  </p>
+                </div>
+                <ul className="py-1 text-sm">
+                  <li>
+                    <MenuItem
+                      href="/perfil"
+                      icon={<PerfilIcon />}
+                      label="Perfil"
+                      onSelect={closeMenu}
+                    />
+                  </li>
+                  <li>
+                    <MenuItem
+                      icon={theme === "dark" ? <ModoClaroIcon /> : <ModoOscuroIcon />}
+                      label={theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+                      onSelect={() => {
+                        toggle();
+                        closeMenu();
+                      }}
+                    />
+                  </li>
+                  <li>
+                    <MenuToggleItem
+                      icon={<ChordsIcon />}
+                      label="Sugerir acordes"
+                      checked={suggestChords}
+                      onChange={() =>
+                        setPreference("suggestChords", !suggestChords)
+                      }
+                    />
+                  </li>
+                  <li>
+                    <MenuItem
+                      href="/playlists"
+                      icon={<ListasIcon />}
+                      label="Playlists"
+                      onSelect={closeMenu}
+                    />
+                  </li>
+                  <li>
+                    <MenuItem
+                      href="/parroquias"
+                      icon={<ParroquiasIcon />}
+                      label="Parroquias"
+                      onSelect={closeMenu}
+                    />
+                  </li>
+                </ul>
+                <div className="border-t border-border py-1 text-sm">
+                  <MenuItem
+                    icon={<CerrarSesionIcon />}
+                    label="Cerrar Sesión"
+                    onSelect={closeMenu}
+                    destructive
+                  />
+                </div>
               </div>
-              <ul className="py-1 text-sm">
-                <li>
-                  <MenuItem
-                    href="/perfil"
-                    icon={<PerfilIcon />}
-                    label="Perfil"
-                    onSelect={close}
-                  />
-                </li>
-                <li>
-                  <MenuItem
-                    icon={theme === "dark" ? <ModoClaroIcon /> : <ModoOscuroIcon />}
-                    label={theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
-                    onSelect={() => {
-                      toggle();
-                      close();
-                    }}
-                  />
-                </li>
-                <li>
-                  <MenuItem
-                    href="/mis-favoritos"
-                    icon={<FavoritosIcon />}
-                    label="Mis favoritos"
-                    onSelect={close}
-                  />
-                </li>
-                <li>
-                  <MenuItem
-                    href="/listas"
-                    icon={<ListasIcon />}
-                    label="Listas"
-                    onSelect={close}
-                  />
-                </li>
-              </ul>
-              <div className="border-t border-border py-1 text-sm">
-                <MenuItem
-                  icon={<CerrarSesionIcon />}
-                  label="Cerrar Sesión"
-                  onSelect={close}
-                  destructive
-                />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
+
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <FavoritesDialog open={favOpen} onClose={() => setFavOpen(false)} />
     </header>
+  );
+}
+
+function CircleButton({
+  label,
+  onClick,
+  icon,
+  ariaHaspopup,
+  ariaExpanded,
+}: {
+  label: string;
+  onClick: () => void;
+  icon: ReactNode;
+  ariaHaspopup?: "menu" | "dialog";
+  ariaExpanded?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-haspopup={ariaHaspopup}
+      aria-expanded={ariaExpanded}
+      onClick={onClick}
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+    >
+      {icon}
+    </button>
   );
 }
