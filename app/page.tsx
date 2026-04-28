@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { version } from "@/package.json";
+import { getEventForToday, listActiveFeatured } from "@/lib/songs";
 
 type AccesoRapido = {
   href: string;
@@ -25,7 +26,19 @@ const accesos: AccesoRapido[] = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const [event, featured] = await Promise.all([
+    getEventForToday(),
+    listActiveFeatured(),
+  ]);
+
+  const today = new Date().toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div className="flex flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
@@ -43,7 +56,7 @@ export default function Home() {
           </p>
 
           <form
-            action="/buscar"
+            action="/canciones"
             method="get"
             role="search"
             className="mt-4 flex w-full max-w-xl items-center gap-2 rounded-full border border-border bg-background px-5 py-3 shadow-sm focus-within:border-primary"
@@ -73,22 +86,38 @@ export default function Home() {
           className="rounded-2xl border border-border bg-sidebar p-8"
         >
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Festividad del día
+            {event ? "Festividad de hoy" : today}
           </p>
           <h2 id="festividad-heading" className="mt-2 text-2xl">
-            Tiempo litúrgico
+            {event ? event.name : "Tiempo ordinario"}
           </h2>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
-            Cuando se conecte el calendario litúrgico, este espacio destacará la
-            playlist sugerida y las novedades para la fecha actual.
-          </p>
+          {event?.description && (
+            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
+              {event.description}
+            </p>
+          )}
+          {!event && (
+            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
+              Hoy no hay festividad destacada en el calendario. Explorá el
+              repertorio o las playlists de las parroquias.
+            </p>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/playlists"
-              className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
-            >
-              Ver playlists
-            </Link>
+            {event?.playlist && event.playlist.parish_slug ? (
+              <Link
+                href={`/playlists/${event.playlist.parish_slug}/${event.playlist.slug}`}
+                className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
+              >
+                Ver playlist sugerida
+              </Link>
+            ) : (
+              <Link
+                href="/playlists"
+                className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
+              >
+                Ver playlists
+              </Link>
+            )}
             <Link
               href="/canciones"
               className="rounded-full px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:text-primary"
@@ -97,6 +126,29 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        {featured.length > 0 && (
+          <section aria-labelledby="novedades-heading" className="flex flex-col gap-4">
+            <h2 id="novedades-heading" className="text-xl">
+              Novedades
+            </h2>
+            <ul className="grid gap-3">
+              {featured.map((f, i) => (
+                <li
+                  key={i}
+                  className="rounded-xl border border-border bg-background p-5"
+                >
+                  <p className="text-base text-primary">{f.title}</p>
+                  {f.body && (
+                    <p className="mt-1 text-sm normal-case leading-6 text-muted-foreground">
+                      {f.body}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section aria-labelledby="accesos-heading" className="flex flex-col gap-6">
           <h2 id="accesos-heading" className="text-xl">

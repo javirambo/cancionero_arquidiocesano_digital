@@ -70,7 +70,7 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 * [ ] RF5: Visualización de canciones con acordes
 * [ ] RF6: Transposición de acordes
 * [ ] RF7: Descarga de partituras  
-* [ ] RF8: Reproducción de links de referencia (Youtube en fase 1)
+* [ ] RF8: Reproducción de links de referencia (YouTube)
 * [ ] RF9: ABM de usuarios  
 * [ ] RF10: ABM de parroquias  
 * [ ] RF11: Acceso directo a una parroquia mediante URL  
@@ -154,6 +154,12 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 
 * Tipo: Web App (futura APP para mobiles)  
 * Cliente – Servidor – Storage
+
+### 6.1 Canciones
+
+Usamos formato ChordPro:
+
+- ver [ChordPro](https://www.chordpro.org/chordpro/chordpro-introduction/)
 
 
 
@@ -242,51 +248,32 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 
 
 
-## 14. Fase 1 (Producto mínimo viable)
-
-Objetivo: funcional y usable para el 7 de octubre.
+## 14. Alcance del producto
 
 Incluye:
 
-* Catálogo de canciones  
-* Visualización letra \+ acordes  
-* Embebido de YouTube  
-* Búsqueda básica  
-* Selección de parroquias  
-* Hosting simple
+* Catálogo de canciones
+* Visualización letra \+ acordes
+* Embebido de YouTube
+* Búsqueda
+* Parroquias y playlists públicas
+* Sistema de usuarios y roles (coros / coordinadores / editores / admin)
+* Editor de canciones web con versionado y aprobaciones
+* Descargas (partituras, canciones para imprimir, cancioneros, QR)
+* Favoritos y "Mis favoritos"
+* Anuncios programados
 
-No incluye:
+A futuro (sin compromiso de fecha):
 
-* Usuarios y roles  
-* Edición online compleja  
-* Analytics  
-* Aplicaciones para Android / iOS  
-* Descargas
-
-
-
-## 15. Fase 2 (Evolución)
-
-* Sistema de usuarios (coros / coordinadores)  
-* Editor de canciones web  
-* Versionado y aprobaciones  
-* App móvil (posible PWA o nativa)  
-* Descarga offline  
-* Métricas de uso  
-* IA para sugerencia de repertorio (alineado al calendario litúrgico)  
+* App móvil (PWA o nativa)
+* Descarga offline
+* Métricas de uso
+* IA para sugerencia de repertorio (alineado al calendario litúrgico)
 * IA para agregar canciones y partituras
 
 
 
-## 16. Roadmap
-
-* Fase 1 → 7 de octubre  
-* Fase 2 → 24 de diciembre  
-* Iteraciones intermedias
-
-
-
-## 17. Riesgos y Consideraciones
+## 15. Riesgos y Consideraciones
 
 * Derechos de autor:  
   Considerar derechos de autor.  

@@ -2,38 +2,38 @@
 
 Este documento detalla los casos de uso del sistema, derivados de los requerimientos funcionales (RF) descriptos en [`especificacion_tecnica.md`](especificacion_tecnica.md) §5.1.
 
-Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
-
-- **Fase 1** → MVP funcional al 7 de octubre.
-- **Fase 2** → Evolución hacia el 24 de diciembre.
-
 ---
 
 ## Índice
 
-| ID    | Nombre                                      | Fase | RF             |
-| ----- | ------------------------------------------- | ---- | -------------- |
-| CU-01 | Buscar canción                              | 1    | RF4            |
-| CU-02 | Ver canción con letra y acordes             | 1    | RF5            |
-| CU-03 | Transponer tonalidad                        | 1    | RF6            |
-| CU-04 | Reproducir referencia de YouTube            | 1    | RF8            |
-| CU-05 | Ver playlist de parroquia                   | 1    | RF3, RF12      |
-| CU-06 | Acceder a parroquia por URL                 | 1    | RF11           |
-| CU-07 | Visualizar novedades / festividad del día   | 1    | —              |
-| CU-08 | Silenciar dispositivo y mantener pantalla   | 1    | RF20           |
-| CU-09 | Descargar partitura                         | 2    | RF7            |
-| CU-10 | Descargar canción para imprimir             | 2    | RF14           |
-| CU-11 | Descargar playlist como cancionero          | 2    | RF15           |
-| CU-12 | Descargar QR de la página actual            | 2    | RF13           |
-| CU-13 | Login con Google                            | 2    | RF16           |
-| CU-14 | Vincular usuario a parroquia                | 2    | RF17           |
-| CU-15 | Marcar favoritos                            | 2    | RF18           |
-| CU-16 | ABM de canción                              | 2    | RF1            |
-| CU-17 | ABM de playlist                             | 2    | RF2            |
-| CU-18 | ABM de usuario                              | 2    | RF9            |
-| CU-19 | ABM de parroquia                            | 2    | RF10           |
-| CU-20 | Gestionar permisos                          | 2    | RF21           |
-| CU-21 | Gestionar anuncios programados              | 2    | RF19           |
+| ID      | Nombre                                               | RF        | Hecho |
+| ------- | ---------------------------------------------------- | --------- | ----- |
+| CU-01   | Buscar cualquier cosa (parroquia, canción, playlist) | RF4       |       |
+| CU-02.1 | Ver canción con letra                                | RF5       | [x]   |
+| CU-02.2 | Ver canción con letra y acordes                      | RF5       | [x]   |
+| CU-03   | Transponer tonalidad                                 | RF6       | [x]   |
+| CU-04   | Reproducir referencia de YouTube                     | RF8       | [x]   |
+| CU-05   | Ver playlist de parroquia                            | RF3, RF12 | [x]   |
+| CU-06.1 | Buscar parroquia                                     | RF11      | [x]   |
+| CU-06.2 | Acceder a parroquia por URL                          | RF11      | [x]   |
+| CU-07   | Visualizar novedades / festividad del día            | —         | [x]   |
+| CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | [x]   |
+| CU-09   | Descargar partitura                                  | RF7       |       |
+| CU-10   | Descargar canción para imprimir                      | RF14      |       |
+| CU-11   | Descargar playlist como cancionero                   | RF15      |       |
+| CU-12   | Descargar QR de la página actual                     | RF13      |       |
+| CU-13   | Login con Google                                     | RF16      |       |
+| CU-14   | Vincular usuario a parroquia                         | RF17      |       |
+| CU-15   | Marcar favoritos                                     | RF18      |       |
+| CU-16   | ABM de canción                                       | RF1       |       |
+| CU-17   | ABM de playlist                                      | RF2       |       |
+| CU-18   | ABM de usuario                                       | RF9       |       |
+| CU-19   | ABM de parroquia                                     | RF10      |       |
+| CU-20   | Gestionar permisos                                   | RF21      |       |
+| CU-21   | Gestionar anuncios programados                       | RF19      |       |
+| CU-22   | Gestionar "Mis favoritos"                            | RF18      |       |
+| CU-23   | Lista de canciones con badges y menú contextual      | RF4       |       |
+| CU-24   | Barra de acciones global en el header                | RF4, RF18 |       |
 
 ---
 
@@ -47,11 +47,8 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ---
 
-# FASE 1 — MVP (7 de octubre)
-
 ## CU-01: Buscar cualquier cosa (parroquia, cancion, playlist)
 
-- **Fase:** 1
 - **RF:** RF4
 - **Actor primario:** Visitante / Músico
 - **Precondiciones:** Catálogo de canciones cargado.
@@ -72,7 +69,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-02.1: Ver canción con letra
 
-- **Fase:** 1
 - **RF:** RF5
 - **Actor primario:** Visitante
 - **Precondiciones:** La canción existe en el catálogo.
@@ -90,7 +86,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-02.2: Ver canción con letra y acordes
 
-- **Fase:** 1
 - **RF:** RF5
 - **Actor primario:** Músico
 - **Precondiciones:** La canción existe en el catálogo.
@@ -108,7 +103,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-03: Transponer tonalidad
 
-- **Fase:** 1
 - **RF:** RF6
 - **Actor primario:** Músico
 - **Precondiciones:** Estar en la vista de canción con acordes (CU-02).
@@ -136,7 +130,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-04: Reproducir referencia de YouTube
 
-- **Fase:** 1
 - **RF:** RF8
 - **Actor primario:** Músico / Visitante
 - **Precondiciones:** La canción tiene un link de YouTube asociado.
@@ -153,7 +146,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-05: Ver playlist de parroquia
 
-- **Fase:** 1
 - **RF:** RF3, RF12
 - **Actor primario:** Visitante / Músico
 - **Precondiciones:** La playlist existe y es pública.
@@ -170,7 +162,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-06.1: Buscar parroquia
 
-- **Fase:** 1
 - **RF:** RF11
 - **Actor primario:** Visitante
 - **Precondiciones:** La parroquia existe.
@@ -185,7 +176,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 ---
 ## CU-06.2: Acceder a parroquia por URL
 
-- **Fase:** 1
 - **RF:** RF11
 - **Actor primario:** Visitante
 - **Precondiciones:** La parroquia existe.
@@ -201,7 +191,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-07: Visualizar novedades / festividad del día
 
-- **Fase:** 1
 - **RF:** —
 - **Actor primario:** Visitante
 - **Precondiciones:** Existe contenido marcado como "novedad" o "festividad" para la fecha actual.
@@ -219,7 +208,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-08: Silenciar dispositivo y mantener pantalla activa
 
-- **Fase:** 1
 - **RF:** RF20
 - **Actor primario:** Músico / Corista
 - **Precondiciones:** El usuario está en una vista de canción o playlist en un dispositivo móvil.
@@ -236,11 +224,8 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ---
 
-# FASE 2 — Evolución (24 de diciembre)
-
 ## CU-09: Descargar partitura
 
-- **Fase:** 2
 - **RF:** RF7
 - **Actor primario:** Músico
 - **Precondiciones:** La canción tiene una partitura asociada en Supabase Storage.
@@ -257,7 +242,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-10: Descargar canción para imprimir
 
-- **Fase:** 2
 - **RF:** RF14
 - **Actor primario:** Músico
 - **Precondiciones:** Estar en la vista de canción.
@@ -273,7 +257,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-11: Descargar playlist como cancionero
 
-- **Fase:** 2
 - **RF:** RF15
 - **Actor primario:** Coordinador parroquial / Músico
 - **Precondiciones:** La playlist tiene al menos una canción.
@@ -290,7 +273,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-12: Descargar QR de la página actual
 
-- **Fase:** 2
 - **RF:** RF13
 - **Actor primario:** Coordinador parroquial / Visitante
 - **Precondiciones:** Estar en una página con URL pública (canción, playlist, parroquia).
@@ -305,7 +287,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-13: Login con Google
 
-- **Fase:** 2
 - **RF:** RF16
 - **Actor primario:** Visitante
 - **Precondiciones:** Supabase Auth con provider Google habilitado.
@@ -323,7 +304,6 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-14: Vincular usuario a parroquia
 
-- **Fase:** 2
 - **RF:** RF17
 - **Actor primario:** Usuario autenticado
 - **Precondiciones:** Sesión activa (CU-13).
@@ -340,23 +320,26 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ## CU-15: Marcar favoritos
 
-- **Fase:** 2
 - **RF:** RF18
 - **Actor primario:** Usuario autenticado
 - **Precondiciones:** Sesión activa.
-- **Disparador:** El usuario marca el ícono de "favorito" en una canción, playlist o parroquia.
+- **Disparador:** El usuario hace clic en el ícono de corazón presente en:
+  - la página de detalle de una canción, playlist o parroquia,
+  - el menú contextual "⋯" de un ítem de listado (CU-23),
+  - el botón "Agregar a Mis favoritos" del menú contextual.
 - **Flujo principal:**
-  1. El sistema registra el like del usuario sobre el recurso.
-  2. El recurso aparece en la sección "Mis favoritos" del perfil.
-  3. El usuario puede quitar el favorito.
-- **Flujos alternativos:** Ninguno.
-- **Postcondiciones:** Like persistido o eliminado.
+  1. El sistema registra el like del usuario sobre el recurso (`favorites (user_id, target_kind, target_id)`).
+  2. El ícono de corazón pasa a estado "lleno" en todas las vistas que muestran ese recurso.
+  3. El recurso aparece en la sección "Mis favoritos" (CU-22) ordenado por fecha de marca descendente.
+  4. El usuario puede quitar el favorito desde cualquiera de los puntos de entrada (toggle).
+- **Flujos alternativos:**
+  - 1a. **Sin sesión:** el ícono de corazón es visible pero al hacer clic se invita a iniciar sesión (CU-13). No se persiste nada.
+- **Postcondiciones:** Like persistido o eliminado en `favorites`.
 
 ---
 
 ## CU-16: ABM de canción (flujo editorial `draft → review → published`)
 
-- **Fase:** 2
 - **RF:** RF1
 - **Actores primarios:**
   - **Coordinador parroquial:** crea/edita y envía a revisión.
@@ -404,28 +387,85 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 - Si fue aprobada: nueva fila en `song_versions` con `published_at`, `current_version` incrementado, archivos en Storage públicos.
 - Traza completa de la transición editorial (`submitted_by/at`, `reviewed_by/at`, `review_notes`).
 
+### CU-16.1: Editar canción (sin acordes)
+
+Edición rápida de una canción cuando solo se modifica la letra y los metadatos, sin tocar acordes.
+
+- **Disparador:** desde la vista de canción o desde `/admin/canciones`, opción "Editar".
+- **Campos editables:** `title`, `number`, `author_id`, `category_id`, `body` (solo letra, sin marcadores `[acorde]`), `tempo_bpm`, `tags`, `youtube_url`.
+- **Flujo:** al guardar, si la canción estaba `published` se crea una nueva edición en estado `draft` que sigue el flujo de revisión (CU-16). Si estaba en `draft`/`rejected`, se sobrescribe.
+- **Flujos alternativos:**
+  - 1a. La canción tenía acordes en `body` previos: el editor "sin acordes" preserva los marcadores intactos y solo muestra la letra plana; los acordes no se pierden.
+
+### CU-16.2: Editar acordes y tonalidad de una canción
+
+Edición específica de la información musical.
+
+- **Disparador:** desde la vista de canción, opción "Editar acordes".
+- **Campos editables:**
+  - `body` con marcadores `[acorde]` en formato ChordPro mínimo.
+  - `original_key`: tonalidad general de la canción (texto libre validado contra el conjunto de notas válidas en notación latina o inglesa).
+- **Flujo:**
+  1. El sistema muestra la letra con los marcadores actuales y un campo separado para la tonalidad original.
+  2. El usuario inserta/quita/edita marcadores `[acorde]` directamente sobre la letra y/o cambia `original_key`.
+  3. El sistema valida que cada acorde sea reconocible (ver `lib/chordpro.ts`); si no, marca error inline pero permite guardar como draft.
+  4. Al enviar a revisión, se aplica el flujo de CU-16. Cambiar `original_key` no recalcula los acordes existentes (es solo metadato).
+- **Postcondiciones:** `songs.body` y `songs.original_key` actualizados; al publicarse, queda registrado en `song_versions`.
+
 ---
 
 ## CU-17: ABM de playlist
 
-- **Fase:** 2
 - **RF:** RF2
 - **Actor primario:** Coordinador parroquial
 - **Precondiciones:** Sesión vinculada a una parroquia (CU-14).
-- **Disparador:** El usuario accede a "Mis playlists" en su parroquia.
+- **Disparador:** El usuario accede a "Mis playlists" en su parroquia o entra a una playlist de la cual es coordinador.
 - **Flujo principal:**
   1. El usuario crea una playlist (nombre, fecha, descripción, visibilidad).
-  2. El usuario agrega/quita/reordena canciones.
-  3. El sistema persiste cada cambio.
+  2. Al ingresar a la playlist, ve la lista de canciones igual que el listado común (mismas columnas y badges, ver CU-23) pero con dos diferencias:
+     - aparece la **barra de acciones de playlist** (CU-17.1),
+     - el menú contextual "⋯" de cada canción incluye el item **"Quitar de esta playlist"** (CU-17.2).
+  3. El sistema persiste cada cambio inmediatamente, salvo el modo "Editar" en lote (CU-17.1.b).
 - **Flujos alternativos:**
-  - 1a. Sin permisos sobre la parroquia: el sistema rechaza la operación.
+  - 1a. Sin permisos sobre la parroquia: el sistema rechaza la operación (RLS).
 - **Postcondiciones:** Playlist persistida.
+
+### CU-17.1: Barra de acciones de la playlist
+
+En la vista de una playlist (cuando el usuario tiene permisos), se muestra una barra superior con cuatro botones:
+
+a. **Agregar** — abre un buscador de canciones (mismo motor que CU-01) restringido a `songs.status = 'published'`. Al seleccionar una, se agrega al final de la playlist y se persiste en `playlist_songs` con `position = max(position) + 1`.
+
+b. **Editar** — abre un diálogo modal con la lista de canciones de la playlist. Cada fila tiene:
+   - un ícono `−` (a la izquierda) que marca la canción para eliminar,
+   - un asa "hamburguesa" (a la derecha) que permite arrastrar para reordenar (subir/bajar).
+
+   La barra de título del diálogo es: `[ Cancelar ]   TITULO DE PLAYLIST   [ Guardar ]`. Mientras el diálogo está abierto los cambios no se persisten — solo al pulsar **Guardar** se aplican en `playlist_songs` (delete + reordenar `position`). **Cancelar** descarta todo.
+
+c. **Ordenar** — abre un menú con opciones de orden de visualización (no modifica `position` en la base, salvo "Orden personalizado"):
+   - **Orden personalizado** (default; usa `playlist_songs.position`),
+   - **Número** (`songs.number`),
+   - **Título** (`songs.title`),
+   - **Categoría** (`categories.name`),
+   - **Autor** (`authors.name`),
+   - **Agregado recientemente** (`playlist_songs.created_at` desc).
+
+   La elección se guarda por usuario+playlist en `localStorage` (anónimo) o `user_song_keys`-equivalente (autenticado, fuera del MVP).
+
+d. **Nombre** — abre un diálogo simple para editar `playlists.name`. Al guardar persiste y `slug` se mantiene (no se regenera automáticamente para no romper URLs).
+
+### CU-17.2: Quitar canción de una playlist
+
+- **Disparador:** desde el menú contextual "⋯" de una fila de canción dentro de una playlist (CU-23), item **"Quitar de esta playlist"**.
+- **Flujo:**
+  1. El sistema pide confirmación.
+  2. Si el usuario confirma, elimina la fila de `playlist_songs (playlist_id, song_id, position)` y compacta `position` de las restantes.
+- **Postcondiciones:** la canción ya no figura en la playlist; sigue existiendo en `songs`.
 
 ---
 
 ## CU-18: ABM de usuario
 
-- **Fase:** 2
 - **RF:** RF9
 - **Actor primario:** Administrador
 - **Precondiciones:** Sesión con rol admin.
@@ -438,28 +478,56 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
   - 1a. Desactivar al propio usuario: se rechaza.
 - **Postcondiciones:** Usuarios actualizados.
 
+### CU-18.1: Crear usuario
+
+- **Disparador:** botón "Nuevo usuario" en `/admin/usuarios`.
+- **Campos obligatorios:** `display_name` (nombre), `email`.
+- **Campos opcionales:** `parish_id`, lista de roles (`admin`, `editor`, `coordinator`, `member`).
+- **Flujo:**
+  1. El admin completa el formulario.
+  2. El sistema valida que `email` no exista ya en `users` y tenga formato válido.
+  3. Se crea el registro en `auth.users` (Supabase Auth, sin contraseña — el usuario activa la cuenta vía OAuth en su primer login con CU-13) y el perfil en `public.users` mediante el trigger `on_auth_user_created`.
+  4. Se asignan los roles seleccionados en `user_roles`.
+- **Flujos alternativos:**
+  - 2a. Email duplicado: se muestra error inline.
+  - 4a. Sin roles: el usuario queda con rol `member` por defecto.
+- **Postcondiciones:** Usuario creado, en estado `is_active = true`, con sus roles asignados.
+
 ---
 
 ## CU-19: ABM de parroquia
 
-- **Fase:** 2
 - **RF:** RF10
 - **Actor primario:** Administrador
 - **Precondiciones:** Sesión con rol admin.
 - **Disparador:** Acceso a `/admin/parroquias`.
 - **Flujo principal:**
   1. El admin crea/edita/baja parroquias (nombre, dirección, slug, contacto).
-  2. El sistema valida unicidad del slug.
-  3. Persiste los cambios.
+  2. Al crear una nueva, el sistema ofrece **autocompletar desde Google Maps** (CU-19.1).
+  3. El sistema valida unicidad del slug (`parishes.slug`).
+  4. Persiste los cambios.
 - **Flujos alternativos:**
-  - 2a. Slug duplicado: el sistema sugiere uno alternativo.
+  - 3a. Slug duplicado: el sistema sugiere uno alternativo basado en `slugify(name)` con sufijo numérico.
 - **Postcondiciones:** Parroquia persistida.
+
+### CU-19.1: Autocompletar parroquia desde Google Maps
+
+Al crear una parroquia nueva, el formulario ofrece dos modos de localización:
+
+a. **Por GPS del navegador:** el sistema solicita `navigator.geolocation.getCurrentPosition`. Con las coordenadas, consulta Google Maps Places API filtrando por `type=church` en un radio configurable (default 2 km) y muestra una lista de candidatos con nombre y dirección. Al elegir uno se prellenan `name`, `address`, `city`.
+
+b. **Por búsqueda de texto:** el admin escribe un nombre/dirección y se invoca Places Autocomplete. Al elegir un resultado se prellenan los mismos campos.
+
+- **Flujos alternativos:**
+  - a.1. El navegador deniega geolocalización: se muestra mensaje y se ofrece el modo (b).
+  - a.2. Sin candidatos cercanos: se muestra mensaje "No encontramos parroquias cerca" y se ofrece (b).
+  - El admin siempre puede editar manualmente cualquier campo prellenado.
+- **Postcondiciones:** Datos prellenados; la parroquia se persiste recién al pulsar "Guardar" del formulario principal (CU-19).
 
 ---
 
 ## CU-20: Gestionar permisos
 
-- **Fase:** 2
 - **RF:** RF21
 - **Actor primario:** Administrador
 - **Precondiciones:** Sesión con rol admin.
@@ -474,38 +542,88 @@ Cada caso indica la fase del roadmap a la que pertenece (§14–§15):
 
 ---
 
-## CU-21: Gestionar anuncios programados
+## CU-21: Gestionar anuncios y novedades
 
-- **Fase:** 2
 - **RF:** RF19
-- **Actor primario:** Administrador / Coordinador parroquial (según alcance del anuncio)
+- **Actor primario:** Administrador / Coordinador parroquial (según alcance del anuncio).
 - **Precondiciones:** Sesión con permiso para anuncios.
 - **Disparador:** Acceso a `/admin/anuncios`.
+- **Alcance:** este CU cubre tanto los **anuncios** programados (`announcements`) como las **novedades destacadas** (`featured_content`) que aparecen en la home (CU-07).
 - **Flujo principal:**
-  1. El usuario crea un anuncio: título, cuerpo, fecha de inicio/fin, alcance (global / parroquia), prioridad.
-  2. El sistema valida fechas y alcance.
-  3. En la home, durante la ventana de vigencia, el anuncio aparece en un banner cerrable.
-  4. Al cerrarlo, no vuelve a aparecer al mismo dispositivo (cookie/localStorage).
+  1. El usuario lista anuncios/novedades existentes con sus ventanas de vigencia.
+  2. Crea, edita o da de baja un anuncio: título, cuerpo, fecha de inicio/fin, alcance (global / parroquia), prioridad. Para "novedad" además: `target_kind` (canción, playlist, parroquia, link externo) y referencia.
+  3. El sistema valida fechas y alcance.
+  4. En la home, durante la ventana de vigencia, los anuncios aparecen como banners cerrables y las novedades en la sección "Novedades" (CU-07).
+  5. Al cerrar un banner, no vuelve a aparecer al mismo dispositivo/usuario (`announcement_dismissals`).
 - **Flujos alternativos:**
-  - 1a. Fecha fin anterior a inicio: error de validación.
-- **Postcondiciones:** Anuncio persistido.
+  - 2a. Fecha fin anterior a inicio: error de validación.
+  - 2b. Editar un anuncio que ya está visible: el cambio se aplica en la próxima carga; los dismissals previos se mantienen (la unicidad es por `announcement_id`).
+- **Postcondiciones:** Anuncio/novedad persistido.
 
 ---
 
-## CU-22 Gestionar "Mis favoritos" 
+## CU-22: Gestionar "Mis favoritos"
 
-- **Fase:** 2
+- **RF:** RF18
 - **Actor primario:** Usuario autenticado
-- **Precondiciones:** Sesión activa
-- **Disparador:** Acceso a `/favoritos`.
+- **Precondiciones:** Sesión activa.
+- **Disparador:** clic en el ícono de **corazón** del header (CU-24) o navegación directa a `/favoritos`.
 - **Flujo principal:**
-  1. El usuario accede a Mis Favoritos
-  2. El sistema muestra la lista de favoritos, ordenado por: canciones, playlists, parroquias.
-  3. El usuario desmarca un item de favorito.
-  4. El item se quita de favorito (se quita el corazón).
-  5. Al cerrarlo, no vuelve a aparecer ese favorito.
+  1. El usuario abre Mis Favoritos. Cuando se accede desde el header, se muestra como **diálogo popup** con la lista; en `/favoritos` ocupa la página completa.
+  2. El sistema muestra la lista ordenada por **agregados recientemente** (`favorites.created_at` desc). Cada ítem indica su tipo (canción / playlist / parroquia) y enlaza al detalle correspondiente.
+  3. Subagrupación opcional por tipo: el popup muestra los tres grupos colapsables — primero canciones, luego playlists, luego parroquias.
+  4. El usuario desmarca un ítem haciendo clic en su corazón.
+  5. El ítem desaparece de la lista; el cambio se refleja en todas las vistas que lo muestran (CU-15).
 - **Flujos alternativos:**
-  - 1a. No existen favoritos: lista vacía.
+  - 1a. No existen favoritos: el popup muestra texto vacío "Todavía no marcaste favoritos".
+  - 1b. Sin sesión: el popup invita a iniciar sesión (CU-13).
+- **Postcondiciones:** Lista actualizada en `favorites`.
+
+---
+
+## CU-23: Lista de canciones con badges y menú contextual
+
+- **RF:** RF4
+- **Actor primario:** Visitante / Músico / Coordinador parroquial.
+- **Precondiciones:** Estar en una vista que muestra una lista de canciones (catálogo `/canciones`, playlist, resultados de búsqueda, "Mis favoritos").
+- **Disparador:** El sistema renderiza la lista.
+- **Flujo principal:**
+  1. Para cada canción, además de número y título, el sistema muestra a la derecha un grupo compacto de **badges** que indican capacidades disponibles. Cada badge tiene tooltip al pasar el cursor:
+     - 🎵 nota musical → la canción tiene acordes (`body` con marcadores `[acorde]`).
+     - ▶ play → la canción tiene `youtube_url`.
+     - 📄 hoja → la canción tiene archivos asociados publicados (`song_files.status = 'published'`: partituras, audios).
+     - ❤ corazón (lleno) → la canción está en los favoritos del usuario actual (solo con sesión).
+     Solo se muestran los badges que aplican (sin slots vacíos).
+  2. Al final de cada fila, a la derecha del todo, un ícono de **tres puntitos horizontales (⋯)**. Al hacer clic abre un menú desplegable con tooltip "Más acciones":
+     - **Agregar a playlist** — abre selector de playlists del usuario; al elegir una, la canción se agrega al final de esa playlist (reusa CU-17.1.a).
+     - **Ver canción** — equivale a hacer clic en el título (navega a `/canciones/[slug]`).
+     - **Compartir** — usa `navigator.share` si está disponible; si no, copia la URL canónica al portapapeles y muestra un toast "Enlace copiado".
+     - **Agregar a Mis favoritos** / **Quitar de Mis favoritos** — toggle del corazón (CU-15).
+     - **Quitar de esta playlist** — solo presente si el listado es una playlist y el usuario tiene permisos (CU-17.2).
+- **Flujos alternativos:**
+  - **Sin sesión:** los items "Agregar a playlist" y "Agregar a Mis favoritos" están visibles pero deshabilitados con tooltip "Iniciá sesión para usar esta acción".
+  - **Sin permisos sobre la playlist:** "Quitar de esta playlist" no aparece.
+- **Postcondiciones:** Ninguna por defecto; las acciones individuales tienen las suyas.
+
+---
+
+## CU-24: Barra de acciones global en el header
+
+- **RF:** RF4, RF18
+- **Actor primario:** Cualquier usuario.
+- **Precondiciones:** Ninguna.
+- **Disparador:** El sistema renderiza el header en cualquier página.
+- **Flujo principal:**
+  1. En el extremo derecho del header se muestran **tres botones circulares** con tooltips:
+     - 🔍 **Buscar** (lupa) → tooltip "Buscar".
+     - ❤ **Mis favoritos** (corazón) → tooltip "Mis favoritos".
+     - 👤 **Perfil** (silueta de usuario) → tooltip "Mi cuenta".
+  2. **Buscar:** abre un overlay/diálogo con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01.
+  3. **Mis favoritos:** abre el diálogo popup de CU-22.
+  4. **Perfil:** abre el menú lateral existente (login, modo oscuro, listas, etc.).
+- **Flujos alternativos:**
+  - **Buscar sin término:** el overlay muestra accesos rápidos (parroquias destacadas, últimas playlists, etc.).
+- **Postcondiciones:** Ninguna persistente; las acciones derivadas siguen sus propios CU.
 
 ---
 

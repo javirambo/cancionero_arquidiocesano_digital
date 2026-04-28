@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useTheme } from "./theme";
 
 type MenuItemProps = {
   href?: string;
@@ -61,6 +62,13 @@ const ModoOscuroIcon = () => (
   </svg>
 );
 
+const ModoClaroIcon = () => (
+  <svg {...iconProps}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4" />
+  </svg>
+);
+
 const FavoritosIcon = () => (
   <svg {...iconProps}>
     <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" />
@@ -94,6 +102,7 @@ const UsuarioTriggerIcon = () => (
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     if (!open) return;
@@ -167,9 +176,12 @@ export function SiteHeader() {
                 </li>
                 <li>
                   <MenuItem
-                    icon={<ModoOscuroIcon />}
-                    label="Modo Oscuro"
-                    onSelect={close}
+                    icon={theme === "dark" ? <ModoClaroIcon /> : <ModoOscuroIcon />}
+                    label={theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+                    onSelect={() => {
+                      toggle();
+                      close();
+                    }}
                   />
                 </li>
                 <li>

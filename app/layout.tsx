@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cardo } from "next/font/google";
 import { SiteHeader } from "./components/site-header";
+import { ThemeProvider, themeInitScript } from "./components/theme";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -25,9 +26,14 @@ export default function RootLayout({
       lang="es"
       className={`${cardo.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col font-serif bg-background text-foreground">
-        <SiteHeader />
-        {children}
+        <ThemeProvider>
+          <SiteHeader />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

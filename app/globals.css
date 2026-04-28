@@ -26,14 +26,14 @@
   --color-muted-foreground: #5b5b5b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #0e0c0a;
-    --color-foreground: #f4efe6;
-    --color-sidebar: #181513;
-    --color-border: #2b2722;
-    --color-muted-foreground: #a39b8b;
-  }
+/* Tema dark: se activa explícitamente con data-theme="dark" en <html>.
+   Por defecto el tema es light, sin importar la preferencia del SO. */
+:root[data-theme="dark"] {
+  --color-background: #0e0c0a;
+  --color-foreground: #f4efe6;
+  --color-sidebar: #181513;
+  --color-border: #2b2722;
+  --color-muted-foreground: #a39b8b;
 }
 
 @theme inline {
