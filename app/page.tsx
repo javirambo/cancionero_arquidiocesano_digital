@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { version } from "@/package.json";
 
 type AccesoRapido = {
   href: string;
@@ -27,30 +28,6 @@ const accesos: AccesoRapido[] = [
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-border bg-sidebar">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-baseline gap-3">
-            <span className="text-2xl font-bold tracking-wide text-primary">
-              Cancionero
-            </span>
-            <span className="text-sm normal-case tracking-normal text-muted-foreground">
-              Arquidiócesis de Rosario
-            </span>
-          </Link>
-          <nav className="hidden gap-6 text-sm normal-case text-muted-foreground sm:flex">
-            <Link href="/canciones" className="hover:text-primary">
-              Canciones
-            </Link>
-            <Link href="/playlists" className="hover:text-primary">
-              Playlists
-            </Link>
-            <Link href="/parroquias" className="hover:text-primary">
-              Parroquias
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
         <section className="flex flex-col items-center gap-6 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-secondary">
@@ -146,7 +123,7 @@ export default function Home() {
       <footer className="border-t border-border bg-sidebar">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-1 px-6 py-6 text-center text-xs normal-case text-muted-foreground sm:flex-row sm:justify-between sm:text-left">
           <span>Arquidiócesis de Rosario · Comisión Litúrgico-Musical</span>
-          <span>Versión MVP · Fase 1</span>
+          <span>Versión {version}</span>
         </div>
       </footer>
     </div>
