@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cardo } from "next/font/google";
+import { SiteHeader } from "./components/site-header";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -25,6 +26,7 @@ export default function RootLayout({
       className={`${cardo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-serif bg-background text-foreground">
+        <SiteHeader />
         {children}
       </body>
     </html>

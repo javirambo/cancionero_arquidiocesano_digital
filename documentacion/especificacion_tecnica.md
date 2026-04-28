@@ -76,11 +76,11 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 * [ ] RF11: Acceso directo a una parroquia mediante URL  
 * [ ] RF12: Acceso directo a una playlist mediante URL  
 * [ ] RF13: Descarga de QR de pagina actual  
-* [ ] RF14: Descarga de canciones con y sin acordes (formato para inprimir) 
+* [ ] RF14: Descarga de canciones con y sin acordes (formato para imprimir) 
 * [ ] RF15: Descarga de canciones de una playlist (como nuevo cancionero)  
 * [ ] RF16: Login con google
 * [ ] RF17: Linkear uruaios con parroquias
-* [ ] RF18: Permitir que un usuario tenga links propios de canciones, listas, parroquias, etc a traves de likes.
+* [ ] RF18: Permitir que un usuario tenga links propios de canciones, listas, parroquias, etc a través de likes.
 * [ ] RF19: Gestionar anuncios con fecha, aparecen al inicio, se pueden cerrar.
 * [ ] RF20: Permitir silenciar el dispositivo y que no se apague la pantalla.
 * [ ] RF21: Gestion de permisos
