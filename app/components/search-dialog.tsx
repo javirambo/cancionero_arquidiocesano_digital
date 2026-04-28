@@ -155,11 +155,7 @@ export function SearchDialog({ open, onClose }: Props) {
               {results.playlists.map((p) => (
                 <ResultLink
                   key={`pl-${p.id}`}
-                  href={
-                    p.parish
-                      ? `/playlists/${p.parish.slug}/${p.slug}`
-                      : `/playlists`
-                  }
+                  href={`/playlists/${p.id}`}
                   onClick={close}
                   title={p.name}
                   subtitle={p.parish?.name ?? null}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PlaylistWithSongs } from "@/lib/songs";
+import type { PlaylistWithSongs } from "@/lib/playlists";
 import { SongRow } from "@/app/components/song-row";
 
 type Sort =
@@ -30,7 +30,6 @@ type Props = {
 export function PlaylistView({ playlist }: Props) {
   const [sort, setSort] = useState<Sort>("custom");
 
-  // Persistencia por playlist en localStorage.
   useEffect(() => {
     const raw = window.localStorage.getItem(`pl:sort:${playlist.id}`);
     if (raw && SORT_ORDER.includes(raw as Sort)) setSort(raw as Sort);
@@ -70,11 +69,7 @@ export function PlaylistView({ playlist }: Props) {
 
   return (
     <>
-      <Toolbar
-        title={playlist.name}
-        sort={sort}
-        onSort={setSort}
-      />
+      <Toolbar title={playlist.name} sort={sort} onSort={setSort} />
 
       {sorted.length === 0 ? (
         <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
@@ -87,11 +82,7 @@ export function PlaylistView({ playlist }: Props) {
               key={s.id}
               index={i + 1}
               song={s}
-              playlistContext={{
-                parishSlug: playlist.parish?.slug ?? "",
-                playlistSlug: playlist.slug,
-                canManage: false,
-              }}
+              playlistContext={{ playlistId: playlist.id, canManage: false }}
             />
           ))}
         </ol>
@@ -99,8 +90,6 @@ export function PlaylistView({ playlist }: Props) {
     </>
   );
 }
-
-const DISABLED_TOOLTIP = "Disponible al iniciar sesión como coordinador";
 
 function Toolbar({
   title,
@@ -138,16 +127,17 @@ function Toolbar({
       aria-label={`Acciones de la playlist ${title}`}
       className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-sidebar px-3 py-2"
     >
-      <ToolbarButton label="Agregar" disabled tooltip={DISABLED_TOOLTIP} />
-      <ToolbarButton label="Editar" disabled tooltip={DISABLED_TOOLTIP} />
       <div ref={sortRef} className="relative">
-        <ToolbarButton
-          label="Ordenar"
+        <button
+          type="button"
           onClick={() => setSortOpen((v) => !v)}
-          tooltip={`Orden actual: ${SORT_LABELS[sort]}`}
-          ariaHaspopup
-          ariaExpanded={sortOpen}
-        />
+          title={`Orden actual: ${SORT_LABELS[sort]}`}
+          aria-haspopup="menu"
+          aria-expanded={sortOpen}
+          className="rounded-full border border-border bg-background px-4 py-1.5 text-sm uppercase tracking-wide text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          Ordenar
+        </button>
         {sortOpen && (
           <div
             role="menu"
@@ -180,37 +170,6 @@ function Toolbar({
           </div>
         )}
       </div>
-      <ToolbarButton label="Nombre" disabled tooltip={DISABLED_TOOLTIP} />
     </div>
-  );
-}
-
-function ToolbarButton({
-  label,
-  onClick,
-  disabled,
-  tooltip,
-  ariaHaspopup,
-  ariaExpanded,
-}: {
-  label: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  tooltip?: string;
-  ariaHaspopup?: boolean;
-  ariaExpanded?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={tooltip}
-      aria-haspopup={ariaHaspopup ? "menu" : undefined}
-      aria-expanded={ariaExpanded}
-      className="rounded-full border border-border bg-background px-4 py-1.5 text-sm uppercase tracking-wide text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:text-muted-foreground"
-    >
-      {label}
-    </button>
   );
 }

@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getPlaylistBySlug,
-  getSongBySlug,
-  youtubeEmbedUrl,
-} from "@/lib/songs";
+import { getSongBySlug, youtubeEmbedUrl } from "@/lib/songs";
+import { getPlaylistById } from "@/lib/playlists";
 import { SongView } from "./song-view";
 import { QrButton } from "@/app/components/qr-button";
 
@@ -13,7 +10,7 @@ export default async function CancionPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ pl?: string; parroquia?: string }>;
+  searchParams: Promise<{ pl?: string }>;
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const song = await getSongBySlug(slug);
@@ -24,20 +21,18 @@ export default async function CancionPage({
   // Contexto de playlist (CU-05): navegación anterior/siguiente.
   let playlistCtx: {
     name: string;
-    parishSlug: string;
-    playlistSlug: string;
+    playlistId: string;
     prev: { slug: string; title: string } | null;
     next: { slug: string; title: string } | null;
   } | null = null;
-  if (sp.pl && sp.parroquia) {
-    const pl = await getPlaylistBySlug(sp.parroquia, sp.pl);
+  if (sp.pl) {
+    const pl = await getPlaylistById(sp.pl);
     if (pl) {
       const idx = pl.songs.findIndex((s) => s.slug === slug);
       if (idx !== -1) {
         playlistCtx = {
           name: pl.name,
-          parishSlug: sp.parroquia,
-          playlistSlug: sp.pl,
+          playlistId: pl.id,
           prev:
             idx > 0
               ? { slug: pl.songs[idx - 1].slug, title: pl.songs[idx - 1].title }
@@ -51,16 +46,14 @@ export default async function CancionPage({
     }
   }
 
-  const plQuery = playlistCtx
-    ? `?pl=${playlistCtx.playlistSlug}&parroquia=${playlistCtx.parishSlug}`
-    : "";
+  const plQuery = playlistCtx ? `?pl=${playlistCtx.playlistId}` : "";
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
       <nav className="text-sm normal-case text-muted-foreground">
         {playlistCtx ? (
           <Link
-            href={`/playlists/${playlistCtx.parishSlug}/${playlistCtx.playlistSlug}`}
+            href={`/playlists/${playlistCtx.playlistId}`}
             className="hover:text-primary"
           >
             ← {playlistCtx.name}

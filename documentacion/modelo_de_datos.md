@@ -30,6 +30,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `song_files`           | Archivos asociados (partitura PDF, audio)                  | 1/2  | CU-09, CU-16                  |
 | `playlists`            | Listas de canciones por parroquia                          | 1    | CU-05, CU-11, CU-17           |
 | `playlist_songs`       | Relación playlist ↔ canción (ordenada)                     | 1    | CU-05, CU-17                  |
+| `playlist_parish_subscriptions` | Suscripción de una parroquia a una playlist ajena | 1    | CU-17                         |
 | `liturgical_events`    | Festividades del calendario litúrgico                      | 1    | CU-07                         |
 | `featured_content`     | Novedades / contenido destacado en la home                 | 1    | CU-07                         |
 | `users`                | Perfil de usuario (extiende `auth.users` de Supabase)      | 2    | CU-13, CU-14, CU-18           |
@@ -192,22 +193,23 @@ Archivos asociados a una canción (puede haber varias partituras y audios). Apun
 ---
 
 ### `playlists`
-Lista de canciones de una parroquia para una celebración o uso general.
+Lista de canciones de una parroquia para una celebración o uso general. La URL canónica es `/playlists/{id}` (UUID); el `slug` quedó como texto libre opcional sin restricción de unicidad (migración 0006).
 
-| Columna         | Tipo        | Notas                                                     |
-| --------------- | ----------- | --------------------------------------------------------- |
-| `id`            | uuid        | PK                                                        |
-| `parish_id`     | uuid        | FK → `parishes.id` ON DELETE CASCADE                      |
-| `slug`          | text        | NOT NULL — único por parroquia (`UNIQUE(parish_id, slug)`)|
-| `name`          | text        | NOT NULL                                                  |
-| `description`   | text        |                                                           |
-| `event_date`    | date        | fecha de la celebración (opcional)                        |
-| `visibility`    | text        | CHECK in ('public','unlisted','private'); default 'public'|
-| `created_by`    | uuid        | FK → `users.id`                                           |
-| `created_at`    | timestamptz | default now()                                             |
-| `updated_at`    | timestamptz | default now()                                             |
+| Columna           | Tipo        | Notas                                                     |
+| ----------------- | ----------- | --------------------------------------------------------- |
+| `id`              | uuid        | PK                                                        |
+| `parish_id`       | uuid        | FK → `parishes.id` ON DELETE CASCADE — parroquia dueña    |
+| `slug`            | text        | opcional, libre (no se usa en URL)                        |
+| `name`            | text        | NOT NULL                                                  |
+| `description`     | text        |                                                           |
+| `event_date`      | date        | fecha de la celebración (opcional)                        |
+| `visibility`      | text        | CHECK in ('public','unlisted','private'); default 'public'|
+| `is_archdiocesan` | boolean     | default false. Cuando true (solo si `parish_id` corresponde a la parroquia virtual `arquidiocesis`), la playlist se ve por defecto en todas las parroquias |
+| `created_by`      | uuid        | FK → `users.id`                                           |
+| `created_at`      | timestamptz | default now()                                             |
+| `updated_at`      | timestamptz | default now()                                             |
 
-**Índices:** `parish_id`, `(parish_id, slug)` UNIQUE, `event_date`.
+**Índices:** `parish_id`, `event_date`, `is_archdiocesan` (parcial donde true).
 
 ---
 
@@ -225,6 +227,21 @@ Relación N:M ordenada entre `playlists` y `songs`.
 
 **PK compuesta:** `(playlist_id, song_id, position)`.
 **Índices:** `(playlist_id, position)`.
+
+---
+
+### `playlist_parish_subscriptions`
+Permite que una parroquia "adopte" una playlist creada por otra (ver CU-17, modelo estilo Spotify). Independiente del flag `is_archdiocesan` que aplica de forma global.
+
+| Columna         | Tipo        | Notas                                            |
+| --------------- | ----------- | ------------------------------------------------ |
+| `playlist_id`   | uuid        | FK → `playlists.id` ON DELETE CASCADE            |
+| `parish_id`     | uuid        | FK → `parishes.id` ON DELETE CASCADE             |
+| `subscribed_by` | uuid        | FK → `users.id` ON DELETE SET NULL               |
+| `subscribed_at` | timestamptz | default now()                                    |
+
+**PK compuesta:** `(playlist_id, parish_id)`.
+**Índices:** `parish_id`.
 
 ---
 
@@ -288,7 +305,8 @@ Perfil aplicativo. Extiende `auth.users` de Supabase. Se crea por trigger al pri
 | `email`       | text        | NOT NULL, UNIQUE                               |
 | `display_name`| text        |                                                |
 | `avatar_url`  | text        |                                                |
-| `parish_id`   | uuid        | FK → `parishes.id` (parroquia "principal")     |
+| `parish_id`   | uuid        | FK → `parishes.id` (parroquia "principal" — la que se selecciona con ⭐ en CU-14) |
+| `preferences` | jsonb       | preferencias de UI (ej. `{ "suggestChords": true }`); default `{}` (migración 0005) |
 | `is_active`   | boolean     | default true                                   |
 | `created_at`  | timestamptz | default now()                                  |
 | `updated_at`  | timestamptz | default now()                                  |

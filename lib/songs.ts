@@ -75,33 +75,54 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   };
 }
 
-// Devuelve canciones publicadas con sus capacidades para badges (CU-23).
-// Si `q` está vacío, devuelve el catálogo completo.
-// Si `term` es solo dígitos, devuelve el entero (sin ceros a la izquierda).
-// Ej: "2" → 2, "002" → 2, "abc" → null, "12a" → null.
-function parseSongNumber(term: string): number | null {
-  if (!/^\d+$/.test(term)) return null;
-  const n = Number.parseInt(term, 10);
-  return Number.isFinite(n) ? n : null;
-}
-
-// Construye la cláusula OR para Supabase combinando match por número
-// (si aplica) y match por título/letra.
-function buildSongMatchOr(term: string): string {
-  const like = `%${term}%`;
-  const num = parseSongNumber(term);
-  const parts = [`title.ilike.${like}`, `body.ilike.${like}`];
-  if (num !== null) parts.unshift(`number.eq.${num}`);
-  return parts.join(",");
-}
-
 export async function listSongsWithCapabilities(
   q: string = "",
   limit = 100
 ): Promise<(SongSummary & SongCapabilities)[]> {
   const supabase = await createClient();
   const term = q.trim();
-  let query = supabase
+
+  // Si hay query: usamos el RPC accent-insensitive para obtener IDs y luego
+  // fetcheamos capacidades. Si no, traemos todo el catálogo directo.
+  if (term) {
+    const { data: matches, error: rpcErr } = await supabase.rpc("search_songs", {
+      q: term,
+      lim: limit,
+    });
+    if (rpcErr) throw rpcErr;
+    const ids = ((matches ?? []) as { id: string }[]).map((r) => r.id);
+    if (ids.length === 0) return [];
+    const { data: rows, error } = await supabase
+      .from("songs")
+      .select(
+        "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id, status)"
+      )
+      .in("id", ids);
+    if (error) throw error;
+    // Mantener el orden del RPC.
+    const byId = new Map((rows ?? []).map((r) => [r.id as string, r]));
+    return ids
+      .map((id) => byId.get(id))
+      .filter((row): row is NonNullable<typeof row> => row !== undefined)
+      .map((row) => {
+        const body = (row.body as string | null) ?? "";
+        const files = (row.song_files as { status: string }[] | null) ?? [];
+        return {
+          id: row.id as string,
+          number: row.number as number | null,
+          title: row.title as string,
+          slug: row.slug as string,
+          category: firstName(row.categories as Named),
+          author: firstName(row.authors as Named),
+          hasChords: /\[[^\]]+\]/.test(body),
+          hasYoutube: Boolean(row.youtube_url),
+          hasFiles: files.some((f) => f.status === "published"),
+        };
+      });
+  }
+
+  // Sin query: catálogo completo ordenado por número.
+  const { data, error } = await supabase
     .from("songs")
     .select(
       "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id, status)"
@@ -109,12 +130,7 @@ export async function listSongsWithCapabilities(
     .eq("status", "published")
     .order("number", { ascending: true, nullsFirst: false })
     .limit(limit);
-  if (term) {
-    query = query.or(buildSongMatchOr(term));
-  }
-  const { data, error } = await query;
   if (error) throw error;
-
   return (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
     const files = (row.song_files as { status: string }[] | null) ?? [];
@@ -136,22 +152,12 @@ export async function searchSongs(q: string, limit = 50): Promise<SongSummary[]>
   const supabase = await createClient();
   const term = q.trim();
   if (!term) return listPublishedSongs(limit);
-  const { data, error } = await supabase
-    .from("songs")
-    .select("id, number, title, slug, categories(name), authors(name)")
-    .eq("status", "published")
-    .or(buildSongMatchOr(term))
-    .order("number", { ascending: true, nullsFirst: false })
-    .limit(limit);
+  const { data, error } = await supabase.rpc("search_songs", {
+    q: term,
+    lim: limit,
+  });
   if (error) throw error;
-  return (data ?? []).map((row) => ({
-    id: row.id as string,
-    number: row.number as number | null,
-    title: row.title as string,
-    slug: row.slug as string,
-    category: firstName(row.categories as Named),
-    author: firstName(row.authors as Named),
-  }));
+  return (data ?? []) as SongSummary[];
 }
 
 export type GlobalSearchResults = {
@@ -160,55 +166,30 @@ export type GlobalSearchResults = {
   parishes: Parish[];
 };
 
-export async function searchGlobal(q: string, limit = 8): Promise<GlobalSearchResults> {
+export async function searchGlobal(q: string): Promise<GlobalSearchResults> {
   const term = q.trim();
   if (!term) return { songs: [], playlists: [], parishes: [] };
   const supabase = await createClient();
-  const like = `%${term}%`;
-
-  const [songsRes, playlistsRes, parishesRes] = await Promise.all([
-    supabase
-      .from("songs")
-      .select("id, number, title, slug, categories(name), authors(name)")
-      .eq("status", "published")
-      .or(buildSongMatchOr(term))
-      .limit(limit),
-    supabase
-      .from("playlists")
-      .select("id, slug, name, description, event_date, parishes(name, slug)")
-      .eq("visibility", "public")
-      .ilike("name", like)
-      .limit(limit),
-    supabase
-      .from("parishes")
-      .select("id, slug, name, address, city, description")
-      .eq("is_active", true)
-      .or(`name.ilike.${like},city.ilike.${like}`)
-      .limit(limit),
-  ]);
-
-  if (songsRes.error) throw songsRes.error;
-  if (playlistsRes.error) throw playlistsRes.error;
-  if (parishesRes.error) throw parishesRes.error;
-
+  const { data, error } = await supabase.rpc("search_global", { q: term });
+  if (error) throw error;
+  if (!data) return { songs: [], playlists: [], parishes: [] };
+  // El RPC devuelve { songs, playlists, parishes } como jsonb.
+  type RpcResult = {
+    songs: SongSummary[];
+    playlists: {
+      id: string;
+      name: string;
+      description: string | null;
+      event_date: string | null;
+      parish: { name: string; slug: string } | null;
+    }[];
+    parishes: Parish[];
+  };
+  const r = data as RpcResult;
   return {
-    songs: (songsRes.data ?? []).map((row) => ({
-      id: row.id as string,
-      number: row.number as number | null,
-      title: row.title as string,
-      slug: row.slug as string,
-      category: firstName(row.categories as Named),
-      author: firstName(row.authors as Named),
-    })),
-    playlists: (playlistsRes.data ?? []).map((row) => ({
-      id: row.id as string,
-      slug: row.slug as string,
-      name: row.name as string,
-      description: (row.description as string | null) ?? null,
-      event_date: (row.event_date as string | null) ?? null,
-      parish: firstParish(row.parishes as ParishRel),
-    })),
-    parishes: (parishesRes.data ?? []) as Parish[],
+    songs: r.songs ?? [],
+    playlists: r.playlists ?? [],
+    parishes: r.parishes ?? [],
   };
 }
 
@@ -218,15 +199,10 @@ export async function searchGlobal(q: string, limit = 8): Promise<GlobalSearchRe
 
 export type PlaylistSummary = {
   id: string;
-  slug: string;
   name: string;
   description: string | null;
   event_date: string | null;
   parish: { name: string; slug: string } | null;
-};
-
-export type PlaylistWithSongs = PlaylistSummary & {
-  songs: (SongSummary & SongCapabilities & { position: number; created_at: string })[];
 };
 
 type ParishRel = { name: string; slug: string } | { name: string; slug: string }[] | null;
@@ -234,113 +210,6 @@ function firstParish(rel: ParishRel): { name: string; slug: string } | null {
   if (!rel) return null;
   if (Array.isArray(rel)) return rel[0] ?? null;
   return rel;
-}
-
-export async function listPlaylists(parishSlug?: string): Promise<PlaylistSummary[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("playlists")
-    .select("id, slug, name, description, event_date, parishes(name, slug)")
-    .eq("visibility", "public")
-    .order("event_date", { ascending: false, nullsFirst: false });
-  if (parishSlug) {
-    // Filtro por slug de parroquia (relación 1-N).
-    query = query.eq("parishes.slug", parishSlug);
-  }
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? [])
-    .map((row) => ({
-      id: row.id as string,
-      slug: row.slug as string,
-      name: row.name as string,
-      description: (row.description as string | null) ?? null,
-      event_date: (row.event_date as string | null) ?? null,
-      parish: firstParish(row.parishes as ParishRel),
-    }))
-    // Si filtramos por parroquia, descartamos rows sin match de la relación.
-    .filter((p) => (parishSlug ? p.parish?.slug === parishSlug : true));
-}
-
-export async function getPlaylistBySlug(
-  parishSlug: string,
-  playlistSlug: string
-): Promise<PlaylistWithSongs | null> {
-  const supabase = await createClient();
-  // Primero la parroquia (para obtener parish_id sin ambiguedad).
-  const { data: parish, error: pErr } = await supabase
-    .from("parishes")
-    .select("id, name, slug")
-    .eq("slug", parishSlug)
-    .maybeSingle();
-  if (pErr) throw pErr;
-  if (!parish) return null;
-
-  const { data: pl, error: plErr } = await supabase
-    .from("playlists")
-    .select("id, slug, name, description, event_date")
-    .eq("parish_id", parish.id)
-    .eq("slug", playlistSlug)
-    .maybeSingle();
-  if (plErr) throw plErr;
-  if (!pl) return null;
-
-  const { data: items, error: iErr } = await supabase
-    .from("playlist_songs")
-    .select(
-      "position, created_at, songs(id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(status))"
-    )
-    .eq("playlist_id", pl.id)
-    .order("position", { ascending: true });
-  if (iErr) throw iErr;
-
-  type SongRow = {
-    id: string;
-    number: number | null;
-    title: string;
-    slug: string;
-    body: string | null;
-    youtube_url: string | null;
-    categories: Named;
-    authors: Named;
-    song_files: { status: string }[] | null;
-  };
-
-  const songs = (items ?? [])
-    .map((row) => {
-      const songRel = row.songs as SongRow | SongRow[] | null;
-      const s = Array.isArray(songRel) ? songRel[0] : songRel;
-      if (!s) return null;
-      const body = s.body ?? "";
-      const files = s.song_files ?? [];
-      return {
-        id: s.id,
-        number: s.number,
-        title: s.title,
-        slug: s.slug,
-        category: firstName(s.categories),
-        author: firstName(s.authors),
-        hasChords: /\[[^\]]+\]/.test(body),
-        hasYoutube: Boolean(s.youtube_url),
-        hasFiles: files.some((f) => f.status === "published"),
-        position: row.position as number,
-        created_at: row.created_at as string,
-      };
-    })
-    .filter(
-      (x): x is SongSummary & SongCapabilities & { position: number; created_at: string } =>
-        x !== null
-    );
-
-  return {
-    id: pl.id as string,
-    slug: pl.slug as string,
-    name: pl.name as string,
-    description: (pl.description as string | null) ?? null,
-    event_date: (pl.event_date as string | null) ?? null,
-    parish: { name: parish.name as string, slug: parish.slug as string },
-    songs,
-  };
 }
 
 // =====================================================================
@@ -399,7 +268,7 @@ export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
   const { data, error } = await supabase
     .from("liturgical_events")
     .select(
-      "name, slug, description, kind, playlists(id, slug, name, description, event_date, parishes(name, slug))"
+      "name, slug, description, kind, playlists(id, name, description, event_date, parishes!playlists_parish_id_fkey(name, slug))"
     )
     .eq("event_date", today)
     .limit(1)
@@ -408,8 +277,8 @@ export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
   if (!data) return null;
 
   const plRel = data.playlists as
-    | { id: string; slug: string; name: string; description: string | null; event_date: string | null; parishes: ParishRel }
-    | { id: string; slug: string; name: string; description: string | null; event_date: string | null; parishes: ParishRel }[]
+    | { id: string; name: string; description: string | null; event_date: string | null; parishes: ParishRel }
+    | { id: string; name: string; description: string | null; event_date: string | null; parishes: ParishRel }[]
     | null;
   const pl = Array.isArray(plRel) ? plRel[0] : plRel;
   const parish = pl ? firstParish(pl.parishes) : null;
@@ -422,7 +291,6 @@ export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
     playlist: pl
       ? {
           id: pl.id,
-          slug: pl.slug,
           name: pl.name,
           description: pl.description,
           event_date: pl.event_date,

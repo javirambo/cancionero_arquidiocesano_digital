@@ -27,15 +27,14 @@ type Props = {
   song: SongRowItem;
   // Si la lista es una playlist, se exponen estos extras para CU-17.2.
   playlistContext?: {
-    parishSlug: string;
-    playlistSlug: string;
+    playlistId: string;
     canManage?: boolean; // false: "Quitar de esta playlist" deshabilitado
   };
 };
 
 export function SongRow({ index, song, playlistContext }: Props) {
   const href = playlistContext
-    ? `/canciones/${song.slug}?pl=${playlistContext.playlistSlug}&parroquia=${playlistContext.parishSlug}`
+    ? `/canciones/${song.slug}?pl=${playlistContext.playlistId}`
     : `/canciones/${song.slug}`;
 
   const showCatNumber = index === undefined;

@@ -23,15 +23,15 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-11   | Descargar playlist como cancionero                   | RF15      |       |
 | CU-12   | Descargar QR de la página actual                     | RF13      | [x]   |
 | CU-13   | Login con Google                                     | RF16      | [x]   |
-| CU-14   | Vincular usuario a parroquia                         | RF17      |       |
-| CU-15   | Marcar favoritos                                     | RF18      |       |
+| CU-14   | Vincular usuario a parroquia                         | RF17      | [x]   |
+| CU-15   | Marcar favoritos                                     | RF18      | [x]   |
 | CU-16   | ABM de canción                                       | RF1       |       |
-| CU-17   | ABM de playlist                                      | RF2       |       |
+| CU-17   | ABM de playlist                                      | RF2       | [~]   |
 | CU-18   | ABM de usuario                                       | RF9       |       |
 | CU-19   | ABM de parroquia                                     | RF10      | [x]   |
 | CU-20   | Gestionar permisos                                   | RF21      |       |
 | CU-21   | Gestionar anuncios programados                       | RF19      |       |
-| CU-22   | Gestionar "Mis favoritos"                            | RF18      |       |
+| CU-22   | Gestionar "Mis favoritos"                            | RF18      | [x]   |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | [x]   |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | [x]   |
 | CU-25   | Creación de categorías litúrgicas                    | RF22      |       |
@@ -312,14 +312,15 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 - **RF:** RF17
 - **Actor primario:** Usuario autenticado
 - **Precondiciones:** Sesión activa (CU-13).
-- **Disparador:** El usuario abre su perfil y selecciona "Mi parroquia".
+- **Disparador:** El usuario abre `/parroquias` y opera sobre las cards de cada parroquia.
+- **Modelo:** un usuario puede asociarse a **N parroquias** mediante `parish_members(user_id, parish_id, role='member')`. Adicionalmente puede marcar **una sola** como **principal** (`users.parish_id`).
 - **Flujo principal:**
-  1. El usuario busca y selecciona su parroquia.
-  2. El sistema crea o actualiza la relación `usuario ↔ parroquia`.
-  3. La home pasa a destacar contenido de esa parroquia.
-- **Flujos alternativos:**
-  - 1a. Parroquia inexistente: se ofrece solicitar su alta al administrador.
-- **Postcondiciones:** Relación persistida.
+  1. El listado `/parroquias` separa en dos secciones: **"Mis parroquias"** (las asociadas, con la principal arriba marcada con ⭐) y **"Otras parroquias"** (con botón [+] para asociarse).
+  2. Click en **[+]** de una parroquia → el sistema inserta `parish_members` con `role='member'`. La parroquia pasa a "Mis parroquias".
+  3. Click en **[−]** de una asociada → confirmación + `delete` de `parish_members`. Si era la principal, se limpia automáticamente `users.parish_id`.
+  4. Click en la **estrella** de una asociada → setea `users.parish_id` (queda como principal). Click en la estrella ya activa → limpia (queda sin principal).
+  5. La parroquia virtual **"arquidiocesis"** se oculta del listado público porque no es una parroquia común; sus playlists ya se ven por todas las parroquias gracias a `is_archdiocesan` (ver CU-17).
+- **Postcondiciones:** Filas en `parish_members` y, opcionalmente, `users.parish_id` actualizado.
 
 ---
 
@@ -422,49 +423,58 @@ Edición específica de la información musical.
 ## CU-17: ABM de playlist
 
 - **RF:** RF2
-- **Actor primario:** Coordinador parroquial
-- **Precondiciones:** Sesión vinculada a una parroquia (CU-14).
-- **Disparador:** El usuario accede a "Mis playlists" en su parroquia o entra a una playlist de la cual es coordinador.
-- **Flujo principal:**
-  1. El usuario crea una playlist (nombre, fecha, descripción, visibilidad).
-  2. Al ingresar a la playlist, ve la lista de canciones igual que el listado común (mismas columnas y badges, ver CU-23) pero con dos diferencias:
-     - aparece la **barra de acciones de playlist** (CU-17.1),
-     - el menú contextual "⋯" de cada canción incluye el item **"Quitar de esta playlist"** (CU-17.2).
-  3. El sistema persiste cada cambio inmediatamente, salvo el modo "Editar" en lote (CU-17.1.b).
-- **Flujos alternativos:**
-  - 1a. Sin permisos sobre la parroquia: el sistema rechaza la operación (RLS).
-- **Postcondiciones:** Playlist persistida.
+- **Actores primarios:**
+  - **Coordinador parroquial:** crea/edita/elimina playlists de su parroquia.
+  - **Administrador:** gestiona playlists de cualquier parroquia.
+  - **Coordinador pastoral:** coordinador de la parroquia virtual `arquidiocesis`; sus playlists pueden marcarse `is_archdiocesan` y aparecen en todas las parroquias.
 
-### CU-17.1: Barra de acciones de la playlist
+### Modelo (estilo Spotify)
 
-En la vista de una playlist (cuando el usuario tiene permisos), se muestra una barra superior con cuatro botones:
+- **URL canónica:** `/playlists/{uuid}`. El antiguo `slug` quedó como texto libre y no se usa más en URLs (UNIQUE eliminado por la migración 0006).
+- **Dueño:** `playlists.parish_id` (parroquia creadora) + `playlists.created_by` (usuario).
+- **Visibilidad:** `playlists.visibility ∈ {public, unlisted, private}`.
+- **Compartir entre parroquias:** tabla `playlist_parish_subscriptions(playlist_id, parish_id)`. Otra parroquia puede "suscribirse" a una playlist pública para que aparezca en su listado.
+- **Arquidiocesanas:** flag `playlists.is_archdiocesan`. Si está en `true`, la playlist se ve por defecto en el listado de todas las parroquias (sin necesidad de suscripción explícita). Solo se permite marcar `is_archdiocesan` cuando la parroquia dueña es `arquidiocesis`.
 
-a. **Agregar** — abre un buscador de canciones (mismo motor que CU-01) restringido a `songs.status = 'published'`. Al seleccionar una, se agrega al final de la playlist y se persiste en `playlist_songs` con `position = max(position) + 1`.
+### Listados disponibles
 
-b. **Editar** — abre un diálogo modal con la lista de canciones de la playlist. Cada fila tiene:
-   - un ícono `−` (a la izquierda) que marca la canción para eliminar,
-   - un asa "hamburguesa" (a la derecha) que permite arrastrar para reordenar (subir/bajar).
+- `/playlists` — **"Tus playlists"**: si hay sesión, agrupa las playlists de cada parroquia en la que el usuario es miembro (propias + suscriptas + arquidiocesanas). Sin sesión invita a iniciar sesión. Logueado sin parroquias asociadas, invita a vincularse a una en `/parroquias` (CU-14).
+- `/parroquias/{slug}/playlists` — listado completo de playlists asociadas a una parroquia, agrupado en *De esta parroquia / Compartidas / De la Arquidiócesis*. Si el usuario es admin o coordinator de esa parroquia, ve botón **"+ Nueva playlist"**.
+- `/parroquias/{slug}` — preview de las 4 últimas playlists con link "Ver todas" cuando hay más.
 
-   La barra de título del diálogo es: `[ Cancelar ]   TITULO DE PLAYLIST   [ Guardar ]`. Mientras el diálogo está abierto los cambios no se persisten — solo al pulsar **Guardar** se aplican en `playlist_songs` (delete + reordenar `position`). **Cancelar** descarta todo.
+### Flujo principal — Crear
 
-c. **Ordenar** — abre un menú con opciones de orden de visualización (no modifica `position` en la base, salvo "Orden personalizado"):
-   - **Orden personalizado** (default; usa `playlist_songs.position`),
-   - **Número** (`songs.number`),
-   - **Título** (`songs.title`),
-   - **Categoría** (`categories.name`),
-   - **Autor** (`authors.name`),
-   - **Agregado recientemente** (`playlist_songs.created_at` desc).
+1. Coordinador (o admin) entra a `/parroquias/{slug}/playlists/nueva`.
+2. Completa nombre (obligatorio), descripción, fecha del evento, visibilidad, y opcionalmente `is_archdiocesan` (solo visible si la parroquia es `arquidiocesis`).
+3. Al guardar, el sistema redirige a `/playlists/{nuevo-id}/editar`.
+4. En la pantalla de edición, abajo aparece el editor de canciones (CU-17.1.a).
 
-   La elección se guarda por usuario+playlist en `localStorage` (anónimo) o `user_song_keys`-equivalente (autenticado, fuera del MVP).
+### Flujo principal — Editar metadatos / eliminar
 
-d. **Nombre** — abre un diálogo simple para editar `playlists.name`. Al guardar persiste y `slug` se mantiene (no se regenera automáticamente para no romper URLs).
+- En `/playlists/{id}` aparece botón **"Editar playlist"** si el usuario es admin o coordinator de la parroquia dueña.
+- En `/playlists/{id}/editar`:
+  - Sección **"Datos"**: nombre, descripción, fecha, visibilidad, `is_archdiocesan`. Botón **Guardar** persiste y vuelve a `/playlists/{id}`.
+  - Botón **"Eliminar playlist"**: pide confirmación con `window.confirm`. Borrado físico (`playlist_songs` se borra por `ON DELETE CASCADE`). Tras eliminar, redirige al listado de la parroquia.
+
+### Flujos alternativos
+
+- 1a. Sin permisos sobre la parroquia: el sistema rechaza la operación (RLS) y/o la pantalla redirige.
+- Eliminación de playlist con suscripciones: las filas en `playlist_parish_subscriptions` se borran por CASCADE.
+
+### CU-17.1: Edición de canciones dentro de la playlist
+
+En `/playlists/{id}/editar`, sección **"Canciones"** (Tanda 1 implementada):
+
+a. **Buscador "Agregar canción"** — input que consulta `/api/songs/buscar` (mismo motor que CU-01, accent-insensitive vía RPC `search_songs`). Al elegir un resultado, se inserta en `playlist_songs` con `position = max(position)+1`.
+
+b. **Listado actual** — cada fila muestra `[posición] [número] [título] [Quitar]`. Click en **Quitar** pide confirmación y elimina la fila.
+
+c. *(Pendiente — Tanda 2)* **Edición en lote** con drag para reordenar y marcado para eliminación múltiple.
 
 ### CU-17.2: Quitar canción de una playlist
 
-- **Disparador:** desde el menú contextual "⋯" de una fila de canción dentro de una playlist (CU-23), item **"Quitar de esta playlist"**.
-- **Flujo:**
-  1. El sistema pide confirmación.
-  2. Si el usuario confirma, elimina la fila de `playlist_songs (playlist_id, song_id, position)` y compacta `position` de las restantes.
+- **Disparador:** botón **Quitar** en cada fila del editor de canciones (`/playlists/{id}/editar`).
+- **Flujo:** confirmación + `delete from playlist_songs where playlist_id=… and song_id=… and position=…`.
 - **Postcondiciones:** la canción ya no figura en la playlist; sigue existiendo en `songs`.
 
 ---

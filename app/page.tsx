@@ -120,19 +120,19 @@ export default async function Home() {
             </p>
           )}
           <div className="mt-6 flex flex-wrap gap-3">
-            {event?.playlist && event.playlist.parish_slug ? (
+            {event?.playlist ? (
               <Link
-                href={`/playlists/${event.playlist.parish_slug}/${event.playlist.slug}`}
+                href={`/playlists/${event.playlist.id}`}
                 className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
               >
                 Ver playlist sugerida
               </Link>
             ) : (
               <Link
-                href="/playlists"
+                href="/parroquias"
                 className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
               >
-                Ver playlists
+                Ver parroquias
               </Link>
             )}
             <Link

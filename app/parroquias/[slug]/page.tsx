@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getParishBySlug, listPlaylists } from "@/lib/songs";
+import { getParishBySlug } from "@/lib/songs";
+import { listPlaylistsForParish } from "@/lib/playlists";
 import { QrButton } from "@/app/components/qr-button";
 
 export default async function ParroquiaPage({
@@ -12,7 +13,8 @@ export default async function ParroquiaPage({
   const parish = await getParishBySlug(slug);
   if (!parish) notFound();
 
-  const playlists = await listPlaylists(slug);
+  const playlists = await listPlaylistsForParish(parish.id, { parishSlug: parish.slug });
+  const previewPlaylists = playlists.slice(0, 4);
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
@@ -43,22 +45,42 @@ export default async function ParroquiaPage({
       </header>
 
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">
-        <h2 id="playlists-heading" className="text-xl">
-          Playlists
-        </h2>
-        {playlists.length === 0 ? (
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="playlists-heading" className="text-xl">
+            Playlists
+          </h2>
+          {playlists.length > previewPlaylists.length && (
+            <Link
+              href={`/parroquias/${parish.slug}/playlists`}
+              className="text-sm normal-case text-primary hover:underline"
+            >
+              Ver todas ({playlists.length})
+            </Link>
+          )}
+        </div>
+        {previewPlaylists.length === 0 ? (
           <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
             Esta parroquia todavía no publicó playlists.
           </p>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2">
-            {playlists.map((p) => (
+            {previewPlaylists.map((p) => (
               <li key={p.id}>
                 <Link
-                  href={`/playlists/${parish.slug}/${p.slug}`}
+                  href={`/playlists/${p.id}`}
                   className="flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary"
                 >
                   <span className="text-lg text-primary">{p.name}</span>
+                  {p.relation === "archdiocesan" && (
+                    <span className="text-xs uppercase tracking-wide text-secondary">
+                      De la Arquidiócesis
+                    </span>
+                  )}
+                  {p.relation === "subscribed" && p.parish && (
+                    <span className="text-xs uppercase tracking-wide text-secondary">
+                      Compartida por {p.parish.name}
+                    </span>
+                  )}
                   {p.event_date && (
                     <span className="text-xs normal-case text-muted-foreground">
                       {new Date(p.event_date).toLocaleDateString("es-AR", {

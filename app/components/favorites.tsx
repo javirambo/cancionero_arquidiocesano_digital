@@ -69,7 +69,7 @@ async function loadFromDb(userId: string): Promise<FavoriteEntry[]> {
     playlistIds.length
       ? supabase
           .from("playlists")
-          .select("id, name, slug, parishes(slug, name)")
+          .select("id, name, parishes!playlists_parish_id_fkey(slug, name)")
           .in("id", playlistIds)
       : Promise.resolve({ data: [] as PlaylistRow[] }),
     parishIds.length
@@ -103,7 +103,6 @@ type SongRow = {
 type PlaylistRow = {
   id: string;
   name: string;
-  slug: string;
   parishes: { slug: string; name: string } | { slug: string; name: string }[] | null;
 };
 
@@ -138,9 +137,7 @@ function buildEntry(
       kind: "playlist",
       id: p.id,
       title: p.name,
-      href: parishRel
-        ? `/parroquias/${parishRel.slug}/playlists/${p.slug}`
-        : `/playlists/${p.slug}`,
+      href: `/playlists/${p.id}`,
       subtitle: parishRel?.name,
       added_at,
     };
