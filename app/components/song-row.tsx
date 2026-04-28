@@ -55,44 +55,55 @@ export function SongRow({ index, song, playlistContext }: Props) {
     <li className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar">
       <Link
         href={href}
-        className="flex flex-1 items-baseline gap-4 min-w-0"
+        title={`Ver canción ${song.title}`}
+        className="flex min-w-0 flex-1 items-center gap-4"
         prefetch={false}
       >
-        <span className="w-10 shrink-0 text-sm normal-case text-muted-foreground">
-          {numberDisplay}
-        </span>
-        <span className="flex-1 truncate text-lg text-primary">
-          {song.title}
-        </span>
-        {song.author && (
-          <span className="hidden truncate text-xs normal-case text-muted-foreground sm:block">
-            {song.author}
+        <span className="relative flex h-6 w-10 shrink-0 items-center justify-start text-sm normal-case text-muted-foreground">
+          <span aria-hidden="true" className="sm:group-hover:invisible">
+            {numberDisplay}
           </span>
-        )}
-      </Link>
-
-      <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
-        {song.hasChords && (
-          <span title="Tiene acordes">
-            <ChordsIcon />
-          </span>
-        )}
-        {song.hasYoutube && (
-          <span title="Tiene video de YouTube">
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 hidden items-center justify-start text-primary sm:group-hover:flex"
+          >
             <PlayIcon />
           </span>
-        )}
-        {song.hasFiles && (
-          <span title="Tiene partitura o archivos">
-            <FilesIcon />
+        </span>
+
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-lg text-primary">{song.title}</span>
+          <span className="flex items-center gap-2 text-muted-foreground">
+            {song.author && (
+              <span className="truncate text-xs normal-case">
+                {song.author}
+              </span>
+            )}
+            <span className="flex shrink-0 items-center gap-2">
+              {song.hasChords && (
+                <span title="Tiene acordes">
+                  <ChordsIcon />
+                </span>
+              )}
+              {song.hasYoutube && (
+                <span title="Tiene video de YouTube">
+                  <PlayIcon />
+                </span>
+              )}
+              {song.hasFiles && (
+                <span title="Tiene partitura o archivos">
+                  <FilesIcon />
+                </span>
+              )}
+              {fav && (
+                <span title="En tus favoritos" className="text-primary">
+                  <HeartIcon filled />
+                </span>
+              )}
+            </span>
           </span>
-        )}
-        {fav && (
-          <span title="En tus favoritos" className="text-primary">
-            <HeartIcon filled />
-          </span>
-        )}
-      </div>
+        </span>
+      </Link>
 
       <RowMenu
         href={href}
@@ -176,10 +187,10 @@ function RowMenu({
     <div ref={ref} className="relative">
       <button
         type="button"
-        title="Más acciones"
+        title={`Más opciones para ${title}`}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Más acciones"
+        aria-label={`Más opciones para ${title}`}
         onClick={(e) => {
           e.preventDefault();
           setOpen((v) => !v);

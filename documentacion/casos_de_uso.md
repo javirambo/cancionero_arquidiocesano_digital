@@ -22,18 +22,19 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-10   | Descargar canción para imprimir                      | RF14      |       |
 | CU-11   | Descargar playlist como cancionero                   | RF15      |       |
 | CU-12   | Descargar QR de la página actual                     | RF13      | [x]   |
-| CU-13   | Login con Google                                     | RF16      |       |
+| CU-13   | Login con Google                                     | RF16      | [x]   |
 | CU-14   | Vincular usuario a parroquia                         | RF17      |       |
 | CU-15   | Marcar favoritos                                     | RF18      |       |
 | CU-16   | ABM de canción                                       | RF1       |       |
 | CU-17   | ABM de playlist                                      | RF2       |       |
 | CU-18   | ABM de usuario                                       | RF9       |       |
-| CU-19   | ABM de parroquia                                     | RF10      |       |
+| CU-19   | ABM de parroquia                                     | RF10      | [x]   |
 | CU-20   | Gestionar permisos                                   | RF21      |       |
 | CU-21   | Gestionar anuncios programados                       | RF19      |       |
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      |       |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | [x]   |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | [x]   |
+| CU-25   | Creación de categorías litúrgicas                    | RF22      |       |
 
 ---
 
@@ -507,20 +508,20 @@ d. **Nombre** — abre un diálogo simple para editar `playlists.name`. Al guard
 - **Disparador:** Acceso a `/admin/parroquias`.
 - **Flujo principal:**
   1. El admin crea/edita/baja parroquias (nombre, dirección, slug, contacto).
-  2. Al crear una nueva, el sistema ofrece **autocompletar desde Google Maps** (CU-19.1).
+  2. Al crear una nueva, el sistema ofrece **autocompletar desde OpenStreetMap** (CU-19.1).
   3. El sistema valida unicidad del slug (`parishes.slug`).
   4. Persiste los cambios.
 - **Flujos alternativos:**
   - 3a. Slug duplicado: el sistema sugiere uno alternativo basado en `slugify(name)` con sufijo numérico.
 - **Postcondiciones:** Parroquia persistida.
 
-### CU-19.1: Autocompletar parroquia desde Google Maps
+### CU-19.1: Autocompletar parroquia desde OpenStreetMap (Nominatim)
 
-Al crear una parroquia nueva, el formulario ofrece dos modos de localización:
+Al crear una parroquia nueva, el formulario ofrece dos modos de localización usando el servicio gratuito **Nominatim** de OpenStreetMap (sin API key, ver `lib/nominatim.ts`). Las llamadas se proxy-ean por el endpoint server `/api/parroquias/buscar` para respetar el `User-Agent` exigido por la política de uso de Nominatim y evitar CORS.
 
-a. **Por GPS del navegador:** el sistema solicita `navigator.geolocation.getCurrentPosition`. Con las coordenadas, consulta Google Maps Places API filtrando por `type=church` en un radio configurable (default 2 km) y muestra una lista de candidatos con nombre y dirección. Al elegir uno se prellenan `name`, `address`, `city`.
+a. **Por GPS del navegador:** el sistema solicita `navigator.geolocation.getCurrentPosition`. Con las coordenadas, consulta Nominatim acotado a un viewbox de ~2 km alrededor del punto y muestra una lista de candidatos con nombre y dirección. Al elegir uno se prellenan `name`, `address`, `city`.
 
-b. **Por búsqueda de texto:** el admin escribe un nombre/dirección y se invoca Places Autocomplete. Al elegir un resultado se prellenan los mismos campos.
+b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 caracteres) y se invoca `nominatim.openstreetmap.org/search`. Al elegir un resultado se prellenan los mismos campos.
 
 - **Flujos alternativos:**
   - a.1. El navegador deniega geolocalización: se muestra mensaje y se ofrece el modo (b).
@@ -628,6 +629,27 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección y se invoca
 - **Flujos alternativos:**
   - **Buscar sin término:** el overlay muestra accesos rápidos (parroquias destacadas, últimas playlists, etc.).
 - **Postcondiciones:** Ninguna persistente; las acciones derivadas siguen sus propios CU.
+
+---
+
+## CU-25: Creación de categorías litúrgicas
+
+- **RF:** RF22
+- **Actores primarios:** Coordinador parroquial / Editor de contenido / Administrador.
+- **Precondiciones:** Sesión activa con uno de esos roles, y estar editando una canción (CU-16, CU-16.1).
+- **Disparador:** desde el selector de categoría en el formulario de edición de canción, opción **"+ Nueva categoría"** cuando la categoría buscada no existe.
+- **Flujo principal:**
+  1. En el formulario de canción (CU-16, CU-16.1), el campo `category_id` ofrece un selector con las categorías ordenadas por `sort_order, name`.
+  2. Si la categoría buscada no existe, el usuario hace clic en **"+ Nueva categoría"**.
+  3. Se abre un mini-diálogo con los campos `name` (obligatorio), `description` (opcional). `slug` se genera automáticamente con `slugify(name)`; `sort_order` se asigna al final.
+  4. Al guardar, la categoría queda persistida en `categories` y se selecciona automáticamente en la canción que se está editando.
+  5. El usuario sigue editando la canción sin haber salido del formulario.
+- **Flujos alternativos:**
+  - 3a (slug duplicado): el sistema sugiere uno alternativo con sufijo numérico (`comunion-2`).
+  - 3b (nombre duplicado): el sistema avisa "Ya existe una categoría con ese nombre" y propone seleccionarla en lugar de crear duplicado.
+- **Postcondiciones:** Categoría persistida en `categories` y asociada a la canción en edición.
+
+> **Nota:** la **edición y baja** de categorías existentes no está cubierta en este CU y se decidirá más adelante. La FK `songs.category_id` es `ON DELETE SET NULL`, por lo que la baja eventual de una categoría dejaría las canciones asociadas sin categoría.
 
 ---
 

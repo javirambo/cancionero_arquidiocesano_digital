@@ -5,6 +5,7 @@ import { SiteHeader } from "./components/site-header";
 import { ThemeProvider, themeInitScript } from "./components/theme";
 import { FavoritesProvider } from "./components/favorites";
 import { PreferencesProvider } from "./components/preferences";
+import { UserRolesProvider } from "./components/user-roles";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -36,12 +37,14 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
         <ThemeProvider>
-          <PreferencesProvider>
-            <FavoritesProvider>
-              <SiteHeader />
-              {children}
-            </FavoritesProvider>
-          </PreferencesProvider>
+          <UserRolesProvider>
+            <PreferencesProvider>
+              <FavoritesProvider>
+                <SiteHeader />
+                {children}
+              </FavoritesProvider>
+            </PreferencesProvider>
+          </UserRolesProvider>
         </ThemeProvider>
       </body>
     </html>

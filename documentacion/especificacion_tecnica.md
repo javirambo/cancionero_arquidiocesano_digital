@@ -84,7 +84,7 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 * RF19: Gestionar anuncios con fecha, aparecen al inicio, se pueden cerrar.
 * RF20: Permitir silenciar el dispositivo y que no se apague la pantalla.
 * RF21: Gestion de permisos
-* RF22: 
+* RF22: Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.) — creación on-demand al editar una canción y asignación a canciones
 
 
 ### **5.2 Requerimientos no funcionales**

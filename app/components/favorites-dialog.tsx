@@ -19,7 +19,7 @@ const GROUP_LABELS: Record<FavoriteKind, string> = {
 const GROUP_ORDER: FavoriteKind[] = ["song", "playlist", "parish"];
 
 export function FavoritesDialog({ open, onClose }: Props) {
-  const { favorites, remove } = useFavorites();
+  const { favorites, remove, isAuthenticated, loading } = useFavorites();
 
   // Cerrar con ESC.
   useEffect(() => {
@@ -72,7 +72,16 @@ export function FavoritesDialog({ open, onClose }: Props) {
         </header>
 
         <div className="max-h-[60vh] overflow-y-auto">
-          {favorites.length === 0 ? (
+          {!isAuthenticated ? (
+            <p className="px-6 py-10 text-center text-sm normal-case text-muted-foreground">
+              Iniciá sesión para guardar tus favoritos en la nube y verlos desde
+              cualquier dispositivo.
+            </p>
+          ) : loading ? (
+            <p className="px-6 py-10 text-center text-sm normal-case text-muted-foreground">
+              Cargando…
+            </p>
+          ) : favorites.length === 0 ? (
             <p className="px-6 py-10 text-center text-sm normal-case text-muted-foreground">
               Todavía no marcaste favoritos. Tocá el ❤ de una canción, playlist o
               parroquia para guardarla acá.
@@ -92,14 +101,16 @@ export function FavoritesDialog({ open, onClose }: Props) {
                       <Link
                         href={f.href}
                         onClick={onClose}
-                        className="flex flex-1 flex-col gap-0.5"
+                        className="flex flex-1 items-baseline gap-3"
                       >
-                        <span className="text-base text-primary">{f.title}</span>
-                        {f.subtitle && (
-                          <span className="text-xs normal-case text-muted-foreground">
-                            {f.subtitle}
+                        {f.kind === "song" && f.number != null && (
+                          <span className="w-10 shrink-0 text-sm normal-case text-muted-foreground">
+                            {String(f.number).padStart(3, "0")}
                           </span>
                         )}
+                        <span className="flex-1 truncate text-base text-primary">
+                          {f.title}
+                        </span>
                       </Link>
                       <button
                         type="button"

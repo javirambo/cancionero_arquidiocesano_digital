@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "./theme";
 import { SearchDialog } from "./search-dialog";
 import { FavoritesDialog } from "./favorites-dialog";
 import { useFavorites } from "./favorites";
 import { usePreferences } from "./preferences";
+import { useUserRoles } from "./user-roles";
 import { ChordsIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 type MenuItemProps = {
@@ -48,19 +51,29 @@ function MenuToggleItem({
   label,
   checked,
   onChange,
+  disabled,
+  tooltip,
 }: {
   icon: ReactNode;
   label: string;
   checked: boolean;
   onChange: () => void;
+  disabled?: boolean;
+  tooltip?: string;
 }) {
   return (
     <button
       type="button"
       role="menuitemcheckbox"
       aria-checked={checked}
+      disabled={disabled}
+      title={tooltip}
       onClick={onChange}
-      className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+      className={`flex w-full items-center gap-3 px-4 py-2 text-left normal-case transition-colors ${
+        disabled
+          ? "text-muted-foreground cursor-not-allowed"
+          : "text-foreground hover:bg-sidebar"
+      }`}
     >
       <span aria-hidden="true" className="text-muted-foreground">
         {icon}
@@ -70,7 +83,7 @@ function MenuToggleItem({
         aria-hidden="true"
         className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
           checked ? "bg-primary" : "bg-border"
-        }`}
+        } ${disabled ? "opacity-50" : ""}`}
       >
         <span
           className={`inline-block h-4 w-4 rounded-full bg-background shadow transition-transform ${
@@ -139,14 +152,55 @@ const CerrarSesionIcon = () => (
   </svg>
 );
 
+const IngresarIcon = () => (
+  <svg {...iconProps}>
+    <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+    <path d="M14 8l4 4-4 4" />
+    <path d="M18 12H8" />
+  </svg>
+);
+
+const AdminIcon = () => (
+  <svg {...iconProps}>
+    <path d="M12 3l8 4v5c0 4.5-3.5 8-8 9-4.5-1-8-4.5-8-9V7l8-4z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggle } = useTheme();
   const { favorites } = useFavorites();
-  const { suggestChords, setPreference } = usePreferences();
+  const { suggestChords, setPreference, isAuthenticated: prefsAuth } = usePreferences();
+  const { isAdmin, isEditor } = useUserRoles();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  };
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setMenuOpen(false);
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -224,10 +278,28 @@ export function SiteHeader() {
                 className="absolute right-0 top-12 z-40 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
               >
                 <div className="border-b border-border px-4 py-3 normal-case">
-                  <p className="text-sm text-foreground">Invitado</p>
-                  <p className="text-xs text-muted-foreground">
-                    Iniciá sesión para acceder a tu perfil
-                  </p>
+                  {user ? (
+                    <>
+                      <p className="text-sm text-foreground">
+                        {user.user_metadata?.full_name ??
+                          user.user_metadata?.name ??
+                          user.email ??
+                          "Usuario"}
+                      </p>
+                      {user.email && (
+                        <p className="text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-foreground">Invitado</p>
+                      <p className="text-xs text-muted-foreground">
+                        Iniciá sesión para acceder a tu perfil
+                      </p>
+                    </>
+                  )}
                 </div>
                 <ul className="py-1 text-sm">
                   <li>
@@ -253,6 +325,12 @@ export function SiteHeader() {
                       icon={<ChordsIcon />}
                       label="Sugerir acordes"
                       checked={suggestChords}
+                      disabled={!prefsAuth}
+                      tooltip={
+                        prefsAuth
+                          ? undefined
+                          : "Iniciá sesión para guardar tus preferencias"
+                      }
                       onChange={() =>
                         setPreference("suggestChords", !suggestChords)
                       }
@@ -274,14 +352,35 @@ export function SiteHeader() {
                       onSelect={closeMenu}
                     />
                   </li>
+                  {(isAdmin || isEditor) && (
+                    <li>
+                      <MenuItem
+                        href="/admin"
+                        icon={<AdminIcon />}
+                        label="Administración"
+                        onSelect={closeMenu}
+                      />
+                    </li>
+                  )}
                 </ul>
                 <div className="border-t border-border py-1 text-sm">
-                  <MenuItem
-                    icon={<CerrarSesionIcon />}
-                    label="Cerrar Sesión"
-                    onSelect={closeMenu}
-                    destructive
-                  />
+                  {user ? (
+                    <MenuItem
+                      icon={<CerrarSesionIcon />}
+                      label="Cerrar Sesión"
+                      onSelect={handleSignOut}
+                      destructive
+                    />
+                  ) : (
+                    <MenuItem
+                      icon={<IngresarIcon />}
+                      label="Ingresar con Google"
+                      onSelect={() => {
+                        closeMenu();
+                        handleSignIn();
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             )}

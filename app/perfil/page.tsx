@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { GoogleSignInButton } from "./google-sign-in-button";
+import { SignOutButton } from "./sign-out-button";
 
 export const metadata = {
   title: "Perfil · Cancionero Arquidiocesano",
@@ -28,16 +30,10 @@ export default async function PerfilPage() {
         <section className="rounded-2xl border border-border bg-sidebar p-6">
           <h2 className="text-xl">Iniciar sesión</h2>
           <p className="mt-2 text-sm normal-case text-muted-foreground">
-            La autenticación con Google estará disponible próximamente.
+            Iniciá sesión con tu cuenta de Google para guardar favoritos,
+            vincular tu parroquia y acceder a tus listas.
           </p>
-          <button
-            type="button"
-            disabled
-            title="Disponible próximamente"
-            className="mt-4 rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary opacity-60"
-          >
-            Ingresar con Google
-          </button>
+          <GoogleSignInButton />
         </section>
 
         <section aria-labelledby="atajos-heading" className="flex flex-col gap-3">
@@ -74,45 +70,60 @@ export default async function PerfilPage() {
   }
 
   // Sesión activa: traer perfil + parroquia.
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("display_name, email, avatar_url, parishes(name, slug)")
+    .select("display_name, email, avatar_url, parish_id")
     .eq("id", user.id)
     .maybeSingle();
 
-  const parishRel = profile?.parishes as
-    | { name: string; slug: string }
-    | { name: string; slug: string }[]
-    | null
-    | undefined;
-  const parish = Array.isArray(parishRel) ? parishRel[0] : parishRel;
+  if (profileError) {
+    console.error("[perfil] error leyendo users:", profileError);
+  }
+
+  let parish: { name: string; slug: string } | null = null;
+  if (profile?.parish_id) {
+    const { data: parishRow } = await supabase
+      .from("parishes")
+      .select("name, slug")
+      .eq("id", profile.parish_id)
+      .maybeSingle();
+    parish = parishRow ?? null;
+  }
+
   const displayName = profile?.display_name ?? user.email ?? "Usuario";
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
-      <header className="flex items-center gap-4">
-        {profile?.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={profile.avatar_url as string}
-            alt=""
-            className="h-16 w-16 rounded-full border border-border object-cover"
-          />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-muted-foreground">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div className="flex flex-col gap-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Perfil
-          </p>
-          <h1 className="text-2xl">{displayName}</h1>
-          {profile?.email && (
-            <p className="text-sm normal-case text-muted-foreground">
-              {profile.email as string}
-            </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          {profile?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.avatar_url as string}
+              alt=""
+              className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-muted-foreground">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
           )}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+              Perfil
+            </p>
+            <h1 className={`truncate text-2xl ${displayName.includes("@") ? "lowercase" : ""}`}>
+              {displayName}
+            </h1>
+            {profile?.email && (
+              <p className="truncate text-sm lowercase text-muted-foreground">
+                {profile.email as string}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="self-end sm:self-auto">
+          <SignOutButton />
         </div>
       </header>
 

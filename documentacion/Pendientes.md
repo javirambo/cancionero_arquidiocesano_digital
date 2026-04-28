@@ -9,3 +9,10 @@
 [ ] verificar que mis favoritos no esten el local storage (dene estar en la base)
 
 [ ] verificar que las preferencias del usuario no sean en local storage, sino en base de datos. (como sugerir acordes)
+
+[ ] necesitamos un : Provide users a link to your public terms of service
+    y un Provide users a link to your public privacy policy. (google login)
+
+[ ] colocar una sugerencia popup por primera vez en el dispositivo que diga
+    "Esta app funciona mejor si usa el mail como login registrarse como usuario
+    Si esta logueado puede acceder a sus favoritos y guardar playlists, etc, etc"

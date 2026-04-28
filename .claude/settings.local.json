@@ -10,7 +10,10 @@
       "Bash(curl -sS -o /tmp/home.html -w \"HTTP %{http_code} in %{time_total}s\\\\nLength: %{size_download}\\\\n\" http://localhost:3000/)",
       "Bash(npm ls *)",
       "Bash(npm view *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(curl -s -m 10 -o /dev/null -w \"kumi: %{http_code} time=%{time_total}\\\\n\" -X POST \"https://overpass.kumi.systems/api/interpreter\" --data-urlencode 'data=[out:json][timeout:10];node[\"amenity\"=\"place_of_worship\"]\\(around:2000,-32.9590506,-60.6452139\\);out tags 5;')",
+      "Bash(curl -s -m 10 -o /dev/null -w \"main: %{http_code} time=%{time_total}\\\\n\" -X POST \"https://overpass-api.de/api/interpreter\" --data-urlencode 'data=[out:json][timeout:10];node[\"amenity\"=\"place_of_worship\"]\\(around:2000,-32.9590506,-60.6452139\\);out tags 5;')",
+      "Bash(curl -s -m 10 -o /dev/null -w \"coffee: %{http_code} time=%{time_total}\\\\n\" -X POST \"https://overpass.private.coffee/api/interpreter\" --data-urlencode 'data=[out:json][timeout:10];node[\"amenity\"=\"place_of_worship\"]\\(around:2000,-32.9590506,-60.6452139\\);out tags 5;')"
     ]
   }
 }
