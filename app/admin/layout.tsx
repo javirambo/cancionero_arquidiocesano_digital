@@ -42,6 +42,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <Link href="/admin/parroquias" className="text-primary hover:underline">
           Parroquias
         </Link>
+        <Link href="/admin/anuncios" className="text-primary hover:underline">
+          Anuncios
+        </Link>
       </nav>
       {children}
     </div>

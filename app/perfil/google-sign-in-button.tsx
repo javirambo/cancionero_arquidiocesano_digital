@@ -15,6 +15,8 @@ export function GoogleSignInButton() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        // Forzar selector de cuentas (no auto-loguear con la sesión activa).
+        queryParams: { prompt: "select_account" },
       },
     });
     if (error) {

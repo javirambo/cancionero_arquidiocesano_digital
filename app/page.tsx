@@ -150,19 +150,53 @@ export default async function Home() {
               Novedades
             </h2>
             <ul className="grid gap-3">
-              {featured.map((f, i) => (
-                <li
-                  key={i}
-                  className="rounded-xl border border-border bg-background p-5"
-                >
-                  <p className="text-base text-primary">{f.title}</p>
-                  {f.body && (
-                    <p className="mt-1 text-sm normal-case leading-6 text-muted-foreground">
-                      {f.body}
-                    </p>
-                  )}
-                </li>
-              ))}
+              {featured.map((f, i) => {
+                const isExternal = f.target_kind === "external" && f.href;
+                const cardClass =
+                  "block rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary";
+                const content = (
+                  <>
+                    <p className="text-base text-primary">{f.title}</p>
+                    {f.body && (
+                      <p className="mt-1 text-sm normal-case leading-6 text-muted-foreground">
+                        {f.body}
+                      </p>
+                    )}
+                  </>
+                );
+
+                if (f.href && isExternal) {
+                  return (
+                    <li key={i}>
+                      <a
+                        href={f.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cardClass}
+                      >
+                        {content}
+                      </a>
+                    </li>
+                  );
+                }
+                if (f.href) {
+                  return (
+                    <li key={i}>
+                      <Link href={f.href} className={cardClass}>
+                        {content}
+                      </Link>
+                    </li>
+                  );
+                }
+                return (
+                  <li
+                    key={i}
+                    className="rounded-xl border border-border bg-background p-5"
+                  >
+                    {content}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
