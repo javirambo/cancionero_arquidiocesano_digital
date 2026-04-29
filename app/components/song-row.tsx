@@ -44,7 +44,7 @@ export function SongRow({ index, song, playlistContext }: Props) {
       : "—"
     : `${index}.`;
 
-  const { isFavorite, toggle: toggleFavorite } = useFavorites();
+  const { isFavorite, toggle: toggleFavorite, isAuthenticated } = useFavorites();
   const fav = isFavorite("song", song.id);
   const subtitle =
     song.author ??
@@ -108,6 +108,7 @@ export function SongRow({ index, song, playlistContext }: Props) {
         href={href}
         title={song.title}
         favorited={fav}
+        isAuthenticated={isAuthenticated}
         onToggleFavorite={() =>
           toggleFavorite("song", song.id, {
             title: song.title,
@@ -126,6 +127,7 @@ function RowMenu({
   href,
   title,
   favorited,
+  isAuthenticated,
   onToggleFavorite,
   canRemoveFromPlaylist,
   canManagePlaylist,
@@ -133,6 +135,7 @@ function RowMenu({
   href: string;
   title: string;
   favorited: boolean;
+  isAuthenticated: boolean;
   onToggleFavorite: () => void;
   canRemoveFromPlaylist: boolean;
   canManagePlaylist: boolean;
@@ -205,33 +208,45 @@ function RowMenu({
           className="absolute right-0 top-10 z-30 w-60 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
         >
           <ul className="py-1 text-sm">
-            <MenuButton
-              label="Agregar a playlist"
-              disabled
-              tooltip="Iniciá sesión para usar esta acción"
-              onClick={close}
-            />
-            <MenuLink label="Ver canción" href={href} onClick={close} />
-            <MenuButton label="Compartir" onClick={share} />
-            <MenuButton
-              label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
-              onClick={() => {
-                onToggleFavorite();
-                close();
-              }}
-            />
-            {canRemoveFromPlaylist && (
-              <MenuButton
-                label="Quitar de esta playlist"
-                disabled={!canManagePlaylist}
-                tooltip={
-                  canManagePlaylist
-                    ? undefined
-                    : "Necesitás permisos sobre esta playlist"
-                }
-                onClick={close}
-                destructive
-              />
+            {isAuthenticated ? (
+              <>
+                <MenuButton
+                  label="Agregar a playlist"
+                  disabled
+                  onClick={close}
+                />
+                <MenuLink label="Ver canción" href={href} onClick={close} />
+                <MenuButton label="Compartir" onClick={share} />
+                <MenuButton
+                  label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
+                  onClick={() => {
+                    onToggleFavorite();
+                    close();
+                  }}
+                />
+                {canRemoveFromPlaylist && (
+                  <MenuButton
+                    label="Quitar de esta playlist"
+                    disabled={!canManagePlaylist}
+                    tooltip={
+                      canManagePlaylist
+                        ? undefined
+                        : "Necesitás permisos sobre esta playlist"
+                    }
+                    onClick={close}
+                    destructive
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <MenuLink label="Ver canción" href={href} onClick={close} />
+                <MenuLink
+                  label="Iniciá sesión para más opciones…"
+                  href="/perfil"
+                  onClick={close}
+                />
+              </>
             )}
           </ul>
         </div>

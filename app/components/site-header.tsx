@@ -191,7 +191,13 @@ export function SiteHeader() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        // Fuerza a Google a mostrar el selector de cuentas en lugar de
+        // usar la sesión activa. Acepta valores compuestos separados
+        // por espacio (p. ej. "consent select_account").
+        queryParams: { prompt: "select_account" },
+      },
     });
   };
 
@@ -263,11 +269,9 @@ export function SiteHeader() {
           />
 
           <div ref={menuRef} className="relative">
-            <CircleButton
-              label="Mi cuenta"
+            <AccountButton
+              user={user}
               onClick={() => setMenuOpen((v) => !v)}
-              icon={<UserIcon />}
-              ariaHaspopup="menu"
               ariaExpanded={menuOpen}
             />
 
@@ -418,6 +422,55 @@ function CircleButton({
       className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary"
     >
       {icon}
+    </button>
+  );
+}
+
+function AccountButton({
+  user,
+  onClick,
+  ariaExpanded,
+}: {
+  user: User | null;
+  onClick: () => void;
+  ariaExpanded: boolean;
+}) {
+  const meta = user?.user_metadata as
+    | { avatar_url?: string; picture?: string }
+    | undefined;
+  const avatarUrl = meta?.avatar_url ?? meta?.picture ?? null;
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (!avatarUrl || imgFailed) {
+    return (
+      <CircleButton
+        label="Mi cuenta"
+        onClick={onClick}
+        icon={<UserIcon />}
+        ariaHaspopup="menu"
+        ariaExpanded={ariaExpanded}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      title="Mi cuenta"
+      aria-label="Mi cuenta"
+      aria-haspopup="menu"
+      aria-expanded={ariaExpanded}
+      onClick={onClick}
+      className="h-10 w-10 overflow-hidden rounded-full border border-border bg-background transition-colors hover:border-primary"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={avatarUrl}
+        alt=""
+        referrerPolicy="no-referrer"
+        onError={() => setImgFailed(true)}
+        className="h-full w-full object-cover"
+      />
     </button>
   );
 }

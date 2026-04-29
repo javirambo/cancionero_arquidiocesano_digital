@@ -30,7 +30,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-18   | ABM de usuario                                       | RF9       |       |
 | CU-19   | ABM de parroquia                                     | RF10      | [x]   |
 | CU-20   | Gestionar permisos                                   | RF21      |       |
-| CU-21   | Gestionar anuncios programados                       | RF19      |       |
+| CU-21   | Gestionar anuncios                                   | RF19      | [x]   |
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      | [x]   |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | [x]   |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | [x]   |
@@ -38,13 +38,29 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 
 ---
 
-## Actores
+## Actores del sistema
 
-- **Visitante:** usuario anónimo (asamblea, fiel cualquiera).
-- **Músico/Corista:** usuario que utiliza la app para ejecutar repertorio.
-- **Coordinador parroquial:** usuario autenticado, gestiona playlists y datos de su parroquia.
-- **Editor de contenido:** usuario autenticado con permisos para ABM de canciones (Comisión Litúrgico-Musical).
-- **Administrador:** usuario con permisos plenos (parroquias, usuarios, permisos, anuncios).
+Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en user_roles) y vínculo contextual con parroquia (tabla parish_members.role).
+
+1. 👥 Visitante (anónimo, sin sesión)
+  Asamblea, fiel cualquiera. No tiene cuenta.
+  Puede: buscar (CU-01), ver canciones/letra/acordes (CU-02), reproducir YouTube (CU-04), ver playlists públicas (CU-05), parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), login con Google (CU-13).
+  No puede: persistir favoritos, transposiciones por usuario, ni nada de admin.
+2. 🎵 Músico / Corista
+  No es un rol técnico distinto en la base — es un uso sobre el visitante o sobre un usuario autenticado con rol member. Lo distingue su intención (ejecutar repertorio, ver acordes, transponer).
+3. 👤 *member* (autenticado básico)
+  Rol global default al loguearse por primera vez (CU-13, CU-18.1).
+  Suma sobre el visitante: favoritos (CU-15, CU-22), transposición persistida en user_song_keys (CU-03), vincularse a N parroquias y elegir una principal (CU-14).
+4. ⛪ *coordinator* (Coordinador parroquial)
+  Rol contextual: se asigna por parroquia en parish_members.role='coordinator'.
+  Suma: crear/editar playlists de su parroquia (CU-17), crear/editar canciones en estado draft y enviarlas a revisión (CU-16), crear categorías nuevas (CU-25), gestionar anuncios con alcance parroquial (CU-21).
+  Caso especial: Coordinador pastoral = coordinador de la parroquia virtual arquidiocesis; sus playlists pueden marcarse is_archdiocesan.
+5. ✏️ *editor* (Editor de contenido — Comisión Litúrgico-Musical)
+  Rol global en user_roles.
+  Suma: aprobar/rechazar canciones en estado review (CU-16), publicar nuevas versiones, archivar canciones, crear categorías (CU-25).
+6. 👑 *admin* (Administrador)
+  Rol global con permisos plenos.
+  Suma todo: ABM de parroquias (CU-19), ABM de usuarios y asignación de roles (CU-18), gestión de permisos (CU-20), gestión de eventos litúrgicos, anuncios globales (CU-21), playlists de cualquier parroquia (CU-17).
 
 ---
 
@@ -199,10 +215,13 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 - **Flujo principal:**
   1. El sistema busca un evento en `liturgical_events` con `event_date = hoy`. Si existe, lo muestra como "Festividad de hoy" con su descripción y CTA a la playlist asociada (si aplica).
   2. Si no hay evento en la base, el sistema **calcula la festividad litúrgica del día** usando la librería `romcal` con calendario `argentina` (ver `lib/liturgical.ts`). Si el rango de la celebración es ≥ memoria (solemnidad, domingo, fiesta, memoria), la muestra como título; si es feria, muestra el tiempo litúrgico (Adviento, Cuaresma, Tiempo Ordinario, etc.).
-  3. El sistema muestra novedades activas (`featured_content` con ventana vigente) en una sección separada.
-  4. El usuario navega al contenido de su interés.
+  3. El sistema muestra los **anuncios vigentes** (`announcements` con `now() between starts_at and ends_at`) en la sección "Novedades", ordenados por `priority desc, starts_at desc`. Cada anuncio se muestra una sola vez (sin duplicados aunque el usuario esté en varias parroquias destinatarias). Si tiene atajo (`target_kind` ≠ `'none'`), el banner enlaza al recurso.
+  4. **Visibilidad de anuncios:**
+     - **Anónimo:** ve únicamente anuncios **globales** (sin filas en `announcement_parishes`).
+     - **Autenticado:** ve los globales + los anuncios cuyas parroquias destinatarias intersectan con sus `parish_members`.
+  5. El usuario navega al contenido de su interés.
 - **Flujos alternativos:**
-  - 1a. Sin festividad ni novedades: la home muestra el tiempo litúrgico calculado y acceso al buscador y al catálogo.
+  - 1a. Sin festividad ni anuncios: la home muestra el tiempo litúrgico calculado y acceso al buscador y al catálogo.
 - **Postcondiciones:** Ninguna persistente.
 
 ### Sobre los nombres en español
@@ -557,23 +576,60 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 
 ---
 
-## CU-21: Gestionar anuncios y novedades
+## CU-21: Gestionar anuncios
 
 - **RF:** RF19
-- **Actor primario:** Administrador / Coordinador parroquial (según alcance del anuncio).
-- **Precondiciones:** Sesión con permiso para anuncios.
+- **Actor primario:** Administrador.
+- **Precondiciones:** Sesión con rol admin.
 - **Disparador:** Acceso a `/admin/anuncios`.
-- **Alcance:** este CU cubre tanto los **anuncios** programados (`announcements`) como las **novedades destacadas** (`featured_content`) que aparecen en la home (CU-07).
-- **Flujo principal:**
-  1. El usuario lista anuncios/novedades existentes con sus ventanas de vigencia.
-  2. Crea, edita o da de baja un anuncio: título, cuerpo, fecha de inicio/fin, alcance (global / parroquia), prioridad. Para "novedad" además: `target_kind` (canción, playlist, parroquia, link externo) y referencia.
-  3. El sistema valida fechas y alcance.
-  4. En la home, durante la ventana de vigencia, los anuncios aparecen como banners cerrables y las novedades en la sección "Novedades" (CU-07).
-  5. Al cerrar un banner, no vuelve a aparecer al mismo dispositivo/usuario (`announcement_dismissals`).
-- **Flujos alternativos:**
-  - 2a. Fecha fin anterior a inicio: error de validación.
-  - 2b. Editar un anuncio que ya está visible: el cambio se aplica en la próxima carga; los dismissals previos se mantienen (la unicidad es por `announcement_id`).
-- **Postcondiciones:** Anuncio/novedad persistido.
+- **Alcance:** "anuncio" y "novedad" son el mismo concepto. Un anuncio es una pieza de contenido con ventana de vigencia (`starts_at` → `ends_at`) que aparece en la home (CU-07). Solo el Administrador los gestiona; los usuarios finales no pueden cerrarlos ni ocultarlos: el anuncio desaparece automáticamente al pasar `ends_at`.
+
+### Modelo
+
+- **Vigencia:** `now() between starts_at and ends_at`. No hay flag de activo/inactivo: la vigencia es estrictamente temporal.
+- **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo.
+- **Destinatarios:** tabla N–N `announcement_parishes(announcement_id, parish_id)`.
+  - Sin filas → **anuncio global** (lo ven todos: anónimos y autenticados).
+  - Con filas → **anuncio dirigido**: lo ven únicamente los usuarios autenticados asociados (vía `parish_members`) a alguna de esas parroquias. Los anónimos **no** lo ven.
+- **Deduplicación:** un mismo anuncio se muestra una sola vez al usuario, aunque esté asociado a múltiples parroquias destinatarias.
+
+### Flujo principal — Crear
+
+1. El admin entra a `/admin/anuncios/nuevo`.
+2. Completa: `title` (obligatorio), `body` (opcional), `starts_at`, `ends_at`, `priority`.
+3. Selecciona destinatarios:
+   - **Todas las parroquias** (default) — no se insertan filas en `announcement_parishes`.
+   - **Parroquias específicas** — selector multi-select. Debe elegir al menos una.
+4. Opcionalmente define un atajo: tipo de recurso + selección (búsqueda del recurso o URL externa).
+5. Al guardar, se inserta la fila en `announcements` y, si corresponde, las filas en `announcement_parishes`.
+
+### Flujo principal — Editar
+
+1. Desde el listado, el admin abre un anuncio existente (vigente, futuro o vencido).
+2. Puede modificar cualquier campo, incluido el set de parroquias destinatarias y la fecha de fin.
+3. Al guardar, los cambios se aplican inmediatamente en la próxima carga de la home.
+
+### Flujo principal — Eliminar
+
+1. Desde el listado o desde el detalle, el admin pulsa "Eliminar".
+2. Confirmación con `window.confirm`.
+3. Borrado físico de `announcements` (las filas en `announcement_parishes` caen por `ON DELETE CASCADE`). Se permite eliminar anuncios vigentes, futuros o vencidos.
+
+### Listados disponibles
+
+- `/admin/anuncios` — listado server-side, agrupado en **vigentes** (vigencia atravesando ahora), **programados** (futuros) y **vencidos** (pasados). Cada fila muestra título, ventana de fechas y destinatarios (badge "Todas" o lista de slugs). Botón "+ Nuevo anuncio".
+
+### Flujos alternativos
+
+- 2a. **`ends_at <= starts_at`** → error de validación inline; no se permite guardar.
+- 3a. **Selección "específicas" sin elegir ninguna parroquia** → error de validación.
+- 4a. **Atajo con tipo `song`/`playlist`/`parish` y `target_id` ausente** → error de validación.
+- 4b. **Atajo con tipo `external` y `target_url` inválida** → error de validación.
+
+### Postcondiciones
+
+- Anuncio persistido en `announcements` y, si aplica, sus destinatarios en `announcement_parishes`.
+- Visible en la home (CU-07) durante su ventana de vigencia, según las reglas de visibilidad descriptas arriba.
 
 ---
 

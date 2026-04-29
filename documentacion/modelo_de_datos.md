@@ -32,7 +32,6 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `playlist_songs`       | Relación playlist ↔ canción (ordenada)                     | 1    | CU-05, CU-17                  |
 | `playlist_parish_subscriptions` | Suscripción de una parroquia a una playlist ajena | 1    | CU-17                         |
 | `liturgical_events`    | Festividades del calendario litúrgico                      | 1    | CU-07                         |
-| `featured_content`     | Novedades / contenido destacado en la home                 | 1    | CU-07                         |
 | `users`                | Perfil de usuario (extiende `auth.users` de Supabase)      | 2    | CU-13, CU-14, CU-18           |
 | `roles`                | Roles del sistema                                          | 2    | CU-20                         |
 | `user_roles`           | Asignación de roles a usuarios                             | 2    | CU-18, CU-20                  |
@@ -41,8 +40,8 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `parish_members`       | Vínculo usuario ↔ parroquia (con rol contextual)           | 2    | CU-14, CU-17                  |
 | `favorites`            | Likes del usuario sobre canciones / playlists / parroquias | 2    | CU-15, CU-22                  |
 | `user_song_keys`       | Tono preferido del usuario por canción (transposición)     | 2    | CU-03                         |
-| `announcements`        | Anuncios programados                                       | 2    | CU-21                         |
-| `announcement_dismissals` | Cierres de anuncio por dispositivo / usuario            | 2    | CU-21                         |
+| `announcements`        | Anuncios / novedades destacadas en la home                 | 2    | CU-07, CU-21                  |
+| `announcement_parishes`| Destino multi-parroquia de un anuncio (N–N)                | 2    | CU-21                         |
 | `settings`             | Configuraciones clave/valor                                | 1    | global                        |
 
 ---
@@ -263,26 +262,6 @@ Festividades fijas/movibles del calendario litúrgico para CU-07. **Carga manual
 
 ---
 
-### `featured_content`
-Bloques de novedad/destacado de la home (CU-07).
-
-| Columna        | Tipo        | Notas                                                                |
-| -------------- | ----------- | -------------------------------------------------------------------- |
-| `id`           | uuid        | PK                                                                   |
-| `title`        | text        | NOT NULL                                                             |
-| `body`         | text        |                                                                      |
-| `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none')              |
-| `target_id`    | uuid        |                                                                      |
-| `target_url`   | text        | si `target_kind='external'`                                          |
-| `starts_at`    | timestamptz | NOT NULL                                                             |
-| `ends_at`      | timestamptz | NOT NULL                                                             |
-| `priority`     | int         | default 0                                                            |
-| `is_active`    | boolean     | default true                                                         |
-
-**Índices:** `(starts_at, ends_at)`.
-
----
-
 ### `settings`
 Pares clave/valor globales (config feature flags, textos institucionales).
 
@@ -417,37 +396,41 @@ Tono preferido por el usuario para una canción dada (CU-03). Cuando un usuario 
 ---
 
 ### `announcements`
-Anuncios programados (CU-21).
+Anuncios / novedades destacadas en la home (CU-07, CU-21). Solo el Administrador los gestiona. Vencen automáticamente al pasar `ends_at` (no hay cierre manual ni dismissals). Pueden incluir un **atajo opcional** a un recurso (canción, playlist, parroquia o URL externa) para que el banner sea clickeable.
 
-| Columna       | Tipo        | Notas                                                                   |
-| ------------- | ----------- | ----------------------------------------------------------------------- |
-| `id`          | uuid        | PK                                                                      |
-| `title`       | text        | NOT NULL                                                                |
-| `body`        | text        | NOT NULL                                                                |
-| `scope`       | text        | CHECK in ('global','parish'); default 'global'                          |
-| `parish_id`   | uuid        | FK → `parishes.id` (NULL si scope='global')                             |
-| `priority`    | int         | default 0                                                               |
-| `starts_at`   | timestamptz | NOT NULL                                                                |
-| `ends_at`     | timestamptz | NOT NULL — CHECK `ends_at > starts_at`                                  |
-| `is_active`   | boolean     | default true                                                            |
-| `created_by`  | uuid        | FK → `users.id`                                                         |
-| `created_at`  | timestamptz | default now()                                                           |
+| Columna        | Tipo        | Notas                                                                   |
+| -------------- | ----------- | ----------------------------------------------------------------------- |
+| `id`           | uuid        | PK                                                                      |
+| `title`        | text        | NOT NULL                                                                |
+| `body`         | text        | NULL permitido                                                          |
+| `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none'); default 'none' |
+| `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`              |
+| `target_url`   | text        | requerido si `target_kind='external'`                                   |
+| `priority`     | int         | default 0                                                               |
+| `starts_at`    | timestamptz | NOT NULL                                                                |
+| `ends_at`      | timestamptz | NOT NULL — CHECK `ends_at > starts_at`                                  |
+| `created_by`   | uuid        | FK → `users.id` ON DELETE SET NULL                                      |
+| `created_at`   | timestamptz | default now()                                                           |
+| `updated_at`   | timestamptz | default now()                                                           |
 
-**Índices:** `(starts_at, ends_at)`, `parish_id`.
+**Índices:** `(starts_at, ends_at)`.
+
+> **Alcance de visibilidad:** un anuncio es **global** si no tiene filas en `announcement_parishes`; en ese caso lo ven todos (anónimos y autenticados). Si tiene filas, es de **parroquias específicas** y lo ven únicamente los usuarios autenticados asociados (vía `parish_members`) a alguna de esas parroquias. Los anónimos solo ven los globales.
+
+> **Deduplicación:** la consulta de la home devuelve cada anuncio una sola vez aunque el usuario esté asociado a varias parroquias destinatarias del mismo anuncio.
 
 ---
 
-### `announcement_dismissals`
-Registro de cierre de anuncio para no volver a mostrarlo. Soporta usuario autenticado (`user_id`) y dispositivo anónimo (`device_id`).
+### `announcement_parishes`
+Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un anuncio no tiene filas acá, se considera **global**.
 
-| Columna           | Tipo        | Notas                                                       |
-| ----------------- | ----------- | ----------------------------------------------------------- |
-| `announcement_id` | uuid        | FK → `announcements.id` ON DELETE CASCADE                   |
-| `user_id`         | uuid        | FK → `users.id` (nullable)                                  |
-| `device_id`       | text        | id anónimo en localStorage (nullable)                       |
-| `dismissed_at`    | timestamptz | default now()                                               |
+| Columna           | Tipo  | Notas                                                       |
+| ----------------- | ----- | ----------------------------------------------------------- |
+| `announcement_id` | uuid  | FK → `announcements.id` ON DELETE CASCADE                   |
+| `parish_id`       | uuid  | FK → `parishes.id` ON DELETE CASCADE                        |
 
-**PK compuesta:** `(announcement_id, COALESCE(user_id::text, device_id))` — implementar vía constraint UNIQUE parcial.
+**PK compuesta:** `(announcement_id, parish_id)`.
+**Índices:** `parish_id` (para resolver "anuncios de esta parroquia").
 
 ---
 
@@ -473,8 +456,8 @@ Registro de cierre de anuncio para no volver a mostrarlo. Soporta usuario autent
 | CU-04   | `songs.youtube_url`                                                                |
 | CU-05   | `playlists`, `playlist_songs`, `songs`, `parishes`                                 |
 | CU-06.1 | `parishes`                                                                         |
-| CU-06.2 | `parishes`, `playlists`, `featured_content`                                        |
-| CU-07   | `liturgical_events`, `featured_content`, `playlists`                               |
+| CU-06.2 | `parishes`, `playlists`                                                            |
+| CU-07   | `liturgical_events`, `announcements`, `announcement_parishes`, `playlists`         |
 | CU-08   | — (cliente)                                                                        |
 | CU-09   | `song_files`, bucket `partituras`                                                  |
 | CU-10   | `songs`                                                                            |
@@ -488,5 +471,5 @@ Registro de cierre de anuncio para no volver a mostrarlo. Soporta usuario autent
 | CU-18   | `users`, `user_roles`                                                              |
 | CU-19   | `parishes`                                                                         |
 | CU-20   | `roles`, `permissions`, `role_permissions`, `user_roles`                           |
-| CU-21   | `announcements`, `announcement_dismissals`                                         |
+| CU-21   | `announcements`, `announcement_parishes`, `parish_members`                         |
 | CU-22   | `favorites`                                                                        |

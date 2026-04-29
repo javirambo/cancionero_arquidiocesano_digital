@@ -2,7 +2,7 @@
 
 ## Este documento invalida la sección de diseño gráfico de `especificacion_tecnica.md` (5.3 Requerimientos de diseño y 10. UX/UI y Diseño Gráfico), y asigna los lineamientos generales a la sección de diseño gráfico a usar en el proyecto.
 
-## Tipografía 
+## Tipografía
 
 **Fuente principal:** *Cardo* (Google Fonts).
 

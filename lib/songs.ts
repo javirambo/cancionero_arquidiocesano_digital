@@ -307,27 +307,80 @@ export type Featured = {
   target_kind: string;
   target_id: string | null;
   target_url: string | null;
+  // URL ya resuelta a la que debe navegar el banner si es clickeable.
+  // Null cuando target_kind === 'none' o no se pudo resolver.
+  href: string | null;
 };
 
 export async function listActiveFeatured(): Promise<Featured[]> {
+  // Lee de `announcements` (CU-07, CU-21). La RLS aplica la regla de
+  // visibilidad: anónimo solo globales; autenticado globales + los de
+  // sus parroquias asociadas (vía parish_members). Cada anuncio se
+  // devuelve una sola vez (la N–N a parroquias no duplica filas).
   const supabase = await createClient();
   const now = new Date().toISOString();
   const { data, error } = await supabase
-    .from("featured_content")
+    .from("announcements")
     .select("title, body, target_kind, target_id, target_url, starts_at, ends_at, priority")
-    .eq("is_active", true)
     .lte("starts_at", now)
     .gte("ends_at", now)
     .order("priority", { ascending: false })
     .limit(5);
   if (error) throw error;
-  return (data ?? []).map((r) => ({
-    title: r.title as string,
-    body: (r.body as string | null) ?? null,
-    target_kind: r.target_kind as string,
-    target_id: (r.target_id as string | null) ?? null,
-    target_url: (r.target_url as string | null) ?? null,
-  }));
+  const rows = data ?? [];
+
+  // Resolver slugs en lote para canciones y parroquias (las playlists
+  // usan UUID en URL; las externas ya traen target_url).
+  const songIds: string[] = [];
+  const parishIds: string[] = [];
+  for (const r of rows) {
+    const id = r.target_id as string | null;
+    if (!id) continue;
+    if (r.target_kind === "song") songIds.push(id);
+    else if (r.target_kind === "parish") parishIds.push(id);
+  }
+
+  const [songSlugs, parishSlugs] = await Promise.all([
+    songIds.length > 0
+      ? supabase.from("songs").select("id, slug").in("id", songIds)
+      : Promise.resolve({ data: [] as { id: string; slug: string }[] }),
+    parishIds.length > 0
+      ? supabase.from("parishes").select("id, slug").in("id", parishIds)
+      : Promise.resolve({ data: [] as { id: string; slug: string }[] }),
+  ]);
+
+  const songSlugById = new Map(
+    (songSlugs.data ?? []).map((s) => [s.id as string, s.slug as string])
+  );
+  const parishSlugById = new Map(
+    (parishSlugs.data ?? []).map((p) => [p.id as string, p.slug as string])
+  );
+
+  return rows.map((r) => {
+    const kind = r.target_kind as string;
+    const id = (r.target_id as string | null) ?? null;
+    const url = (r.target_url as string | null) ?? null;
+    let href: string | null = null;
+    if (kind === "song" && id) {
+      const slug = songSlugById.get(id);
+      if (slug) href = `/canciones/${slug}`;
+    } else if (kind === "playlist" && id) {
+      href = `/playlists/${id}`;
+    } else if (kind === "parish" && id) {
+      const slug = parishSlugById.get(id);
+      if (slug) href = `/parroquias/${slug}`;
+    } else if (kind === "external" && url) {
+      href = url;
+    }
+    return {
+      title: r.title as string,
+      body: (r.body as string | null) ?? null,
+      target_kind: kind,
+      target_id: id,
+      target_url: url,
+      href,
+    };
+  });
 }
 
 export function youtubeEmbedUrl(url: string | null): string | null {

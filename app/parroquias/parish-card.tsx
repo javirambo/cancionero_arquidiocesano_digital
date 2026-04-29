@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
-type Parish = {
+export type Parish = {
   id: string;
   slug: string;
   name: string;
@@ -14,92 +12,55 @@ type Parish = {
   description: string | null;
 };
 
+export type AnimState = "entering" | "leaving";
+
 type Props = {
   parish: Parish;
   isLogged: boolean;
   isMember: boolean;
   isPrimary: boolean;
+  animState?: AnimState;
+  onAdd: (parishId: string) => void | Promise<void>;
+  onRemove: (parishId: string) => void | Promise<void>;
+  onTogglePrimary: (parishId: string) => void | Promise<void>;
 };
 
-export function ParishCard({ parish, isLogged, isMember, isPrimary }: Props) {
-  const router = useRouter();
+// Si está animando (entering o leaving), partimos de / quedamos en estado
+// "colapsado": altura 0, sin padding, sin opacidad, borde transparente.
+// La transición la hace el browser sobre estas propiedades.
+const collapsedClass =
+  "max-h-0 opacity-0 !p-0 !border-transparent overflow-hidden";
+const expandedClass = "max-h-[600px] opacity-100";
+
+export function ParishCard({
+  parish,
+  isLogged,
+  isMember,
+  isPrimary,
+  animState,
+  onAdd,
+  onRemove,
+  onTogglePrimary,
+}: Props) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function withSession<T>(
-    fn: (userId: string) => Promise<T>
-  ): Promise<T | undefined> {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      setError("Sesión expirada.");
-      return;
+  async function withBusy(fn: () => Promise<void>) {
+    setBusy(true);
+    try {
+      await fn();
+    } finally {
+      setBusy(false);
     }
-    return fn(data.user.id);
   }
 
-  async function handleAssociate() {
-    setBusy(true);
-    setError(null);
-    await withSession(async (userId) => {
-      const supabase = createClient();
-      const { error: e } = await supabase
-        .from("parish_members")
-        .insert({ user_id: userId, parish_id: parish.id, role: "member" });
-      if (e) {
-        setError(e.message);
-      } else {
-        router.refresh();
-      }
-    });
-    setBusy(false);
-  }
-
-  async function handleDisassociate() {
-    const ok = window.confirm(`¿Quitar "${parish.name}" de tus parroquias?`);
-    if (!ok) return;
-    setBusy(true);
-    setError(null);
-    await withSession(async (userId) => {
-      const supabase = createClient();
-      // Si era la principal, primero limpiar users.parish_id.
-      if (isPrimary) {
-        await supabase.from("users").update({ parish_id: null }).eq("id", userId);
-      }
-      const { error: e } = await supabase
-        .from("parish_members")
-        .delete()
-        .eq("user_id", userId)
-        .eq("parish_id", parish.id);
-      if (e) {
-        setError(e.message);
-      } else {
-        router.refresh();
-      }
-    });
-    setBusy(false);
-  }
-
-  async function handleTogglePrimary() {
-    setBusy(true);
-    setError(null);
-    await withSession(async (userId) => {
-      const supabase = createClient();
-      const { error: e } = await supabase
-        .from("users")
-        .update({ parish_id: isPrimary ? null : parish.id })
-        .eq("id", userId);
-      if (e) {
-        setError(e.message);
-      } else {
-        router.refresh();
-      }
-    });
-    setBusy(false);
-  }
+  // El estado visual: si animState está, el item está en su forma colapsada.
+  // Sin animState, está en forma expandida (estado normal).
+  const visualClass = animState ? collapsedClass : expandedClass;
 
   return (
-    <li className="flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary">
+    <li
+      className={`flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-5 transition-all duration-300 ease-in-out hover:border-primary ${visualClass}`}
+    >
       <div className="flex items-start gap-2">
         <Link
           href={`/parroquias/${parish.slug}`}
@@ -121,7 +82,7 @@ export function ParishCard({ parish, isLogged, isMember, isPrimary }: Props) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleTogglePrimary();
+                  withBusy(() => Promise.resolve(onTogglePrimary(parish.id)));
                 }}
                 disabled={busy}
                 title={
@@ -144,8 +105,11 @@ export function ParishCard({ parish, isLogged, isMember, isPrimary }: Props) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (isMember) handleDisassociate();
-                else handleAssociate();
+                withBusy(() =>
+                  Promise.resolve(
+                    isMember ? onRemove(parish.id) : onAdd(parish.id)
+                  )
+                );
               }}
               disabled={busy}
               title={
@@ -174,10 +138,6 @@ export function ParishCard({ parish, isLogged, isMember, isPrimary }: Props) {
         <p className="text-sm normal-case text-muted-foreground">
           {parish.description}
         </p>
-      )}
-
-      {error && (
-        <p className="text-xs normal-case text-destructive">{error}</p>
       )}
     </li>
   );

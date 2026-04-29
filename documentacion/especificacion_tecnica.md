@@ -81,7 +81,7 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 * RF16: Login con google
 * RF17: Linkear uruaios con parroquias
 * RF18: Permitir que un usuario tenga links propios de canciones, listas, parroquias, etc a través de likes.
-* RF19: Gestionar anuncios con fecha, aparecen al inicio, se pueden cerrar.
+* RF19: Gestionar anuncios (gestionados por admin) con ventana de fechas. Aparecen en la home durante su vigencia y desaparecen al vencer; el usuario no puede cerrarlos. Pueden tener destino global o a una/varias parroquias.
 * RF20: Permitir silenciar el dispositivo y que no se apague la pantalla.
 * RF21: Gestion de permisos
 * RF22: Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.) — creación on-demand al editar una canción y asignación a canciones
