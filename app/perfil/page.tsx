@@ -35,36 +35,6 @@ export default async function PerfilPage() {
           </p>
           <GoogleSignInButton />
         </section>
-
-        <section aria-labelledby="atajos-heading" className="flex flex-col gap-3">
-          <h2 id="atajos-heading" className="text-xl">
-            Mientras tanto
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            <li>
-              <Link
-                href="/canciones"
-                className="flex flex-col gap-1 rounded-xl border border-border bg-background p-4 transition-colors hover:border-primary"
-              >
-                <span className="text-base text-primary">Canciones</span>
-                <span className="text-xs normal-case text-muted-foreground">
-                  Catálogo del cancionero
-                </span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/playlists"
-                className="flex flex-col gap-1 rounded-xl border border-border bg-background p-4 transition-colors hover:border-primary"
-              >
-                <span className="text-base text-primary">Playlists</span>
-                <span className="text-xs normal-case text-muted-foreground">
-                  Repertorios de las parroquias
-                </span>
-              </Link>
-            </li>
-          </ul>
-        </section>
       </main>
     );
   }
