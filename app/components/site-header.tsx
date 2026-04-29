@@ -324,30 +324,34 @@ export function SiteHeader() {
                       }}
                     />
                   </li>
-                  <li>
-                    <MenuToggleItem
-                      icon={<ChordsIcon />}
-                      label="Sugerir acordes"
-                      checked={suggestChords}
-                      disabled={!prefsAuth}
-                      tooltip={
-                        prefsAuth
-                          ? undefined
-                          : "Iniciá sesión para guardar tus preferencias"
-                      }
-                      onChange={() =>
-                        setPreference("suggestChords", !suggestChords)
-                      }
-                    />
-                  </li>
-                  <li>
-                    <MenuItem
-                      href="/playlists"
-                      icon={<ListasIcon />}
-                      label="Playlists"
-                      onSelect={closeMenu}
-                    />
-                  </li>
+                  {user && (
+                    <li>
+                      <MenuToggleItem
+                        icon={<ChordsIcon />}
+                        label="Sugerir acordes"
+                        checked={suggestChords}
+                        disabled={!prefsAuth}
+                        tooltip={
+                          prefsAuth
+                            ? undefined
+                            : "Iniciá sesión para guardar tus preferencias"
+                        }
+                        onChange={() =>
+                          setPreference("suggestChords", !suggestChords)
+                        }
+                      />
+                    </li>
+                  )}
+                  {user && (
+                    <li>
+                      <MenuItem
+                        href="/playlists"
+                        icon={<ListasIcon />}
+                        label="Playlists"
+                        onSelect={closeMenu}
+                      />
+                    </li>
+                  )}
                   <li>
                     <MenuItem
                       href="/parroquias"
