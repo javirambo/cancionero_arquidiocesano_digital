@@ -85,6 +85,7 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 * RF20: Permitir silenciar el dispositivo y que no se apague la pantalla.
 * RF21: Gestion de permisos
 * RF22: Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.) — creación on-demand al editar una canción y asignación a canciones
+* RF23: Festividades litúrgicas (calendario) — ABM y carga automática desde fuente externa (Conferencia Episcopal Argentina / Vaticano / iCal). Se usan en la home (CU-07) y como sugerencia de playlists para fechas específicas.
 
 
 ### **5.2 Requerimientos no funcionales**
