@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AnuncioForm, type AnnouncementFormData } from "../../anuncio-form";
+import { listScopedParishes } from "../../scoped-parishes";
 
 function toDateTimeLocal(iso: string): string {
   const d = new Date(iso);
@@ -38,14 +39,14 @@ export default async function EditarAnuncioPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [annRes, apRes, parishesRes] = await Promise.all([
+  const [annRes, apRes, parishes] = await Promise.all([
     supabase
       .from("announcements")
       .select("id, title, body, starts_at, ends_at, priority, target_kind, target_id, target_url")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("announcement_parishes").select("parish_id").eq("announcement_id", id),
-    supabase.from("parishes").select("id, slug, name").eq("is_active", true).order("name"),
+    listScopedParishes(),
   ]);
 
   if (!annRes.data) notFound();
@@ -85,7 +86,7 @@ export default async function EditarAnuncioPage({
         <h1 className="text-2xl">Editar anuncio</h1>
       </header>
 
-      <AnuncioForm mode="edit" initial={initial} parishes={parishesRes.data ?? []} />
+      <AnuncioForm mode="edit" initial={initial} parishes={parishes} />
     </main>
   );
 }

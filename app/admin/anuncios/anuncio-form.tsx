@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type AnnouncementFormData = {
@@ -392,21 +392,13 @@ export function AnuncioForm({
         </p>
         <div className="mt-3 flex flex-col gap-3">
           <Field label="Tipo">
-            <select
+            <TargetKindDropdown
               value={form.target_kind}
-              onChange={(e) => {
-                const next = e.target.value as AnnouncementFormData["target_kind"];
+              onChange={(next) => {
                 clearTarget();
                 update("target_kind", next);
               }}
-              className={inputClass}
-            >
-              <option value="none">Ninguno</option>
-              <option value="song">Canción</option>
-              <option value="playlist">Playlist</option>
-              <option value="parish">Parroquia</option>
-              <option value="external">Link externo</option>
-            </select>
+            />
           </Field>
 
           {(form.target_kind === "song" ||
@@ -520,6 +512,92 @@ export function AnuncioForm({
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
+
+const TARGET_KIND_OPTIONS: {
+  value: AnnouncementFormData["target_kind"];
+  label: string;
+}[] = [
+  { value: "none", label: "Ninguno" },
+  { value: "song", label: "Canción" },
+  { value: "playlist", label: "Playlist" },
+  { value: "parish", label: "Parroquia" },
+  { value: "external", label: "Link externo" },
+];
+
+function TargetKindDropdown({
+  value,
+  onChange,
+}: {
+  value: AnnouncementFormData["target_kind"];
+  onChange: (v: AnnouncementFormData["target_kind"]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const current = TARGET_KIND_OPTIONS.find((o) => o.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-left text-sm normal-case hover:border-primary"
+      >
+        <span>{current?.label ?? "Ninguno"}</span>
+        <span aria-hidden="true" className="text-muted-foreground">
+          ▾
+        </span>
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-lg"
+        >
+          {TARGET_KIND_OPTIONS.map((opt) => {
+            const active = opt.value === value;
+            return (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm normal-case transition-colors hover:bg-sidebar ${
+                    active ? "text-primary" : "text-foreground"
+                  }`}
+                >
+                  <span>{opt.label}</span>
+                  {active && <span aria-hidden="true">✓</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function Field({
   label,

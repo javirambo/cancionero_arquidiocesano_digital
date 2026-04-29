@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cardo } from "next/font/google";
 import Script from "next/script";
 import { SiteHeader } from "./components/site-header";
@@ -18,6 +18,13 @@ const cardo = Cardo({
 export const metadata: Metadata = {
   title: "Cancionero Arquidiocesano Digital",
   description: "Evangelizar a través de la música",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Permite que el usuario haga zoom (accesibilidad).
+  maximumScale: 5,
 };
 
 export default function RootLayout({
