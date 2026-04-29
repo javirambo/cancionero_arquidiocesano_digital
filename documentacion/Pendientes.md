@@ -16,3 +16,29 @@
 [ ] colocar una sugerencia popup por primera vez en el dispositivo que diga
     "Esta app funciona mejor si usa el mail como login registrarse como usuario
     Si esta logueado puede acceder a sus favoritos y guardar playlists, etc, etc"
+
+
+
+
+Your privacy policy URL 
+
+https://console.cloud.google.com/auth/branding?project=cancionero-arquidiocesano
+
+
+    Para armarla bien necesito unos datos. Respondeme estos puntos y la creo:
+
+Responsable: ¿quién figura como responsable del tratamiento? (¿la Arquidiócesis? ¿vos personalmente? ¿nombre + email de contacto?)
+Email de contacto para consultas de privacidad.
+País / jurisdicción (Argentina supongo, para mencionar la ley aplicable — Ley 25.326 de Protección de Datos Personales).
+Datos que guardás — confirmame cuáles aplican:
+Email y nombre de Google
+Foto de perfil de Google
+Parroquia vinculada
+Favoritos
+Playlists creadas
+Preferencias (sugerir acordes, etc.)
+¿algo más?
+¿Usás analytics? (Google Analytics, Vercel Analytics, etc.)
+¿Compartís datos con terceros? Supongo que sí: Supabase (hosting de datos), Google (auth), Vercel (hosting). ¿Algún otro?
+¿Hay menores de edad como usuarios esperables?
+Con eso te genero app/privacidad/page.tsx con el texto adaptado y un link en el footer si querés.
