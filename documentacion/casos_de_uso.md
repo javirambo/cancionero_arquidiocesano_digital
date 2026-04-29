@@ -35,6 +35,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | [x]   |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | [x]   |
 | CU-25   | Creación de categorías litúrgicas                    | RF22      |       |
+| CU-26   | ABM de festividades litúrgicas                       | RF23      |       |
 
 ---
 
@@ -716,6 +717,48 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 - **Postcondiciones:** Categoría persistida en `categories` y asociada a la canción en edición.
 
 > **Nota:** la **edición y baja** de categorías existentes no está cubierta en este CU y se decidirá más adelante. La FK `songs.category_id` es `ON DELETE SET NULL`, por lo que la baja eventual de una categoría dejaría las canciones asociadas sin categoría.
+
+---
+
+## CU-26: ABM de festividades litúrgicas
+
+- **RF:** RF23
+- **Actor primario:** Administrador.
+- **Precondiciones:** Sesión con rol admin.
+- **Disparador:** acceso a `/admin/eventos-liturgicos`.
+- **Flujo principal:**
+  1. El admin lista las festividades cargadas en `liturgical_events` ordenadas por `event_date`. Filtros básicos: año, tipo (`solemnidad`, `fiesta`, `memoria`, `tiempo`, `otro`).
+  2. Crea/edita/elimina entradas con: `name`, `slug` (autogenerado), `event_date` (fecha concreta), `kind`, `description`, `playlist_id` opcional (sugerencia de repertorio para esa fecha).
+  3. El sistema valida unicidad de `slug` y que `event_date` sea válida.
+  4. Persiste los cambios.
+- **Comportamiento en home (CU-07):** la festividad cargada en `liturgical_events` para `event_date = hoy` tiene **prioridad** sobre la festividad calculada por la librería `romcal`. Esto permite controlar nombre, descripción y playlist asociada en español argentino.
+- **Flujos alternativos:**
+  - 3a (slug duplicado): el sistema sugiere uno alternativo con sufijo numérico.
+  - Baja con playlist asociada: la FK `liturgical_events.playlist_id` es `ON DELETE SET NULL`, por lo que borrar la playlist no elimina el evento.
+- **Postcondiciones:** Evento persistido en `liturgical_events`.
+
+### CU-26.1: Importación automática del calendario litúrgico
+
+Para evitar carga manual año tras año, el sistema ofrece una **importación masiva** desde una fuente externa.
+
+- **Fuentes posibles** (a evaluar al implementar):
+  - **Conferencia Episcopal Argentina** ([episcopado.org](https://episcopado.org) — sección liturgia): publica el calendario en HTML. Requiere scraping.
+  - **Vaticano** ([vatican.va](https://www.vatican.va)): calendario universal en HTML, también scraping.
+  - **divinumofficium.com**: calendario tradicional, HTML.
+  - **iCal feeds litúrgicos** (catholic-resources.org, universalis.com): formato `.ics` parseable.
+  - **romcal** (librería ya instalada): generación local sin red, pero sin locale español. Puede combinarse con un mapa de traducción y servir como base, sobreescribiendo los nombres con scraping si se prefiere.
+- **Disparador:** botón **"Importar calendario {año}"** en `/admin/eventos-liturgicos`.
+- **Flujo:**
+  1. El admin elige el año (default: año en curso).
+  2. El sistema obtiene el calendario desde la fuente configurada (server-side; el scraping se hace en un endpoint Next.js, no desde el browser).
+  3. Se previsualizan las entradas que se van a crear, marcando duplicados con respecto a lo ya cargado (mismo `slug` o misma `event_date`).
+  4. El admin confirma. Las entradas se insertan con `on conflict do nothing` para no pisar ediciones manuales.
+  5. Al finalizar se muestra un resumen: *N creadas, M omitidas (duplicadas), K errores*.
+- **Flujos alternativos:**
+  - La fuente externa cae o cambia su formato → el sistema marca el error y permite reintentar; las entradas ya existentes no se tocan.
+- **Postcondiciones:** Múltiples filas en `liturgical_events`. La carga manual sigue siendo posible para corregir nombres/descripciones.
+
+> **Nota:** la elección de la fuente y el parser específico se decidirá al implementar el CU. El scraping de sitios oficiales requiere respetar `robots.txt` y aplicar caching agresivo (los calendarios cambian anualmente, no diariamente).
 
 ---
 
