@@ -51,10 +51,10 @@ Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en 
   No es un rol técnico distinto en la base — es un uso sobre el visitante o sobre un usuario autenticado con rol member. Lo distingue su intención (ejecutar repertorio, ver acordes, transponer).
 3. 👤 *member* (autenticado básico)
   Rol global default al loguearse por primera vez (CU-13, CU-18.1).
-  Suma sobre el visitante: favoritos (CU-15, CU-22), transposición persistida en user_song_keys (CU-03), vincularse a N parroquias y elegir una principal (CU-14).
+  Suma sobre el visitante: favoritos (CU-15, CU-22), transposición persistida en user_song_keys (CU-03), vincularse a N parroquias y elegir una principal (CU-14). Crear sus playlists.
 4. ⛪ *coordinator* (Coordinador parroquial)
   Rol contextual: se asigna por parroquia en parish_members.role='coordinator'.
-  Suma: crear/editar playlists de su parroquia (CU-17), crear/editar canciones en estado draft y enviarlas a revisión (CU-16), crear categorías nuevas (CU-25), gestionar anuncios con alcance parroquial (CU-21).
+  Suma: crear/editar playlists de su parroquia (la que tiene la estrella) (CU-17), crear/editar canciones en estado draft y enviarlas a revisión (CU-16), crear categorías nuevas (CU-25), gestionar anuncios con alcance parroquial (CU-21). Crear parroquia en estado de revision (busca en Maps) el Admin debe aceptar.
   Caso especial: Coordinador pastoral = coordinador de la parroquia virtual arquidiocesis; sus playlists pueden marcarse is_archdiocesan.
 5. ✏️ *editor* (Editor de contenido — Comisión Litúrgico-Musical)
   Rol global en user_roles.

@@ -5,7 +5,4 @@
     Ejemplo: Responsable y Direccion (ahora el Arzobispado !!)
     Email, (ahora yo.azimo@gmail.com !!)
 
-[ ] proceso inicial:
-    - autenticación de usuario
-    - lleva a agregar parroquia
-    
+[ ] cambiar funcionamiento en invitado -> los favoritos se guardan en local storage, y si se loguea -por primera vez- se transfiere a la base. Si ya estuvo logueado se traen los favoritos de la base. Si se pisan porque son distintos preguntar que hacer.

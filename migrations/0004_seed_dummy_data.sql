@@ -26,34 +26,34 @@ on conflict (slug) do nothing;
 -- ---------------------------------------------------------------------
 -- Playlists dummy (1 por parroquia + 2 festividades)
 -- ---------------------------------------------------------------------
-insert into public.playlists (parish_id, slug, name, description, event_date, visibility)
-select id, 'domingo-tipo', 'Misa dominical', 'Repertorio habitual de la misa de 11hs.', null, 'public'
+insert into public.playlists (parish_id, name, description, event_date, visibility)
+select id, 'Misa dominical', 'Repertorio habitual de la misa de 11hs.', null, 'public'
 from public.parishes where slug = 'catedral'
-on conflict (parish_id, slug) do nothing;
+on conflict do nothing;
 
-insert into public.playlists (parish_id, slug, name, description, event_date, visibility)
-select id, 'san-cayetano-7-agosto', 'San Cayetano — 7 de agosto',
+insert into public.playlists (parish_id, name, description, event_date, visibility)
+select id, 'San Cayetano — 7 de agosto',
        'Repertorio para la festividad patronal.', '2026-08-07', 'public'
 from public.parishes where slug = 'san-cayetano'
-on conflict (parish_id, slug) do nothing;
+on conflict do nothing;
 
-insert into public.playlists (parish_id, slug, name, description, event_date, visibility)
-select id, 'coro-juvenil', 'Coro juvenil',
+insert into public.playlists (parish_id, name, description, event_date, visibility)
+select id, 'Coro juvenil',
        'Selección que prepara el coro juvenil de Lourdes.', null, 'public'
 from public.parishes where slug = 'lourdes'
-on conflict (parish_id, slug) do nothing;
+on conflict do nothing;
 
-insert into public.playlists (parish_id, slug, name, description, event_date, visibility)
-select id, 'pascua-2026', 'Vigilia Pascual 2026',
+insert into public.playlists (parish_id, name, description, event_date, visibility)
+select id, 'Vigilia Pascual 2026',
        'Repertorio de la Vigilia Pascual.', '2026-04-04', 'public'
 from public.parishes where slug = 'san-jose'
-on conflict (parish_id, slug) do nothing;
+on conflict do nothing;
 
-insert into public.playlists (parish_id, slug, name, description, event_date, visibility)
-select id, 'navidad-2026', 'Misa de Nochebuena',
+insert into public.playlists (parish_id, name, description, event_date, visibility)
+select id, 'Misa de Nochebuena',
        'Cantos para la Misa de Nochebuena.', '2026-12-24', 'public'
 from public.parishes where slug = 'catedral'
-on conflict (parish_id, slug) do nothing;
+on conflict do nothing;
 
 -- ---------------------------------------------------------------------
 -- playlist_songs: agrego 5 canciones a cada playlist usando las
@@ -63,12 +63,12 @@ on conflict (parish_id, slug) do nothing;
 delete from public.playlist_songs
  where playlist_id in (
    select id from public.playlists
-    where slug in ('domingo-tipo','san-cayetano-7-agosto','coro-juvenil','pascua-2026','navidad-2026')
+    where name in ('Misa dominical','San Cayetano — 7 de agosto','Coro juvenil','Vigilia Pascual 2026','Misa de Nochebuena')
  );
 
 with pl as (
-  select id, slug from public.playlists
-   where slug in ('domingo-tipo','san-cayetano-7-agosto','coro-juvenil','pascua-2026','navidad-2026')
+  select id, name from public.playlists
+   where name in ('Misa dominical','San Cayetano — 7 de agosto','Coro juvenil','Vigilia Pascual 2026','Misa de Nochebuena')
 ), s as (
   select id, number from public.songs where number between 1 and 20
 )
@@ -77,11 +77,11 @@ select pl.id, s.id,
        row_number() over (partition by pl.id order by s.number)
   from pl
   join s on (
-       (pl.slug = 'domingo-tipo'           and s.number in (1, 4, 7, 11, 20))
-    or (pl.slug = 'san-cayetano-7-agosto'  and s.number in (2, 5, 9, 14, 16))
-    or (pl.slug = 'coro-juvenil'           and s.number in (3, 6, 12, 15, 19))
-    or (pl.slug = 'pascua-2026'            and s.number in (8, 10, 13, 15, 17))
-    or (pl.slug = 'navidad-2026'           and s.number in (1, 7, 11, 17, 18))
+       (pl.name = 'Misa dominical'              and s.number in (1, 4, 7, 11, 20))
+    or (pl.name = 'San Cayetano — 7 de agosto'  and s.number in (2, 5, 9, 14, 16))
+    or (pl.name = 'Coro juvenil'                and s.number in (3, 6, 12, 15, 19))
+    or (pl.name = 'Vigilia Pascual 2026'        and s.number in (8, 10, 13, 15, 17))
+    or (pl.name = 'Misa de Nochebuena'          and s.number in (1, 7, 11, 17, 18))
   );
 
 -- ---------------------------------------------------------------------
@@ -92,7 +92,7 @@ select 'San Cayetano', 'san-cayetano-2026', '2026-08-07', 'memoria', p.id,
        'Memoria de San Cayetano, patrono del pan y el trabajo.'
 from public.playlists p
 join public.parishes pa on pa.id = p.parish_id
-where p.slug = 'san-cayetano-7-agosto' and pa.slug = 'san-cayetano'
+where p.name = 'San Cayetano — 7 de agosto' and pa.slug = 'san-cayetano'
 on conflict (slug) do nothing;
 
 insert into public.liturgical_events (name, slug, event_date, kind, playlist_id, description)
@@ -100,7 +100,7 @@ select 'Vigilia Pascual', 'vigilia-pascual-2026', '2026-04-04', 'solemnidad', p.
        'Vigilia Pascual: la noche más santa del año litúrgico.'
 from public.playlists p
 join public.parishes pa on pa.id = p.parish_id
-where p.slug = 'pascua-2026' and pa.slug = 'san-jose'
+where p.name = 'Vigilia Pascual 2026' and pa.slug = 'san-jose'
 on conflict (slug) do nothing;
 
 insert into public.liturgical_events (name, slug, event_date, kind, playlist_id, description)
@@ -108,7 +108,7 @@ select 'Natividad del Señor', 'navidad-2026', '2026-12-25', 'solemnidad', p.id,
        'Solemnidad de la Natividad del Señor.'
 from public.playlists p
 join public.parishes pa on pa.id = p.parish_id
-where p.slug = 'navidad-2026' and pa.slug = 'catedral'
+where p.name = 'Misa de Nochebuena' and pa.slug = 'catedral'
 on conflict (slug) do nothing;
 
 -- ---------------------------------------------------------------------
@@ -120,5 +120,5 @@ select 'Nueva playlist: Coro juvenil de Lourdes',
        'playlist', p.id,
        now() - interval '1 day', now() + interval '30 days',
        10, true
-from public.playlists p where p.slug = 'coro-juvenil'
+from public.playlists p where p.name = 'Coro juvenil'
 on conflict do nothing;
