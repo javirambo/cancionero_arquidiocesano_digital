@@ -31,6 +31,8 @@
 /* Tema dark: se activa explícitamente con data-theme="dark" en <html>.
    Por defecto el tema es light, sin importar la preferencia del SO. */
 :root[data-theme="dark"] {
+  --color-primary: #ab4e4e;
+
   --theme-background: #2d2420;
   --theme-foreground: #f4efe6;
   --theme-sidebar: #402d25;

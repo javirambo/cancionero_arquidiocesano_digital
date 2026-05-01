@@ -31,7 +31,7 @@ Orden sugerido para evitar dependencias cruzadas. Cada uno enlaza al CU correspo
 
 [x] **CU-18 — /admin/usuarios.** ABM de usuarios + asignación de roles globales (admin/editor) y `parish_members.role` (member/coordinator). Sin alta manual (sigue por OAuth). Bloquea quitar el último admin. "Desvincular usuario" elimina roles globales + membresías; las playlists personales del usuario se conservan.
 
-[ ] ***arreglar vista celular de edicion de playlist (admin)***
+[x] ***arreglar vista celular de edicion de playlist (admin)***
     http://localhost:3000/admin/playlists
     se ven feos los items!
 

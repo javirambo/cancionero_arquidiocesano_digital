@@ -4,6 +4,7 @@ import { getPlaylistById } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
 import { PlaylistForm } from "@/app/playlists/playlist-form";
 import { PlaylistSongsEditor } from "./songs-editor";
+import { AccordionSection } from "@/app/components/accordion-section";
 
 export default async function EditarPlaylistPage({
   params,
@@ -88,10 +89,7 @@ export default async function EditarPlaylistPage({
       </Link>
       <h1 className="text-2xl">Editar: {pl.name}</h1>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Datos
-        </h2>
+      <AccordionSection title="Datos" defaultOpen={false}>
         <PlaylistForm
           mode="edit"
           parishSlug={pl.parish?.slug ?? null}
@@ -107,12 +105,9 @@ export default async function EditarPlaylistPage({
             is_archdiocesan: pl.is_archdiocesan,
           }}
         />
-      </section>
+      </AccordionSection>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Canciones
-        </h2>
+      <AccordionSection title="Canciones" defaultOpen>
         <PlaylistSongsEditor
           playlistId={pl.id}
           initialSongs={pl.songs.map((s) => ({
@@ -122,7 +117,7 @@ export default async function EditarPlaylistPage({
             title: s.title,
           }))}
         />
-      </section>
+      </AccordionSection>
     </main>
   );
 }
