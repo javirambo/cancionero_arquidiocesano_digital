@@ -6,62 +6,107 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 
 ## Índice
 
-| ID      | Nombre                                               | RF        | Hecho |
-| ------- | ---------------------------------------------------- | --------- | ----- |
-| CU-01   | Buscar cualquier cosa (parroquia, canción, playlist) | RF4       | [x]   |
-| CU-02.1 | Ver canción con letra                                | RF5       | [x]   |
-| CU-02.2 | Ver canción con letra y acordes                      | RF5       | [x]   |
-| CU-03   | Transponer tonalidad                                 | RF6       | [x]   |
-| CU-04   | Reproducir referencia de YouTube                     | RF8       | [x]   |
-| CU-05   | Ver playlist de parroquia                            | RF3, RF12 | [x]   |
-| CU-06.1 | Buscar parroquia                                     | RF11      | [x]   |
-| CU-06.2 | Acceder a parroquia por URL                          | RF11      | [x]   |
-| CU-07   | Visualizar novedades / festividad del día            | —         | [x]   |
-| CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | [x]   |
-| CU-09   | Descargar partitura                                  | RF7       |       |
-| CU-10   | Descargar canción para imprimir                      | RF14      |       |
-| CU-11   | Descargar playlist como cancionero                   | RF15      |       |
-| CU-12   | Descargar QR de la página actual                     | RF13      | [x]   |
-| CU-13   | Login con Google                                     | RF16      | [x]   |
-| CU-14   | Vincular usuario a parroquia                         | RF17      | [x]   |
-| CU-15   | Marcar favoritos                                     | RF18      | [x]   |
-| CU-16   | ABM de canción                                       | RF1       |       |
-| CU-17   | ABM de playlist                                      | RF2       | [~]   |
-| CU-18   | ABM de usuario                                       | RF9       |       |
-| CU-19   | ABM de parroquia                                     | RF10      | [x]   |
-| CU-20   | Gestionar permisos                                   | RF21      |       |
-| CU-21   | Gestionar anuncios                                   | RF19      | [x]   |
-| CU-22   | Gestionar "Mis favoritos"                            | RF18      | [x]   |
-| CU-23   | Lista de canciones con badges y menú contextual      | RF4       | [x]   |
-| CU-24   | Barra de acciones global en el header                | RF4, RF18 | [x]   |
-| CU-25   | Creación de categorías litúrgicas                    | RF22      |       |
-| CU-26   | ABM de festividades litúrgicas                       | RF23      |       |
+| ID      | Nombre                                               | RF        | Estado |
+| ------- | ---------------------------------------------------- | --------- | ------ |
+| CU-01   | Buscar cualquier cosa (parroquia, canción, playlist) | RF4       | ✅     |
+| CU-02.1 | Ver canción con letra                                | RF5       | ✅     |
+| CU-02.2 | Ver canción con letra y acordes                      | RF5       | ✅     |
+| CU-03   | Transponer tonalidad                                 | RF6       | ⏳ (falta ocultarla al invitado) |
+| CU-04   | Reproducir referencia de YouTube                     | RF8       | ✅     |
+| CU-05   | Ver playlist de parroquia                            | RF3, RF12 | ✅     |
+| CU-06.1 | Buscar parroquia                                     | RF11      | ✅     |
+| CU-06.2 | Acceder a parroquia por URL                          | RF11      | ✅     |
+| CU-07   | Visualizar novedades / festividad del día            | —         | ✅     |
+| CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | ✅     |
+| CU-09   | Descargar partitura                                  | RF7       | ⏳     |
+| CU-10   | Descargar canción para imprimir                      | RF14      | ⏳     |
+| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳     |
+| CU-12   | Descargar QR de la página actual                     | RF13      | ✅     |
+| CU-13   | Login con Google                                     | RF16      | ✅ (falta migrar favoritos de localStorage) |
+| CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
+| CU-15   | Marcar favoritos                                     | RF18      | ✅ (falta favoritos de invitado en localStorage) |
+| CU-16   | ABM de canción                                       | RF1       | ⏳     |
+| CU-17   | ABM de playlist                                      | RF2       | ✅ (parcial: falta admin reasignar dueño) |
+| CU-18   | ABM de usuario                                       | RF9       | ⏳     |
+| CU-19   | ABM de parroquia                                     | RF10      | ✅ (falta flujo `pending` para coordinator) |
+| CU-20   | Gestionar permisos                                   | RF21      | ⏳     |
+| CU-21   | Gestionar anuncios                                   | RF19      | ✅ (parcial: falta alcance parroquial para coordinator) |
+| CU-22   | Gestionar "Mis favoritos"                            | RF18      | ✅     |
+| CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅                                       |
+| CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
+| CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳     |
+| CU-26   | ABM de festividades litúrgicas                       | RF23      | ⏳     |
 
 ---
 
 ## Actores del sistema
 
-Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en user_roles) y vínculo contextual con parroquia (tabla parish_members.role).
+Hay dos dimensiones que conviven: **roles globales** (catálogo `roles`, asignados en `user_roles`) y **vínculo contextual con parroquia** (`parish_members.role`).
 
-1. 👥 Visitante (anónimo, sin sesión)
-  Asamblea, fiel cualquiera. No tiene cuenta.
-  Puede: buscar (CU-01), ver canciones/letra/acordes (CU-02), reproducir YouTube (CU-04), ver playlists públicas (CU-05), parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), login con Google (CU-13).
-  No puede: persistir favoritos, transposiciones por usuario, ni nada de admin.
-2. 🎵 Músico / Corista
-  No es un rol técnico distinto en la base — es un uso sobre el visitante o sobre un usuario autenticado con rol member. Lo distingue su intención (ejecutar repertorio, ver acordes, transponer).
-3. 👤 *member* (autenticado básico)
-  Rol global default al loguearse por primera vez (CU-13, CU-18.1).
-  Suma sobre el visitante: favoritos (CU-15, CU-22), transposición persistida en user_song_keys (CU-03), vincularse a N parroquias y elegir una principal (CU-14). Crear sus playlists.
-4. ⛪ *coordinator* (Coordinador parroquial)
-  Rol contextual: se asigna por parroquia en parish_members.role='coordinator'.
-  Suma: crear/editar playlists de su parroquia (la que tiene la estrella) (CU-17), crear/editar canciones en estado draft y enviarlas a revisión (CU-16), crear categorías nuevas (CU-25), gestionar anuncios con alcance parroquial (CU-21). Crear parroquia en estado de revision (busca en Maps) el Admin debe aceptar.
-  Caso especial: Coordinador pastoral = coordinador de la parroquia virtual arquidiocesis; sus playlists pueden marcarse is_archdiocesan.
-5. ✏️ *editor* (Editor de contenido — Comisión Litúrgico-Musical)
-  Rol global en user_roles.
-  Suma: aprobar/rechazar canciones en estado review (CU-16), publicar nuevas versiones, archivar canciones, crear categorías (CU-25).
-6. 👑 *admin* (Administrador)
-  Rol global con permisos plenos.
-  Suma todo: ABM de parroquias (CU-19), ABM de usuarios y asignación de roles (CU-18), gestión de permisos (CU-20), gestión de eventos litúrgicos, anuncios globales (CU-21), playlists de cualquier parroquia (CU-17).
+### 1. 👥 Fiel / Invitado (anónimo, sin sesión)
+
+Asamblea o fiel cualquiera. No tiene cuenta. **Caso de uso central:** escanear un QR pegado en un banco de la iglesia y ver la playlist de la celebración.
+
+- **Puede:** buscar (CU-01), ver canciones con letra y acordes (CU-02), reproducir YouTube (CU-04), ver playlists arquidiocesanas y públicas (CU-05), ver parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD.
+- **NO puede:** transponer (la UI de transposición se oculta — CU-03), crear/editar nada, asociarse a parroquias.
+- **Migración al loguearse:** al hacer su primer login (CU-13), los favoritos guardados en `localStorage` se transfieren a `favorites` en BD.
+
+### 2. 🎵 Músico / Corista
+
+No es un rol técnico distinto: es un patrón de uso del visitante o del `member`. Lo distingue su intención (ejecutar repertorio, ver acordes, transponer). Si quiere persistir transposiciones o crear playlists, debe loguearse y queda como `member`.
+
+### 3. 👤 *member* (autenticado básico)
+
+Rol global default al loguearse por primera vez (CU-13, CU-18.1). Es el "fiel" que decide formar parte del cancionero, o el músico/corista que quiere personalizar.
+
+- **Suma sobre el invitado:**
+  - Transposición persistida en `user_song_keys` (CU-03).
+  - Favoritos persistidos en BD (CU-15, CU-22).
+  - Vincularse a N parroquias y elegir una principal con ⭐ (CU-14).
+  - **Crear playlists personales** (`parish_id = NULL`) — esté o no asociado a una parroquia. Las puede compartir por URL.
+- **Ve:** sus playlists personales + las de las parroquias en que es miembro + las arquidiocesanas + las públicas accedidas por URL.
+- **NO puede:** crear canciones, crear playlists de parroquia, crear anuncios, crear parroquias.
+
+### 4. ⛪ *coordinator* (Coordinador parroquial)
+
+Rol contextual: se asigna por parroquia en `parish_members.role='coordinator'`. Un mismo usuario puede ser coordinator en varias parroquias.
+
+- **Suma sobre member:**
+  - Crear/editar **playlists de su parroquia** (CU-17). Si tiene varias parroquias, debe seleccionar a cuál asignar la playlist.
+  - Crear/editar **canciones en estado `draft`** y enviarlas a `review` para que el editor las apruebe (CU-16).
+  - Adjuntar **`song_files`** (partituras, audios) a una canción en estado `draft`/`review` para enviarlos a aprobación junto con la canción.
+  - Crear **anuncios con alcance parroquial** — solo para su(s) parroquia(s) (CU-21).
+  - Crear **parroquia nueva** en estado `pending` (busca en Maps) — el admin/editor debe aprobarla (CU-19).
+- **Caso especial — Coordinador pastoral:** es el coordinator de la parroquia virtual `arquidiocesis`. Solo él puede marcar sus playlists con `is_archdiocesan = true` (visibles por defecto en todas las parroquias).
+
+### 5. ✏️ *editor* (Editor de contenido — Comisión Litúrgico-Musical)
+
+Rol global en `user_roles`.
+
+- **Suma sobre coordinator (en cuanto a flujo editorial):**
+  - **Aprobar/rechazar canciones** en estado `review` → `published` o `rejected` con `review_notes` (CU-16).
+  - **Aprobar/rechazar `song_files`** (partituras, audios) en estado `review`.
+  - **Aprobar/rechazar parroquias** en estado `pending` → `active` o rechazadas.
+  - Publicar nuevas versiones de canciones existentes.
+  - Archivar canciones.
+  - Crear canciones directamente (puede saltar el flujo de review).
+  - Crear categorías litúrgicas nuevas (CU-25).
+
+### 6. 👑 *admin* (Administrador)
+
+Rol global con permisos plenos.
+
+- **Puede todo, con dos diferencias clave:**
+  - Cuando crea (canciones, playlists, etc.), **se le pregunta a qué parroquia asignar** la creación — no se asume ninguna por defecto.
+  - **Reasignar dueño** de una playlist: cambiar `parish_id`, incluso convertir personal (`NULL`) → de parroquia, o de parroquia → otra parroquia, o de parroquia → personal.
+- **Gestiona:**
+  - ABM de parroquias (CU-19).
+  - ABM de usuarios y asignación de roles globales (CU-18).
+  - Gestión de permisos (CU-20).
+  - Eventos litúrgicos (`liturgical_events`).
+  - **Anuncios globales** (sin filas en `announcement_parishes`) (CU-21).
+  - Playlists de cualquier parroquia (CU-17).
+  - Mover usuarios entre parroquias.
 
 ---
 
@@ -122,8 +167,9 @@ Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en 
 ## CU-03: Transponer tonalidad
 
 - **RF:** RF6
-- **Actor primario:** Músico
-- **Precondiciones:** Estar en la vista de canción con acordes (CU-02).
+- **Actor primario:** Músico (autenticado como `member` o superior)
+- **Precondiciones:** Estar autenticado y en la vista de canción con acordes (CU-02).
+- **Restricción:** **El visitante anónimo no puede transponer.** La UI de transposición se oculta cuando no hay sesión. Si querés transponer, hay que loguearse.
 - **Disparador:** El usuario hace clic en + / − del selector de tono.
 - **Flujo principal:**
   1. El usuario solicita subir o bajar un semitono (o seleccionar un tono específico).
@@ -132,16 +178,14 @@ Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en 
   4. El usuario puede restablecer al tono original.
 - **Flujos alternativos:**
   - 2a. Acorde no estándar: el sistema preserva el acorde tal cual y registra advertencia (no bloqueante).
-  - 1a. **Usuario autenticado:** el tono elegido se persiste en `user_song_keys` (server-side) y queda asociado a su cuenta; al volver a abrir la canción desde cualquier dispositivo se restaura automáticamente.
-  - 1b. **Usuario anónimo:** el tono elegido se persiste solo en `localStorage` por canción mientras dure el navegador.
+  - 1a. El tono elegido se persiste en `user_song_keys` (server-side) y queda asociado a su cuenta; al volver a abrir la canción desde cualquier dispositivo se restaura automáticamente.
 - **Precedencia del tono inicial al abrir una canción** (de mayor a menor prioridad):
   1. **Contexto de playlist** — si la canción se abre desde una playlist y `playlist_songs.key_override` está definido, se usa ese tono. El coordinador armó la playlist pensando esa tonalidad para la celebración.
-  2. **Preferencia del usuario** — `user_song_keys` (si está autenticado) o `localStorage` (si es anónimo).
+  2. **Preferencia del usuario** — `user_song_keys`.
   3. **Tono original** — `songs.original_key`.
   - Si el usuario transpone mientras está en contexto de playlist, el cambio se aplica solo a la sesión actual y **no** sobreescribe `playlist_songs.key_override` ni `user_song_keys`.
 - **Postcondiciones:**
-  - Anónimo: tono guardado en `localStorage` por canción.
-  - Autenticado fuera de playlist: tono guardado en `user_song_keys (user_id, song_id)` y disponible en cualquier dispositivo.
+  - Fuera de playlist: tono guardado en `user_song_keys (user_id, song_id)` y disponible en cualquier dispositivo.
   - Dentro de playlist: ningún cambio persistido (override sólo en sesión).
 
 ---
@@ -323,7 +367,9 @@ Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en 
 - **Flujos alternativos:**
   - 2a. El usuario cancela: vuelve a la página origen sin sesión.
   - 2b. Error de OAuth: se muestra mensaje y opción de reintentar.
-- **Postcondiciones:** Sesión activa. Si es la primera vez, se crea el registro en `users`.
+- **Postcondiciones:** Sesión activa. Si es la primera vez:
+  - Se crea el registro en `users` (vía trigger `on_auth_user_created`).
+  - **Migración de favoritos de invitado:** los favoritos guardados en `localStorage` durante la navegación anónima se transfieren a `favorites` en BD y se borran del `localStorage`. Si un favorito ya existía en BD (poco probable en primer login), se ignora el duplicado.
 
 ---
 
@@ -347,20 +393,20 @@ Hay dos dimensiones que conviven: roles globales (catálogo roles, asignados en 
 ## CU-15: Marcar favoritos
 
 - **RF:** RF18
-- **Actor primario:** Usuario autenticado
-- **Precondiciones:** Sesión activa.
+- **Actor primario:** Visitante o usuario autenticado.
+- **Precondiciones:** Ninguna (también funciona sin sesión).
 - **Disparador:** El usuario hace clic en el ícono de corazón presente en:
   - la página de detalle de una canción, playlist o parroquia,
   - el menú contextual "⋯" de un ítem de listado (CU-23),
   - el botón "Agregar a Mis favoritos" del menú contextual.
-- **Flujo principal:**
+- **Flujo principal (autenticado):**
   1. El sistema registra el like del usuario sobre el recurso (`favorites (user_id, target_kind, target_id)`).
   2. El ícono de corazón pasa a estado "lleno" en todas las vistas que muestran ese recurso.
   3. El recurso aparece en la sección "Mis favoritos" (CU-22) ordenado por fecha de marca descendente.
   4. El usuario puede quitar el favorito desde cualquiera de los puntos de entrada (toggle).
 - **Flujos alternativos:**
-  - 1a. **Sin sesión:** el ícono de corazón es visible pero al hacer clic se invita a iniciar sesión (CU-13). No se persiste nada.
-- **Postcondiciones:** Like persistido o eliminado en `favorites`.
+  - 1a. **Visitante (sin sesión):** el ícono de corazón funciona igual y se persiste en `localStorage` del navegador (no en BD). Al loguearse por primera vez, los favoritos guardados en `localStorage` se transfieren a `favorites` (ver CU-13).
+- **Postcondiciones:** Like persistido o eliminado: en `favorites` (autenticado) o en `localStorage` (invitado).
 
 ---
 
@@ -453,6 +499,8 @@ Edición específica de la información musical.
 - **URL canónica:** `/playlists/{uuid}`. El antiguo `slug` quedó como texto libre y no se usa más en URLs (UNIQUE eliminado por la migración 0006).
 - **Dueño:** `playlists.parish_id` (parroquia creadora) + `playlists.created_by` (usuario).
 - **Visibilidad:** `playlists.visibility ∈ {public, unlisted, private}`.
+- **Compartir por URL:** quien tenga la URL `/playlists/{uuid}` puede ver la playlist **independientemente de `visibility`**. La visibilidad solo decide si la playlist aparece o no en listados públicos / búsquedas. Esto vale incluso para playlists `private` si el dueño compartió el link explícitamente.
+- **Playlist personal (`parish_id IS NULL`):** rol `member` puede crear playlists sin parroquia. El dueño es `created_by`. Aparecen en sus propios listados y se comparten por URL como cualquier otra. El admin puede reasignar el `parish_id` (convertir personal → de parroquia, o viceversa).
 - **Compartir entre parroquias:** tabla `playlist_parish_subscriptions(playlist_id, parish_id)`. Otra parroquia puede "suscribirse" a una playlist pública para que aparezca en su listado.
 - **Arquidiocesanas:** flag `playlists.is_archdiocesan`. Si está en `true`, la playlist se ve por defecto en el listado de todas las parroquias (sin necesidad de suscripción explícita). Solo se permite marcar `is_archdiocesan` cuando la parroquia dueña es `arquidiocesis`.
 

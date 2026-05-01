@@ -17,6 +17,11 @@ const secciones: Seccion[] = [
     titulo: "Anuncios",
     descripcion: "Anuncios y novedades destacadas en la home, con destino global o multi-parroquia.",
   },
+  {
+    href: "/admin/playlists",
+    titulo: "Playlists generales",
+    descripcion: "Repertorio arquidiocesano: alta, edición y baja de playlists visibles en todas las parroquias.",
+  },
 ];
 
 export default function AdminHomePage() {

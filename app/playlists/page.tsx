@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import {
-  listMyPlaylistsGrouped,
-  type ParishPlaylistItem,
-} from "@/lib/playlists";
+import { listMyPlaylistsSections } from "@/lib/playlists";
 import { GoogleSignInButton } from "@/app/perfil/google-sign-in-button";
+import { PlaylistCard } from "./playlist-card";
 
 export const metadata = {
   title: "Playlists · Cancionero Arquidiocesano",
@@ -36,9 +34,13 @@ export default async function PlaylistsPage() {
     );
   }
 
-  const groups = await listMyPlaylistsGrouped(user.id);
+  const sections = await listMyPlaylistsSections(user.id);
+  const isEmpty =
+    sections.personal.length === 0 &&
+    sections.byParish.length === 0 &&
+    sections.archdiocesan.length === 0;
 
-  if (groups.length === 0) {
+  if (isEmpty) {
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
         <header className="flex flex-col gap-2">
@@ -49,7 +51,8 @@ export default async function PlaylistsPage() {
         </header>
         <section className="rounded-2xl border border-border bg-sidebar p-6">
           <p className="text-sm normal-case text-muted-foreground">
-            Vinculá tu parroquia para ver sus playlists.
+            Todavía no tenés playlists. Vinculá tu parroquia o creá una playlist
+            personal desde el menú &quot;…&quot; de cualquier canción.
           </p>
           <Link
             href="/perfil"
@@ -67,73 +70,83 @@ export default async function PlaylistsPage() {
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Tus playlists</h1>
         <p className="text-base normal-case text-muted-foreground">
-          Repertorios de las parroquias en las que participás.
+          Tus repertorios personales, los de tus parroquias y los de la
+          Arquidiócesis.
         </p>
       </header>
 
-      {groups.map((g) => (
+      {sections.personal.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
+            Mis playlists
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {sections.personal.map((p) => (
+              <PlaylistCard
+                key={p.id}
+                playlist={{
+                  id: p.id,
+                  name: p.name,
+                  description: p.description,
+                  event_date: p.event_date,
+                  parish: p.parish,
+                }}
+                badge="Personal"
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {sections.byParish.map((g) => (
         <section key={g.parish.id} className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-              {g.parish.name}
-            </h2>
-            <Link
-              href={`/parroquias/${g.parish.slug}/playlists`}
-              className="text-sm normal-case text-primary hover:underline"
-            >
-              Ver todas
-            </Link>
-          </div>
-          {g.items.length === 0 ? (
-            <p className="rounded-xl border border-border bg-sidebar p-4 text-sm normal-case text-muted-foreground">
-              Esta parroquia todavía no tiene playlists.
-            </p>
-          ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {g.items.map((p) => (
-                <PlaylistCard key={p.id} playlist={p} />
-              ))}
-            </ul>
-          )}
+          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
+            {g.parish.name}
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {g.items.map((p) => (
+              <PlaylistCard
+                key={p.id}
+                playlist={{
+                  id: p.id,
+                  name: p.name,
+                  description: p.description,
+                  event_date: p.event_date,
+                  parish: p.parish,
+                }}
+                badge={
+                  p.relation === "subscribed" && p.parish
+                    ? `Compartida por ${p.parish.name}`
+                    : null
+                }
+              />
+            ))}
+          </ul>
         </section>
       ))}
-    </main>
-  );
-}
 
-function PlaylistCard({ playlist }: { playlist: ParishPlaylistItem }) {
-  return (
-    <li>
-      <Link
-        href={`/playlists/${playlist.id}`}
-        className="flex h-full flex-col gap-1 rounded-xl border border-border bg-background p-4 transition-colors hover:border-primary"
-      >
-        <span className="text-base text-primary">{playlist.name}</span>
-        {playlist.relation === "archdiocesan" && (
-          <span className="text-xs uppercase tracking-wide text-secondary">
-            De la Arquidiócesis
-          </span>
-        )}
-        {playlist.relation === "subscribed" && playlist.parish && (
-          <span className="text-xs uppercase tracking-wide text-secondary">
-            Compartida por {playlist.parish.name}
-          </span>
-        )}
-        {playlist.event_date && (
-          <span className="text-xs normal-case text-muted-foreground">
-            {new Date(playlist.event_date).toLocaleDateString("es-AR", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            })}
-          </span>
-        )}
-        {playlist.description && (
-          <span className="text-sm normal-case text-muted-foreground">
-            {playlist.description}
-          </span>
-        )}
-      </Link>
-    </li>
+      {sections.archdiocesan.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
+            Arquidiócesis
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {sections.archdiocesan.map((p) => (
+              <PlaylistCard
+                key={p.id}
+                playlist={{
+                  id: p.id,
+                  name: p.name,
+                  description: p.description,
+                  event_date: p.event_date,
+                  parish: p.parish,
+                }}
+                badge="De la Arquidiócesis"
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+    </main>
   );
 }

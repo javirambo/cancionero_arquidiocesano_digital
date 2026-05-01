@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { formatearFechaHora } from "@/lib/dates";
 
 type AnnouncementRow = {
   id: string;
@@ -12,14 +13,7 @@ type AnnouncementRow = {
 
 type ParishRow = { id: string; slug: string; name: string };
 
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const fmt = (iso: string) => formatearFechaHora(iso);
 
 export default async function AdminAnunciosPage() {
   const supabase = await createClient();

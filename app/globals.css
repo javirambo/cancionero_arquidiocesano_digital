@@ -10,6 +10,7 @@
   /* Marca / acción */
   --color-primary: #8b1a1a;          /* rojo litúrgico para títulos en mayúscula */
   --color-primary-hover: #6f1414;
+  --color-primary-foreground: #ffffff;
   --color-secondary: #c9a227;        /* dorado litúrgico, tentativo */
   --color-brand-dark: #2a0a0a;
 
@@ -17,6 +18,7 @@
   --color-success: #2f7d3a;
   --color-warning: #c08a00;
   --color-destructive: #b00020;
+  --color-destructive-foreground: #ffffff;
 
   /* Tema light (por defecto) */
   --theme-background: #fafaf7;       /* casi blanco, cálido */
@@ -40,11 +42,13 @@
   /* Colores expuestos como utilidades Tailwind (bg-primary, text-foreground, etc.) */
   --color-primary: var(--color-primary);
   --color-primary-hover: var(--color-primary-hover);
+  --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-secondary);
   --color-brand-dark: var(--color-brand-dark);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: #ffffff;
 
   --color-background: var(--theme-background);
   --color-foreground: var(--theme-foreground);

@@ -89,3 +89,11 @@ export function CloseIcon(): ReactElement {
     </svg>
   );
 }
+
+export function ChevronRightIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}

@@ -48,6 +48,23 @@ export default async function EditarPlaylistPage({
 
   const showArchdiocesan = pl.parish?.slug === "arquidiocesis";
 
+  // Sólo admin puede reasignar el dueño de la playlist (CU-17).
+  let adminParishOptions:
+    | { id: string; slug: string; name: string }[]
+    | undefined;
+  if (isAdmin) {
+    const { data: parishes } = await supabase
+      .from("parishes")
+      .select("id, slug, name")
+      .eq("status", "active")
+      .order("name");
+    adminParishOptions = (parishes ?? []) as {
+      id: string;
+      slug: string;
+      name: string;
+    }[];
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-8">
       <Link
@@ -77,11 +94,12 @@ export default async function EditarPlaylistPage({
         </h2>
         <PlaylistForm
           mode="edit"
-          parishSlug={pl.parish?.slug ?? ""}
+          parishSlug={pl.parish?.slug ?? null}
           showArchdiocesan={showArchdiocesan}
+          adminParishOptions={adminParishOptions}
           initial={{
             id: pl.id,
-            parish_id: pl.parish?.id ?? "",
+            parish_id: pl.parish?.id ?? null,
             name: pl.name,
             description: pl.description ?? "",
             event_date: pl.event_date ?? "",

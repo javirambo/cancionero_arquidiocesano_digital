@@ -4,6 +4,7 @@ import { getPlaylistById } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
 import { PlaylistView } from "./playlist-view";
 import { QrButton } from "@/app/components/qr-button";
+import { formatearFecha } from "@/lib/dates";
 
 export default async function PlaylistPage({
   params,
@@ -67,12 +68,7 @@ export default async function PlaylistPage({
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             Playlist
-            {pl.event_date &&
-              ` · ${new Date(pl.event_date).toLocaleDateString("es-AR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}`}
+            {pl.event_date && ` · ${formatearFecha(pl.event_date)}`}
           </p>
           <h1 className="text-3xl">{pl.name}</h1>
           {pl.is_archdiocesan && (

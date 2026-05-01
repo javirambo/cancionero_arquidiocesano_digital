@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getParishBySlug } from "@/lib/songs";
 import { listPlaylistsForParish, type ParishPlaylistItem } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
+import { formatearFecha } from "@/lib/dates";
 
 export default async function ParroquiaPlaylistsPage({
   params,
@@ -104,11 +105,7 @@ export default async function ParroquiaPlaylistsPage({
                       )}
                       {p.event_date && (
                         <span className="text-xs normal-case text-muted-foreground">
-                          {new Date(p.event_date).toLocaleDateString("es-AR", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })}
+                          {formatearFecha(p.event_date)}
                         </span>
                       )}
                     </Link>

@@ -5,6 +5,8 @@ import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slug";
 
+export type ParishStatus = "active" | "pending" | "inactive";
+
 export type ParishFormData = {
   id?: string;
   name: string;
@@ -14,7 +16,7 @@ export type ParishFormData = {
   phone: string;
   email: string;
   description: string;
-  is_active: boolean;
+  status: ParishStatus;
 };
 
 type Candidate = {
@@ -33,7 +35,7 @@ const empty: ParishFormData = {
   phone: "",
   email: "",
   description: "",
-  is_active: true,
+  status: "active",
 };
 
 export function ParroquiaForm({
@@ -174,7 +176,7 @@ export function ParroquiaForm({
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       description: form.description.trim() || null,
-      is_active: form.is_active,
+      status: form.status,
     };
 
     if (mode === "create") {
@@ -346,24 +348,29 @@ export function ParroquiaForm({
             className={inputClass}
           />
         </Field>
-        <Field label={form.is_active ? "Activa" : "Eliminada"} full>
-          <label className="flex items-center gap-2 text-sm normal-case">
-            <input
-              type="checkbox"
-              checked={!form.is_active}
-              onChange={(e) => {
-                const wantInactive = e.target.checked;
-                if (wantInactive && mode === "edit") {
-                  const ok = window.confirm(
-                    `¿Eliminar la parroquia "${form.name}"? Dejará de aparecer en la app pública. Podés reactivarla más tarde.`
-                  );
-                  if (!ok) return;
-                }
-                update("is_active", !wantInactive);
-              }}
-            />
-            {form.is_active ? "Desactivar parroquia" : "Reactivar parroquia"}
-          </label>
+        <Field
+          label="Estado"
+          hint="Activa: visible en listados. Pendiente: alta de un member, esperando revisión. Inactiva: dada de baja."
+          full
+        >
+          <select
+            value={form.status}
+            onChange={(e) => {
+              const next = e.target.value as ParishStatus;
+              if (next === "inactive" && mode === "edit") {
+                const ok = window.confirm(
+                  `¿Marcar "${form.name}" como inactiva? Dejará de aparecer en la app pública. Podés reactivarla más tarde.`
+                );
+                if (!ok) return;
+              }
+              update("status", next);
+            }}
+            className={inputClass}
+          >
+            <option value="active">Activa</option>
+            <option value="pending">Pendiente de revisión</option>
+            <option value="inactive">Inactiva</option>
+          </select>
         </Field>
       </div>
 
