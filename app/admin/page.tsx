@@ -22,6 +22,11 @@ const secciones: Seccion[] = [
     titulo: "Playlists generales",
     descripcion: "Repertorio arquidiocesano: alta, edición y baja de playlists visibles en todas las parroquias.",
   },
+  {
+    href: "/admin/usuarios",
+    titulo: "Usuarios",
+    descripcion: "Asignación de roles globales y membresías por parroquia. El alta sigue siendo automática vía OAuth.",
+  },
 ];
 
 export default function AdminHomePage() {

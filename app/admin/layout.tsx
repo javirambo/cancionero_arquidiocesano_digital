@@ -35,20 +35,25 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-      <nav className="flex items-center gap-4 border-b border-border pb-3 text-sm normal-case">
-        <span className="uppercase tracking-[0.2em] text-secondary">
+      <div className="flex flex-col gap-2 border-b border-border pb-3">
+        <span className="text-sm uppercase tracking-[0.2em] text-secondary">
           Administración
         </span>
-        <Link href="/admin/parroquias" className="text-primary hover:underline">
-          Parroquias
-        </Link>
-        <Link href="/admin/anuncios" className="text-primary hover:underline">
-          Anuncios
-        </Link>
-        <Link href="/admin/playlists" className="text-primary hover:underline">
-          Playlists
-        </Link>
-      </nav>
+        <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm normal-case">
+          <Link href="/admin/parroquias" className="text-primary hover:underline">
+            Parroquias
+          </Link>
+          <Link href="/admin/anuncios" className="text-primary hover:underline">
+            Anuncios
+          </Link>
+          <Link href="/admin/playlists" className="text-primary hover:underline">
+            Playlists
+          </Link>
+          <Link href="/admin/usuarios" className="text-primary hover:underline">
+            Usuarios
+          </Link>
+        </nav>
+      </div>
       {children}
     </div>
   );

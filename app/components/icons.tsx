@@ -97,3 +97,13 @@ export function ChevronRightIcon(): ReactElement {
     </svg>
   );
 }
+
+export function HelpIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true" width={16} height={16}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}

@@ -29,7 +29,11 @@ Orden sugerido para evitar dependencias cruzadas. Cada uno enlaza al CU correspo
 
 [x] **CU-17 — Admin reasigna dueño de playlist.** Cambiar `parish_id` (incluso personal ↔ parroquia). UI desde `/playlists/[id]/editar` solo para admin. Confirmación si la playlist era arquidiocesana y se mueve fuera.
 
-[ ] **CU-18 — /admin/usuarios.** ABM de usuarios + asignación de roles globales y `parish_members.role`. Sin alta manual (el alta sigue por OAuth). Bloquear quitar el último admin.
+[x] **CU-18 — /admin/usuarios.** ABM de usuarios + asignación de roles globales (admin/editor) y `parish_members.role` (member/coordinator). Sin alta manual (sigue por OAuth). Bloquea quitar el último admin. "Desvincular usuario" elimina roles globales + membresías; las playlists personales del usuario se conservan.
+
+[ ] ***arreglar vista celular de edicion de playlist (admin)***
+    http://localhost:3000/admin/playlists
+    se ven feos los items!
 
 [ ] **CU-03 — Ocultar transposición al invitado.** La UI de + / − de tono debe esconderse cuando no hay sesión.
 
