@@ -80,38 +80,128 @@ export async function listAllPublicPlaylists(): Promise<PlaylistSummary[]> {
   );
 }
 
-// Para una vista "mis playlists": agrupa por parroquia las playlists del
-// usuario logueado, considerando todas las parroquias en las que es miembro.
-export type MyPlaylistsGroup = {
-  parish: { id: string; slug: string; name: string };
-  items: ParishPlaylistItem[];
+// Secciones para `/playlists` (CU-17): personales privadas del usuario,
+// playlists de las parroquias donde es miembro, y arquidiocesanas globales.
+// Se aplica dedupe por id con prioridad: personal > parroquia > arquidiocesana.
+export type MyPlaylistsSections = {
+  personal: PlaylistSummary[];
+  byParish: {
+    parish: { id: string; slug: string; name: string };
+    items: ParishPlaylistItem[];
+  }[];
+  archdiocesan: PlaylistSummary[];
 };
 
-export async function listMyPlaylistsGrouped(
+export async function listMyPlaylistsSections(
   userId: string
-): Promise<MyPlaylistsGroup[]> {
+): Promise<MyPlaylistsSections> {
   const supabase = await createClient();
-  const { data: members, error } = await supabase
+
+  // 1. Personales del usuario (parish_id IS NULL y created_by = user).
+  const personalReq = supabase
+    .from("playlists")
+    .select(PLAYLIST_SELECT)
+    .is("parish_id", null)
+    .eq("created_by", userId)
+    .order("event_date", { ascending: false, nullsFirst: false });
+
+  // 2. Parroquias donde el usuario es miembro.
+  const membersReq = supabase
     .from("parish_members")
     .select("parish_id, parishes(id, slug, name)")
     .eq("user_id", userId);
-  if (error) throw error;
 
-  type Row = { id: string; slug: string; name: string };
-  const parishes = (members ?? [])
+  const [personalRes, membersRes] = await Promise.all([personalReq, membersReq]);
+  if (personalRes.error) throw personalRes.error;
+  if (membersRes.error) throw membersRes.error;
+
+  type ParishRow = { id: string; slug: string; name: string };
+  const parishes = (membersRes.data ?? [])
     .map((m) => {
-      const rel = m.parishes as Row | Row[] | null;
+      const rel = m.parishes as ParishRow | ParishRow[] | null;
       return Array.isArray(rel) ? rel[0] : rel;
     })
-    .filter((p): p is Row => Boolean(p));
+    .filter((p): p is ParishRow => Boolean(p));
 
-  const groups = await Promise.all(
-    parishes.map(async (par) => {
-      const items = await listPlaylistsForParish(par.id, { parishSlug: par.slug });
-      return { parish: par, items };
-    })
+  type Row = Parameters<typeof rowToSummary>[0];
+  const personal = (personalRes.data ?? []).map((r) =>
+    rowToSummary(r as unknown as Row)
   );
-  return groups;
+
+  // Conjunto para dedupe.
+  const seen = new Set<string>(personal.map((p) => p.id));
+
+  // 3. Por parroquia: own + subscribed (sin arquidiocesanas — esas van a su sección).
+  const byParish: MyPlaylistsSections["byParish"] = [];
+  for (const par of parishes) {
+    const isArchdiocesisItself = par.slug === "arquidiocesis";
+
+    const ownReq = supabase
+      .from("playlists")
+      .select(PLAYLIST_SELECT)
+      .eq("parish_id", par.id)
+      .order("event_date", { ascending: false, nullsFirst: false });
+
+    const subsReq = supabase
+      .from("playlist_parish_subscriptions")
+      .select(`playlist_id, playlists(${PLAYLIST_SELECT})`)
+      .eq("parish_id", par.id);
+
+    const [ownRes, subsRes] = await Promise.all([ownReq, subsReq]);
+    if (ownRes.error) throw ownRes.error;
+    if (subsRes.error) throw subsRes.error;
+
+    const own = (ownRes.data ?? []).map((r) => ({
+      ...rowToSummary(r as unknown as Row),
+      relation: "own" as ParishPlaylistRelation,
+    }));
+
+    const subsRaw = (subsRes.data ?? []) as Array<{
+      playlists: Row | Row[] | null;
+    }>;
+    const subs = subsRaw
+      .map((s) => {
+        const pl = Array.isArray(s.playlists) ? s.playlists[0] : s.playlists;
+        if (!pl) return null;
+        return {
+          ...rowToSummary(pl),
+          relation: "subscribed" as ParishPlaylistRelation,
+        };
+      })
+      .filter((p): p is ParishPlaylistItem => p !== null);
+
+    // Si la parroquia es la propia "arquidiocesis", sus playlists van a la
+    // sección arquidiocesana, no acá.
+    const items = isArchdiocesisItself
+      ? []
+      : [...own, ...subs].filter((p) => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+
+    if (items.length > 0) {
+      byParish.push({ parish: par, items });
+    }
+  }
+
+  // 4. Arquidiocesanas globales (sin las ya vistas).
+  const { data: archRows, error: archErr } = await supabase
+    .from("playlists")
+    .select(PLAYLIST_SELECT)
+    .eq("is_archdiocesan", true)
+    .order("event_date", { ascending: false, nullsFirst: false });
+  if (archErr) throw archErr;
+
+  const archdiocesan = (archRows ?? [])
+    .map((r) => rowToSummary(r as unknown as Row))
+    .filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+
+  return { personal, byParish, archdiocesan };
 }
 
 export async function listPlaylistsForParish(parishId: string, options?: {

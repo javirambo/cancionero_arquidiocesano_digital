@@ -8,8 +8,10 @@ import {
   FilesIcon,
   HeartIcon,
   MoreIcon,
+  ChevronRightIcon,
 } from "./icons";
 import { useFavorites } from "./favorites";
+import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 
 export type SongRowItem = {
   id: string;
@@ -105,6 +107,7 @@ export function SongRow({ index, song, playlistContext }: Props) {
       </Link>
 
       <RowMenu
+        songId={song.id}
         href={href}
         title={song.title}
         favorited={fav}
@@ -124,6 +127,7 @@ export function SongRow({ index, song, playlistContext }: Props) {
 }
 
 function RowMenu({
+  songId,
   href,
   title,
   favorited,
@@ -132,6 +136,7 @@ function RowMenu({
   canRemoveFromPlaylist,
   canManagePlaylist,
 }: {
+  songId: string;
   href: string;
   title: string;
   favorited: boolean;
@@ -141,6 +146,7 @@ function RowMenu({
   canManagePlaylist: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [view, setView] = useState<"main" | "addToPlaylist">("main");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -159,7 +165,10 @@ function RowMenu({
     };
   }, [open]);
 
-  const close = () => setOpen(false);
+  const close = () => {
+    setOpen(false);
+    setView("main");
+  };
 
   async function share() {
     close();
@@ -205,50 +214,67 @@ function RowMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-10 z-30 w-60 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+          className="absolute right-0 top-10 z-30 w-72 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
         >
-          <ul className="py-1 text-sm">
-            {isAuthenticated ? (
-              <>
+          {view === "addToPlaylist" ? (
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => setView("main")}
+                  className="text-xs uppercase tracking-[0.15em] text-secondary hover:underline"
+                >
+                  ← Volver
+                </button>
+                <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+                  Agregar a playlist
+                </span>
+              </div>
+              <AddToPlaylistMenu
+                songId={songId}
+                songTitle={title}
+                onClose={close}
+              />
+            </div>
+          ) : (
+            <ul className="py-1 text-sm">
+              {isAuthenticated ? (
                 <MenuButton
                   label="Agregar a playlist"
-                  disabled
-                  onClick={close}
+                  hasSubmenu
+                  onClick={() => setView("addToPlaylist")}
                 />
-                <MenuLink label="Ver canción" href={href} onClick={close} />
-                <MenuButton label="Compartir" onClick={share} />
-                <MenuButton
-                  label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
-                  onClick={() => {
-                    onToggleFavorite();
-                    close();
-                  }}
-                />
-                {canRemoveFromPlaylist && (
-                  <MenuButton
-                    label="Quitar de esta playlist"
-                    disabled={!canManagePlaylist}
-                    tooltip={
-                      canManagePlaylist
-                        ? undefined
-                        : "Necesitás permisos sobre esta playlist"
-                    }
-                    onClick={close}
-                    destructive
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                <MenuLink label="Ver canción" href={href} onClick={close} />
+              ) : (
                 <MenuLink
-                  label="Iniciá sesión para más opciones…"
+                  label="Iniciá sesión para usar playlists"
                   href="/perfil"
                   onClick={close}
                 />
-              </>
-            )}
-          </ul>
+              )}
+              <MenuLink label="Ver canción" href={href} onClick={close} />
+              <MenuButton label="Compartir" onClick={share} />
+              <MenuButton
+                label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
+                onClick={() => {
+                  onToggleFavorite();
+                  close();
+                }}
+              />
+              {canRemoveFromPlaylist && (
+                <MenuButton
+                  label="Quitar de esta playlist"
+                  disabled={!canManagePlaylist}
+                  tooltip={
+                    canManagePlaylist
+                      ? undefined
+                      : "Necesitás permisos sobre esta playlist"
+                  }
+                  onClick={close}
+                  destructive
+                />
+              )}
+            </ul>
+          )}
         </div>
       )}
     </div>
@@ -273,12 +299,14 @@ function MenuButton({
   disabled,
   tooltip,
   destructive,
+  hasSubmenu,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   tooltip?: string;
   destructive?: boolean;
+  hasSubmenu?: boolean;
 }) {
   return (
     <li>
@@ -288,9 +316,15 @@ function MenuButton({
         title={tooltip}
         disabled={disabled}
         onClick={onClick}
+        aria-haspopup={hasSubmenu ? "menu" : undefined}
         className={menuItemClass(disabled, destructive)}
       >
-        {label}
+        <span className="flex-1">{label}</span>
+        {hasSubmenu && (
+          <span className="ml-2 text-muted-foreground">
+            <ChevronRightIcon />
+          </span>
+        )}
       </button>
     </li>
   );

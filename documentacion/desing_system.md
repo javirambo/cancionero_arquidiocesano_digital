@@ -49,9 +49,9 @@ Valores actuales tomados de [`app/globals.css`](../app/globals.css). Tentativos 
 
 | Token              | Hex       | Muestra                                                            | Uso                                  |
 |--------------------|-----------|--------------------------------------------------------------------|--------------------------------------|
-| `background`       | `#0e0c0a` | ![#0e0c0a](https://placehold.co/16x16/0e0c0a/0e0c0a.png)           | Fondo de página                       |
+| `background`       | `#2d2420` | ![#2d2420](https://placehold.co/16x16/2d2420/2d2420.png)           | Fondo de página                       |
 | `foreground`       | `#f4efe6` | ![#f4efe6](https://placehold.co/16x16/f4efe6/f4efe6.png)           | Texto principal                       |
-| `sidebar`          | `#181513` | ![#181513](https://placehold.co/16x16/181513/181513.png)           | Header, footer y paneles laterales    |
+| `sidebar`          | `#614f47` | ![#614f47](https://placehold.co/16x16/614f47/614f47.png)           | Header, footer y paneles laterales    |
 | `border`           | `#2b2722` | ![#2b2722](https://placehold.co/16x16/2b2722/2b2722.png)           | Bordes de tarjetas, separadores       |
 | `muted-foreground` | `#a39b8b` | ![#a39b8b](https://placehold.co/16x16/a39b8b/a39b8b.png)           | Texto secundario, metadata            |
 

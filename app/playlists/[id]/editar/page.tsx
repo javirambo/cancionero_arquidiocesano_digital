@@ -4,6 +4,7 @@ import { getPlaylistById } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
 import { PlaylistForm } from "@/app/playlists/playlist-form";
 import { PlaylistSongsEditor } from "./songs-editor";
+import { AccordionSection } from "@/app/components/accordion-section";
 
 export default async function EditarPlaylistPage({
   params,
@@ -48,6 +49,23 @@ export default async function EditarPlaylistPage({
 
   const showArchdiocesan = pl.parish?.slug === "arquidiocesis";
 
+  // Sólo admin puede reasignar el dueño de la playlist (CU-17).
+  let adminParishOptions:
+    | { id: string; slug: string; name: string }[]
+    | undefined;
+  if (isAdmin) {
+    const { data: parishes } = await supabase
+      .from("parishes")
+      .select("id, slug, name")
+      .eq("status", "active")
+      .order("name");
+    adminParishOptions = (parishes ?? []) as {
+      id: string;
+      slug: string;
+      name: string;
+    }[];
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-8">
       <Link
@@ -71,17 +89,15 @@ export default async function EditarPlaylistPage({
       </Link>
       <h1 className="text-2xl">Editar: {pl.name}</h1>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Datos
-        </h2>
+      <AccordionSection title="Datos" defaultOpen={false}>
         <PlaylistForm
           mode="edit"
-          parishSlug={pl.parish?.slug ?? ""}
+          parishSlug={pl.parish?.slug ?? null}
           showArchdiocesan={showArchdiocesan}
+          adminParishOptions={adminParishOptions}
           initial={{
             id: pl.id,
-            parish_id: pl.parish?.id ?? "",
+            parish_id: pl.parish?.id ?? null,
             name: pl.name,
             description: pl.description ?? "",
             event_date: pl.event_date ?? "",
@@ -89,12 +105,9 @@ export default async function EditarPlaylistPage({
             is_archdiocesan: pl.is_archdiocesan,
           }}
         />
-      </section>
+      </AccordionSection>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Canciones
-        </h2>
+      <AccordionSection title="Canciones" defaultOpen>
         <PlaylistSongsEditor
           playlistId={pl.id}
           initialSongs={pl.songs.map((s) => ({
@@ -104,7 +117,7 @@ export default async function EditarPlaylistPage({
             title: s.title,
           }))}
         />
-      </section>
+      </AccordionSection>
     </main>
   );
 }

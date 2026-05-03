@@ -4,10 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/perfil";
+  const next = searchParams.get("next") ?? "/";
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/perfil?error=missing_code`);
+    return NextResponse.redirect(`${origin}/?error=missing_code`);
   }
 
   const supabase = await createClient();
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      `${origin}/perfil?error=${encodeURIComponent(error.message)}`
+      `${origin}/?error=${encodeURIComponent(error.message)}`
     );
   }
 

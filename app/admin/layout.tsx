@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminAccess } from "./access";
 
 export const dynamic = "force-dynamic";
 
@@ -10,42 +10,50 @@ export const metadata = {
 };
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await getAdminAccess();
+  if (!access.userId) redirect("/perfil");
 
-  if (!user) redirect("/perfil");
+  // El acceso a `/admin/*` lo tienen admin, editor y cualquier
+  // coordinator (que puede gestionar anuncios de sus parroquias).
+  // Cada sub-página verifica permisos más específicos.
+  const canAccess =
+    access.isAdmin || access.isEditor || access.isAnyCoordinator;
+  if (!canAccess) redirect("/perfil");
 
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("roles(name)")
-    .eq("user_id", user.id);
-
-  const roleNames = (roles ?? [])
-    .map((r) => {
-      const rel = r.roles as { name: string } | { name: string }[] | null;
-      const single = Array.isArray(rel) ? rel[0] : rel;
-      return single?.name;
-    })
-    .filter((n): n is string => Boolean(n));
-
-  const isAdmin = roleNames.includes("admin");
-  if (!isAdmin) redirect("/perfil");
+  // El sub-nav muestra solo las secciones que el usuario puede usar.
+  const showAdminLinks = access.isAdmin;
+  const showAnnouncements = access.isAdmin || access.isEditor || access.isAnyCoordinator;
+  const showEditorLinks = access.isAdmin || access.isEditor;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-      <nav className="flex items-center gap-4 border-b border-border pb-3 text-sm normal-case">
-        <span className="uppercase tracking-[0.2em] text-secondary">
+      <div className="flex flex-col gap-2 border-b border-border pb-3">
+        <span className="text-sm uppercase tracking-[0.2em] text-secondary">
           Administración
         </span>
-        <Link href="/admin/parroquias" className="text-primary hover:underline">
-          Parroquias
-        </Link>
-        <Link href="/admin/anuncios" className="text-primary hover:underline">
-          Anuncios
-        </Link>
-      </nav>
+        <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm normal-case">
+          {showAdminLinks && (
+            <Link href="/admin/parroquias" className="text-primary hover:underline">
+              Parroquias
+            </Link>
+          )}
+          {showAnnouncements && (
+            <Link href="/admin/anuncios" className="text-primary hover:underline">
+              Anuncios
+            </Link>
+          )}
+          {showEditorLinks && (
+            <Link href="/admin/playlists" className="text-primary hover:underline">
+              Playlists
+            </Link>
+          )}
+          {showAdminLinks && (
+            <Link href="/admin/usuarios" className="text-primary hover:underline">
+              Usuarios
+            </Link>
+          )}
+        </nav>
+      </div>
       {children}
     </div>
   );

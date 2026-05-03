@@ -192,13 +192,12 @@ Archivos asociados a una canción (puede haber varias partituras y audios). Apun
 ---
 
 ### `playlists`
-Lista de canciones de una parroquia para una celebración o uso general. La URL canónica es `/playlists/{id}` (UUID); el `slug` quedó como texto libre opcional sin restricción de unicidad (migración 0006).
+Lista de canciones de una parroquia para una celebración o uso general. La URL canónica es `/playlists/{id}` (UUID).
 
 | Columna           | Tipo        | Notas                                                     |
 | ----------------- | ----------- | --------------------------------------------------------- |
 | `id`              | uuid        | PK                                                        |
 | `parish_id`       | uuid        | FK → `parishes.id` ON DELETE CASCADE — parroquia dueña    |
-| `slug`            | text        | opcional, libre (no se usa en URL)                        |
 | `name`            | text        | NOT NULL                                                  |
 | `description`     | text        |                                                           |
 | `event_date`      | date        | fecha de la celebración (opcional)                        |
@@ -208,7 +207,7 @@ Lista de canciones de una parroquia para una celebración o uso general. La URL 
 | `created_at`      | timestamptz | default now()                                             |
 | `updated_at`      | timestamptz | default now()                                             |
 
-**Índices:** `parish_id`, `event_date`, `is_archdiocesan` (parcial donde true).
+**Índices:** `parish_id`, `event_date`, `is_archdiocesan` (parcial donde true), `name` (GIN unaccent+trgm para búsqueda).
 
 ---
 

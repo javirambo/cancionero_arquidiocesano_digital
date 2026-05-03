@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export type PlaylistFormData = {
   id?: string;
-  parish_id: string;
+  parish_id: string | null;
   name: string;
   description: string;
   event_date: string; // YYYY-MM-DD
@@ -14,21 +14,38 @@ export type PlaylistFormData = {
   is_archdiocesan: boolean;
 };
 
+export type ParishOption = { id: string; name: string };
+export type AdminParishOption = { id: string; slug: string; name: string };
+
 export function PlaylistForm({
   initial,
   mode,
   parishSlug,
   showArchdiocesan,
+  parishOptions,
+  personalAllowed,
+  adminParishOptions,
 }: {
   initial?: PlaylistFormData;
   mode: "create" | "edit";
-  parishSlug: string;
+  // Slug usado para el botón Cancelar y para el redirect tras eliminar.
+  // Cuando la creación no parte de una parroquia, pasar null.
+  parishSlug: string | null;
   showArchdiocesan: boolean;
+  // Si está presente y tiene >1 entrada, se muestra un selector inline.
+  // Si tiene exactamente 1, se preasigna y no se muestra.
+  parishOptions?: ParishOption[];
+  // Si true, permite crear con parish_id = null (playlist personal).
+  // Aplica solo si parishOptions está vacío o ausente.
+  personalAllowed?: boolean;
+  // Sólo poblada cuando el editor es admin. Habilita reasignar el dueño
+  // de la playlist (CU-17). Aplica únicamente en mode="edit".
+  adminParishOptions?: AdminParishOption[];
 }) {
   const router = useRouter();
   const [form, setForm] = useState<PlaylistFormData>(
     initial ?? {
-      parish_id: "",
+      parish_id: null,
       name: "",
       description: "",
       event_date: "",
@@ -43,12 +60,43 @@ export function PlaylistForm({
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  const needsParishSelector = (parishOptions?.length ?? 0) > 1;
+  const canReassignOwner =
+    mode === "edit" && (adminParishOptions?.length ?? 0) > 0;
+  const selectedParishSlug = canReassignOwner
+    ? adminParishOptions!.find((p) => p.id === form.parish_id)?.slug ?? null
+    : parishSlug;
+  const selectedIsArchdiocesis = selectedParishSlug === "arquidiocesis";
+  // Para admin, el toggle archdiocesan se muestra cuando la parroquia
+  // seleccionada es la virtual; para el resto sigue la prop original.
+  const archdiocesanVisible = canReassignOwner
+    ? selectedIsArchdiocesis
+    : showArchdiocesan;
+  const wasArchdiocesanInitial = initial?.is_archdiocesan === true;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
       setError("El nombre es obligatorio.");
       return;
     }
+    if (needsParishSelector && !form.parish_id) {
+      setError("Elegí la parroquia.");
+      return;
+    }
+    // Si admin reasigna el dueño y la playlist era arquidiocesana, pero la
+    // nueva parroquia no es la virtual, pedimos confirmación porque dejará
+    // de ser arquidiocesana.
+    const wasArchdiocesan = initial?.is_archdiocesan === true;
+    const movingOutOfArchdiocesis =
+      canReassignOwner && wasArchdiocesan && !selectedIsArchdiocesis;
+    if (movingOutOfArchdiocesis) {
+      const ok = window.confirm(
+        "Esta playlist es arquidiocesana. Al moverla a otra parroquia (o a personal) dejará de ser arquidiocesana. ¿Confirmás?"
+      );
+      if (!ok) return;
+    }
+
     setSaving(true);
     setError(null);
     const supabase = createClient();
@@ -58,7 +106,7 @@ export function PlaylistForm({
       description: form.description.trim() || null,
       event_date: form.event_date || null,
       visibility: form.visibility,
-      is_archdiocesan: showArchdiocesan ? form.is_archdiocesan : false,
+      is_archdiocesan: archdiocesanVisible ? form.is_archdiocesan : false,
     };
 
     if (mode === "create") {
@@ -105,13 +153,63 @@ export function PlaylistForm({
       setSaving(false);
       return;
     }
-    router.push(`/parroquias/${parishSlug}/playlists`);
+    router.push(parishSlug ? `/parroquias/${parishSlug}/playlists` : `/playlists`);
     router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div className="grid gap-4 sm:grid-cols-2">
+        {canReassignOwner && (
+          <Field
+            label="Dueño / Parroquia"
+            full
+          >
+            <select
+              value={form.parish_id ?? ""}
+              onChange={(e) => update("parish_id", e.target.value || null)}
+              className={inputClass}
+            >
+              <option value="">Personal (sin parroquia)</option>
+              {adminParishOptions!.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.slug === "arquidiocesis" ? `${p.name} (arquidiócesis)` : p.name}
+                </option>
+              ))}
+            </select>
+            {wasArchdiocesanInitial && !selectedIsArchdiocesis && (
+              <span className="text-xs normal-case text-muted-foreground">
+                Esta playlist es arquidiocesana. Al guardar con otra
+                parroquia (o personal), pediremos confirmación y dejará de
+                serlo.
+              </span>
+            )}
+          </Field>
+        )}
+        {needsParishSelector && (
+          <Field label="Parroquia *" full>
+            <select
+              required
+              value={form.parish_id ?? ""}
+              onChange={(e) => update("parish_id", e.target.value || null)}
+              className={inputClass}
+            >
+              <option value="">Elegí una parroquia…</option>
+              {parishOptions!.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+        {personalAllowed && !needsParishSelector && (
+          <Field label="Alcance" full>
+            <p className="text-sm normal-case text-muted-foreground">
+              Se creará como playlist personal.
+            </p>
+          </Field>
+        )}
         <Field label="Nombre *" full>
           <input
             type="text"
@@ -150,7 +248,7 @@ export function PlaylistForm({
             <option value="private">Privada</option>
           </select>
         </Field>
-        {showArchdiocesan && (
+        {archdiocesanVisible && (
           <Field label="Alcance" full>
             <label className="flex items-center gap-2 text-sm normal-case">
               <input
@@ -180,7 +278,9 @@ export function PlaylistForm({
             router.push(
               mode === "edit" && form.id
                 ? `/playlists/${form.id}`
-                : `/parroquias/${parishSlug}/playlists`
+                : parishSlug
+                ? `/parroquias/${parishSlug}/playlists`
+                : `/playlists`
             )
           }
           className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
@@ -192,7 +292,7 @@ export function PlaylistForm({
             type="button"
             onClick={handleDelete}
             disabled={saving}
-            className="ml-auto rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-primary-foreground disabled:opacity-60"
+            className="ml-auto rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
           >
             Eliminar playlist
           </button>

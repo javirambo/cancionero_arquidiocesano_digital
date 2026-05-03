@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { formatearFechaHora } from "@/lib/dates";
+import { getAdminAccess } from "../access";
 
 type AnnouncementRow = {
   id: string;
@@ -12,17 +14,11 @@ type AnnouncementRow = {
 
 type ParishRow = { id: string; slug: string; name: string };
 
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const fmt = (iso: string) => formatearFechaHora(iso);
 
 export default async function AdminAnunciosPage() {
   const supabase = await createClient();
+  const access = await getAdminAccess();
 
   const [annRes, apRes, parishesRes] = await Promise.all([
     supabase
@@ -33,7 +29,7 @@ export default async function AdminAnunciosPage() {
     supabase.from("parishes").select("id, slug, name"),
   ]);
 
-  const announcements = (annRes.data ?? []) as AnnouncementRow[];
+  const allAnnouncements = (annRes.data ?? []) as AnnouncementRow[];
   const links = (apRes.data ?? []) as Array<{ announcement_id: string; parish_id: string }>;
   const parishes = (parishesRes.data ?? []) as ParishRow[];
   const parishById = new Map(parishes.map((p) => [p.id, p]));
@@ -46,6 +42,27 @@ export default async function AdminAnunciosPage() {
     arr.push(parish);
     destByAnnouncement.set(link.announcement_id, arr);
   }
+
+  // Si el usuario no es admin/editor, mostramos solo los anuncios donde
+  // tiene rol de coordinator en alguna parroquia destinataria.
+  let coordinatorParishIds = new Set<string>();
+  if (!access.isAdmin && !access.isEditor && access.userId) {
+    const { data: members } = await supabase
+      .from("parish_members")
+      .select("parish_id")
+      .eq("user_id", access.userId)
+      .eq("role", "coordinator");
+    coordinatorParishIds = new Set(
+      (members ?? []).map((m) => m.parish_id as string)
+    );
+  }
+  const announcements =
+    access.isAdmin || access.isEditor
+      ? allAnnouncements
+      : allAnnouncements.filter((a) => {
+          const dests = destByAnnouncement.get(a.id) ?? [];
+          return dests.some((p) => coordinatorParishIds.has(p.id));
+        });
 
   const now = Date.now();
   const vigentes: AnnouncementRow[] = [];

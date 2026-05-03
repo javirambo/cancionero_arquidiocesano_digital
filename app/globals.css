@@ -10,6 +10,7 @@
   /* Marca / acción */
   --color-primary: #8b1a1a;          /* rojo litúrgico para títulos en mayúscula */
   --color-primary-hover: #6f1414;
+  --color-primary-foreground: #ffffff;
   --color-secondary: #c9a227;        /* dorado litúrgico, tentativo */
   --color-brand-dark: #2a0a0a;
 
@@ -17,40 +18,45 @@
   --color-success: #2f7d3a;
   --color-warning: #c08a00;
   --color-destructive: #b00020;
+  --color-destructive-foreground: #ffffff;
 
   /* Tema light (por defecto) */
-  --color-background: #fafaf7;       /* casi blanco, cálido */
-  --color-foreground: #111111;       /* texto principal en negro */
-  --color-sidebar: #f1ede5;
-  --color-border: #e2dccd;
-  --color-muted-foreground: #5b5b5b;
+  --theme-background: #fafaf7;       /* casi blanco, cálido */
+  --theme-foreground: #111111;       /* texto principal en negro */
+  --theme-sidebar: #f1ede5;
+  --theme-border: #e2dccd;
+  --theme-muted-foreground: #5b5b5b;
 }
 
 /* Tema dark: se activa explícitamente con data-theme="dark" en <html>.
    Por defecto el tema es light, sin importar la preferencia del SO. */
 :root[data-theme="dark"] {
-  --color-background: #0e0c0a;
-  --color-foreground: #f4efe6;
-  --color-sidebar: #181513;
-  --color-border: #2b2722;
-  --color-muted-foreground: #a39b8b;
+  --color-primary: #ab4e4e;
+
+  --theme-background: #2d2420;
+  --theme-foreground: #f4efe6;
+  --theme-sidebar: #402d25;
+  --theme-border: #564735;
+  --theme-muted-foreground: #a39b8b;
 }
 
 @theme inline {
   /* Colores expuestos como utilidades Tailwind (bg-primary, text-foreground, etc.) */
   --color-primary: var(--color-primary);
   --color-primary-hover: var(--color-primary-hover);
+  --color-primary-foreground: #ffffff;
   --color-secondary: var(--color-secondary);
   --color-brand-dark: var(--color-brand-dark);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: #ffffff;
 
-  --color-background: var(--color-background);
-  --color-foreground: var(--color-foreground);
-  --color-sidebar: var(--color-sidebar);
-  --color-border: var(--color-border);
-  --color-muted-foreground: var(--color-muted-foreground);
+  --color-background: var(--theme-background);
+  --color-foreground: var(--theme-foreground);
+  --color-sidebar: var(--theme-sidebar);
+  --color-border: var(--theme-border);
+  --color-muted-foreground: var(--theme-muted-foreground);
 
   /* Tipografía: Cardo como fuente principal (serif litúrgica). */
   --font-serif: var(--font-cardo), "Cardo", Cambria, Sabon, Baskerville, Palatino, Georgia, serif;

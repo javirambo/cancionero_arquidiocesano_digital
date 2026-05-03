@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+export type ParishStatus = "active" | "pending" | "inactive";
+
 export type Parish = {
   id: string;
   slug: string;
@@ -10,6 +12,9 @@ export type Parish = {
   address: string | null;
   city: string | null;
   description: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: ParishStatus;
 };
 
 export type AnimState = "entering" | "leaving";

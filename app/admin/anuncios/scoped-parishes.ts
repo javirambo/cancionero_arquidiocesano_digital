@@ -29,7 +29,7 @@ export async function listScopedParishes(): Promise<ParishOption[]> {
   let query = supabase
     .from("parishes")
     .select("id, slug, name")
-    .eq("is_active", true)
+    .eq("status", "active")
     .neq("slug", "arquidiocesis")
     .order("name");
 

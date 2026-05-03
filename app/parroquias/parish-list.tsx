@@ -13,6 +13,39 @@ type Props = {
 
 const ANIM_MS = 300;
 
+function haversineKm(
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number }
+): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function sortByDistance(parishes: Parish[], origin: { lat: number; lon: number }): Parish[] {
+  const withCoords: Array<Parish & { _d: number }> = [];
+  const withoutCoords: Parish[] = [];
+  for (const p of parishes) {
+    if (p.latitude !== null && p.longitude !== null) {
+      withCoords.push({
+        ...p,
+        _d: haversineKm(origin, { lat: p.latitude, lon: p.longitude }),
+      });
+    } else {
+      withoutCoords.push(p);
+    }
+  }
+  withCoords.sort((a, b) => a._d - b._d);
+  return [...withCoords.map(({ _d, ...rest }) => rest as Parish), ...withoutCoords];
+}
+
 export function ParishList({
   parishes,
   initialMemberIds,
@@ -25,10 +58,26 @@ export function ParishList({
   const [primaryId, setPrimaryId] = useState<string | null>(initialPrimaryId);
   const [anim, setAnim] = useState<Map<string, AnimState>>(new Map());
   const [error, setError] = useState<string | null>(null);
+  const [origin, setOrigin] = useState<{ lat: number; lon: number } | null>(null);
 
   // Si las props del server cambian (p. ej. tras navegación), resincronizo.
   useEffect(() => setMemberIds(new Set(initialMemberIds)), [initialMemberIds]);
   useEffect(() => setPrimaryId(initialPrimaryId), [initialPrimaryId]);
+
+  // Pedir geolocalización para ordenar "Otras" por cercanía. Si el usuario
+  // rechaza o el navegador no soporta, queda el orden alfabético.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setOrigin({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      },
+      () => {
+        // Silencioso: la geolocalización es asistencia, no requisito.
+      },
+      { timeout: 6000, maximumAge: 600_000 }
+    );
+  }, []);
 
   // Set de ids "visibles como mías": memberIds + los que están saliendo
   // (siguen mostrándose mientras dura la animación).
@@ -48,9 +97,10 @@ export function ParishList({
       if (aPrim !== bPrim) return aPrim - bPrim;
       return sortByName(a, b);
     });
-  const others = parishes
+  const othersAlpha = parishes
     .filter((p) => !displayMembers.has(p.id))
     .sort(sortByName);
+  const others = origin ? sortByDistance(othersAlpha, origin) : othersAlpha;
 
   async function handleAdd(parishId: string) {
     if (!userId) return;

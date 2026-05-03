@@ -4,8 +4,10 @@ import Script from "next/script";
 import { SiteHeader } from "./components/site-header";
 import { ThemeProvider, themeInitScript } from "./components/theme";
 import { FavoritesProvider } from "./components/favorites";
+import { MergeFavoritesDialog } from "./components/merge-favorites-dialog";
 import { PreferencesProvider } from "./components/preferences";
 import { UserRolesProvider } from "./components/user-roles";
+import { ToastProvider } from "./components/toast";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -50,8 +52,11 @@ export default function RootLayout({
           <UserRolesProvider>
             <PreferencesProvider>
               <FavoritesProvider>
-                <SiteHeader />
-                {children}
+                <ToastProvider>
+                  <SiteHeader />
+                  {children}
+                  <MergeFavoritesDialog />
+                </ToastProvider>
               </FavoritesProvider>
             </PreferencesProvider>
           </UserRolesProvider>

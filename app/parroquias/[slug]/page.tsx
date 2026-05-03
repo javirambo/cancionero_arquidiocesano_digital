@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getParishBySlug } from "@/lib/songs";
 import { listPlaylistsForParish } from "@/lib/playlists";
 import { QrButton } from "@/app/components/qr-button";
+import { formatearFecha } from "@/lib/dates";
 
 export default async function ParroquiaPage({
   params,
@@ -83,11 +84,7 @@ export default async function ParroquiaPage({
                   )}
                   {p.event_date && (
                     <span className="text-xs normal-case text-muted-foreground">
-                      {new Date(p.event_date).toLocaleDateString("es-AR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })}
+                      {formatearFecha(p.event_date)}
                     </span>
                   )}
                   {p.description && (

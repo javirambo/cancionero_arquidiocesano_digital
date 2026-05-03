@@ -12,7 +12,7 @@ export default async function EditarParroquiaPage({
   const supabase = await createClient();
   const { data: parish } = await supabase
     .from("parishes")
-    .select("id, name, slug, address, city, phone, email, description, is_active")
+    .select("id, name, slug, address, city, phone, email, description, status")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -53,7 +53,7 @@ export default async function EditarParroquiaPage({
           phone: parish.phone ?? "",
           email: parish.email ?? "",
           description: parish.description ?? "",
-          is_active: parish.is_active,
+          status: parish.status,
         }}
       />
     </main>

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { hoyEnCordoba } from "@/lib/dates";
 
 export type SongSummary = {
   id: string;
@@ -216,6 +217,8 @@ function firstParish(rel: ParishRel): { name: string; slug: string } | null {
 // Parroquias
 // =====================================================================
 
+export type ParishStatus = "active" | "pending" | "inactive";
+
 export type Parish = {
   id: string;
   slug: string;
@@ -223,14 +226,17 @@ export type Parish = {
   address: string | null;
   city: string | null;
   description: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: ParishStatus;
 };
 
 export async function listParishes(): Promise<Parish[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parishes")
-    .select("id, slug, name, address, city, description")
-    .eq("is_active", true)
+    .select("id, slug, name, address, city, description, latitude, longitude, status")
+    .eq("status", "active")
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Parish[];
@@ -240,9 +246,9 @@ export async function getParishBySlug(slug: string): Promise<Parish | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parishes")
-    .select("id, slug, name, address, city, description")
+    .select("id, slug, name, address, city, description, latitude, longitude, status")
     .eq("slug", slug)
-    .eq("is_active", true)
+    .eq("status", "active")
     .maybeSingle();
   if (error) throw error;
   return (data as Parish | null) ?? null;
@@ -264,7 +270,7 @@ export type LiturgicalEventToday = {
 
 export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = hoyEnCordoba();
   const { data, error } = await supabase
     .from("liturgical_events")
     .select(

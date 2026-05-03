@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -24,6 +25,8 @@ export type FavoriteEntry = {
   added_at: number;
 };
 
+export type MergeStrategy = "combine" | "keep-server" | "replace-with-local";
+
 type Ctx = {
   favorites: FavoriteEntry[];
   isFavorite: (kind: FavoriteKind, id: string) => boolean;
@@ -35,15 +38,79 @@ type Ctx = {
   remove: (kind: FavoriteKind, id: string) => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
+  /** Conflicto pendiente al loguearse: hay favoritos locales y remotos distintos. */
+  pendingConflict: {
+    local: FavoriteEntry[];
+    remote: FavoriteEntry[];
+  } | null;
+  /** Resuelve el conflicto pendiente con la estrategia elegida. */
+  resolveConflict: (strategy: MergeStrategy) => Promise<void>;
 };
 
 const FavoritesContext = createContext<Ctx | null>(null);
+
+const GUEST_STORAGE_KEY = "favorites:guest:v1";
 
 type FavoriteRow = {
   target_kind: FavoriteKind;
   target_id: string;
   created_at: string;
 };
+
+function readGuestFavorites(): FavoriteEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(GUEST_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as FavoriteEntry[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (e) =>
+        e &&
+        typeof e === "object" &&
+        (e.kind === "song" || e.kind === "playlist" || e.kind === "parish") &&
+        typeof e.id === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writeGuestFavorites(list: FavoriteEntry[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (list.length === 0) {
+      window.localStorage.removeItem(GUEST_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(list));
+    }
+  } catch {
+    // Silencioso: si localStorage está lleno o bloqueado, perdemos el cambio.
+  }
+}
+
+function sameKey(a: FavoriteEntry, b: FavoriteEntry): boolean {
+  return a.kind === b.kind && a.id === b.id;
+}
+
+function dedupe(list: FavoriteEntry[]): FavoriteEntry[] {
+  const seen = new Set<string>();
+  const out: FavoriteEntry[] = [];
+  for (const e of list) {
+    const key = `${e.kind}:${e.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(e);
+  }
+  return out;
+}
+
+function setsEqual(a: FavoriteEntry[], b: FavoriteEntry[]): boolean {
+  if (a.length !== b.length) return false;
+  const setA = new Set(a.map((e) => `${e.kind}:${e.id}`));
+  for (const e of b) if (!setA.has(`${e.kind}:${e.id}`)) return false;
+  return true;
+}
 
 async function loadFromDb(userId: string): Promise<FavoriteEntry[]> {
   const supabase = createClient();
@@ -153,34 +220,120 @@ function buildEntry(
   };
 }
 
+async function bulkInsertFavorites(
+  userId: string,
+  entries: FavoriteEntry[]
+): Promise<void> {
+  if (entries.length === 0) return;
+  const supabase = createClient();
+  const rows = entries.map((e) => ({
+    user_id: userId,
+    target_kind: e.kind,
+    target_id: e.id,
+  }));
+  // upsert para idempotencia (la PK es user_id+target_kind+target_id).
+  await supabase.from("favorites").upsert(rows, {
+    onConflict: "user_id,target_kind,target_id",
+    ignoreDuplicates: true,
+  });
+}
+
+async function deleteAllFavorites(userId: string): Promise<void> {
+  const supabase = createClient();
+  await supabase.from("favorites").delete().eq("user_id", userId);
+}
+
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<FavoriteEntry[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingConflict, setPendingConflict] = useState<Ctx["pendingConflict"]>(
+    null
+  );
+  // Para detectar la transición invitado → autenticado y disparar el merge.
+  const lastUserIdRef = useRef<string | null>(null);
 
+  // Inicializar desde localStorage (sin sesión) y suscribirse a auth.
   useEffect(() => {
     const supabase = createClient();
+    // Pre-carga inmediata desde localStorage para que el invitado vea sus
+    // favoritos sin parpadeo.
+    setFavorites(readGuestFavorites());
+    setLoading(false);
+
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      if (!data.user) setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        setFavorites([]);
-        setLoading(false);
+      const next = session?.user ?? null;
+      setUser(next);
+      if (!next) {
+        // Logout: volvemos al modo invitado.
+        lastUserIdRef.current = null;
+        setFavorites(readGuestFavorites());
+        setPendingConflict(null);
       }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Cuando cambia el user (login), cargar de BD y mergear con locales.
   useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    loadFromDb(user.id).then((list) => {
-      setFavorites(list);
-      setLoading(false);
-    });
+    if (lastUserIdRef.current === user.id) return;
+    lastUserIdRef.current = user.id;
+
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const local = readGuestFavorites();
+        const remote = await loadFromDb(user.id);
+        if (cancelled) return;
+
+        // Caso 1: no hay locales → solo cargar remotos.
+        if (local.length === 0) {
+          setFavorites(remote);
+          return;
+        }
+
+        // Caso 2: remotos vacíos → transferir locales sin preguntar.
+        if (remote.length === 0) {
+          await bulkInsertFavorites(user.id, local);
+          if (cancelled) return;
+          const fresh = await loadFromDb(user.id);
+          if (cancelled) return;
+          writeGuestFavorites([]);
+          setFavorites(fresh);
+          return;
+        }
+
+        // Caso 3: ambos no vacíos. Si los conjuntos son iguales, no hay
+        // conflicto: usamos los remotos (con sus metadatos completos).
+        if (setsEqual(local, remote)) {
+          writeGuestFavorites([]);
+          setFavorites(remote);
+          return;
+        }
+
+        // Caso 4: hay conflicto real → mostrar diálogo.
+        setFavorites(remote);
+        setPendingConflict({ local, remote });
+      } catch (err) {
+        console.error("[favorites] login effect error:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      // Si nos cancelan antes de terminar, soltamos el lock para que la
+      // siguiente invocación reintente con el mismo user.id.
+      if (lastUserIdRef.current === user.id) {
+        lastUserIdRef.current = null;
+      }
+    };
   }, [user]);
 
   const isFavorite = useCallback(
@@ -191,9 +344,30 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   const toggle = useCallback<Ctx["toggle"]>(
     async (kind, id, meta) => {
-      if (!user) return;
-      const supabase = createClient();
       const existing = favorites.find((f) => f.kind === kind && f.id === id);
+
+      if (!user) {
+        // Modo invitado: solo localStorage.
+        const next = existing
+          ? favorites.filter((f) => !sameKey(f, { ...f, kind, id }))
+          : [
+              {
+                kind,
+                id,
+                title: meta?.title ?? id,
+                href: meta?.href ?? "/",
+                subtitle: meta?.subtitle,
+                number: meta?.number,
+                added_at: Date.now(),
+              } as FavoriteEntry,
+              ...favorites,
+            ];
+        setFavorites(next);
+        writeGuestFavorites(next);
+        return;
+      }
+
+      const supabase = createClient();
       if (existing) {
         const { error } = await supabase
           .from("favorites")
@@ -218,6 +392,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
           title: meta?.title ?? id,
           href: meta?.href ?? "/",
           subtitle: meta?.subtitle,
+          number: meta?.number,
           added_at: Date.now(),
         };
         setFavorites((prev) => [entry, ...prev]);
@@ -228,7 +403,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   const remove = useCallback<Ctx["remove"]>(
     async (kind, id) => {
-      if (!user) return;
+      if (!user) {
+        const next = favorites.filter((f) => !(f.kind === kind && f.id === id));
+        setFavorites(next);
+        writeGuestFavorites(next);
+        return;
+      }
       const supabase = createClient();
       const { error } = await supabase
         .from("favorites")
@@ -242,7 +422,45 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [user]
+    [favorites, user]
+  );
+
+  const resolveConflict = useCallback<Ctx["resolveConflict"]>(
+    async (strategy) => {
+      if (!user || !pendingConflict) return;
+      const { local, remote } = pendingConflict;
+
+      if (strategy === "combine") {
+        // Merge: insertar locales que no estén en remoto (upsert idempotente).
+        const onlyLocal = local.filter(
+          (l) => !remote.some((r) => sameKey(l, r))
+        );
+        if (onlyLocal.length > 0) {
+          await bulkInsertFavorites(user.id, onlyLocal);
+        }
+        const fresh = await loadFromDb(user.id);
+        writeGuestFavorites([]);
+        setFavorites(fresh);
+        setPendingConflict(null);
+        return;
+      }
+
+      if (strategy === "keep-server") {
+        writeGuestFavorites([]);
+        setPendingConflict(null);
+        // favorites ya tiene los remotos.
+        return;
+      }
+
+      // replace-with-local: borrar todos los remotos y subir los locales.
+      await deleteAllFavorites(user.id);
+      await bulkInsertFavorites(user.id, dedupe(local));
+      const fresh = await loadFromDb(user.id);
+      writeGuestFavorites([]);
+      setFavorites(fresh);
+      setPendingConflict(null);
+    },
+    [user, pendingConflict]
   );
 
   const value = useMemo(
@@ -253,8 +471,10 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       remove,
       isAuthenticated: Boolean(user),
       loading,
+      pendingConflict,
+      resolveConflict,
     }),
-    [favorites, isFavorite, toggle, remove, user, loading]
+    [favorites, isFavorite, toggle, remove, user, loading, pendingConflict, resolveConflict]
   );
 
   return <FavoritesContext value={value}>{children}</FavoritesContext>;

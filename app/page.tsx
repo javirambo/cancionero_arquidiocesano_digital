@@ -2,6 +2,9 @@ import Link from "next/link";
 import { version } from "@/package.json";
 import { getEventForToday, listActiveFeatured } from "@/lib/songs";
 import { getLiturgicalDay } from "@/lib/liturgical";
+import { createClient } from "@/lib/supabase/server";
+import { formatearFecha, hoyEnCordoba } from "@/lib/dates";
+import { GoogleSignInButton } from "@/app/perfil/google-sign-in-button";
 
 type AccesoRapido = {
   href: string;
@@ -28,13 +31,35 @@ const accesos: AccesoRapido[] = [
 ];
 
 export default async function Home() {
-  const [event, featured] = await Promise.all([
+  const supabase = await createClient();
+  const [{ data: { user } }, event, featured] = await Promise.all([
+    supabase.auth.getUser(),
     getEventForToday(),
     listActiveFeatured(),
   ]);
-  const litDay = getLiturgicalDay();
 
-  const today = new Date().toLocaleDateString("es-AR", {
+  let primaryParishName: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("parish_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.parish_id) {
+      const { data: parishRow } = await supabase
+        .from("parishes")
+        .select("name")
+        .eq("id", profile.parish_id as string)
+        .maybeSingle();
+      primaryParishName = (parishRow?.name as string | undefined) ?? null;
+    }
+  }
+
+  // Pasamos la fecha de hoy en Cordoba (mediodía UTC) para que
+  // getLiturgicalDay no tome el día UTC del runtime del server.
+  const litDay = getLiturgicalDay(new Date(`${hoyEnCordoba()}T12:00:00Z`));
+
+  const today = formatearFecha(new Date(), {
     weekday: "long",
     day: "2-digit",
     month: "long",
@@ -57,7 +82,7 @@ export default async function Home() {
         description:
           litDay.rank <= 4
             ? `${litDay.seasonName} · ${litDay.date}`
-            : "Hoy no hay festividad destacada. Explorá el repertorio o las playlists de las parroquias.",
+            : "Hoy no hay festividad destacada.",
         season: litDay.seasonName,
       }
     : { kicker: today, title: "Tiempo Ordinario", description: null, season: null };
@@ -66,6 +91,11 @@ export default async function Home() {
     <div className="flex flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
         <section className="flex flex-col items-center gap-6 text-center">
+          {primaryParishName && (
+            <p className="text-2xl text-secondary">
+              {primaryParishName}
+            </p>
+          )}
           <p className="text-sm uppercase tracking-[0.2em] text-secondary">
             Evangelizar a través de la música
           </p>
@@ -77,31 +107,6 @@ export default async function Home() {
             de toda la Arquidiócesis. Buscá una canción, abrí el repertorio de
             tu parroquia o seguí la festividad del día.
           </p>
-
-          <form
-            action="/canciones"
-            method="get"
-            role="search"
-            className="mt-4 flex w-full max-w-xl items-center gap-2 rounded-full border border-border bg-background px-5 py-3 shadow-sm focus-within:border-primary"
-          >
-            <label htmlFor="q" className="sr-only">
-              Buscar canción, playlist o parroquia
-            </label>
-            <input
-              id="q"
-              name="q"
-              type="search"
-              placeholder="Buscar canción, playlist o parroquia…"
-              autoComplete="off"
-              className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-primary-hover"
-            >
-              Buscar
-            </button>
-          </form>
         </section>
 
         <section
@@ -119,30 +124,23 @@ export default async function Home() {
               {headline.description}
             </p>
           )}
-          <div className="mt-6 flex flex-wrap gap-3">
-            {event?.playlist ? (
-              <Link
-                href={`/playlists/${event.playlist.id}`}
-                className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                Ver playlist sugerida
-              </Link>
-            ) : (
-              <Link
-                href="/parroquias"
-                className="rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                Ver parroquias
-              </Link>
-            )}
-            <Link
-              href="/canciones"
-              className="rounded-full px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:text-primary"
-            >
-              Ir al catálogo
-            </Link>
-          </div>
         </section>
+
+        {!user && (
+          <section
+            aria-labelledby="invitado-heading"
+            className="rounded-2xl border border-border bg-sidebar p-8"
+          >
+            <h2 id="invitado-heading" className="text-2xl">
+              Iniciá sesión
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
+              Asociate a parroquias, guardá tus favoritos en la nube y creá tus
+              propias playlists.
+            </p>
+            <GoogleSignInButton />
+          </section>
+        )}
 
         {featured.length > 0 && (
           <section aria-labelledby="novedades-heading" className="flex flex-col gap-4">
