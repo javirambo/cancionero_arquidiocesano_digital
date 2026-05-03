@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminAccess } from "../access";
 import {
   getRolesByName,
   listActiveParishesForAdmin,
@@ -7,6 +9,8 @@ import {
 import { UsersTable } from "./users-table";
 
 export default async function AdminUsuariosPage() {
+  const access = await getAdminAccess();
+  if (!access.isAdmin) redirect("/admin");
   const supabase = await createClient();
   const {
     data: { user: currentUser },

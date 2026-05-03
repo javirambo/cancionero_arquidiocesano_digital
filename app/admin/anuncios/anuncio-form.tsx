@@ -52,13 +52,22 @@ export function AnuncioForm({
   initial,
   parishes,
   mode,
+  allowGlobal = true,
 }: {
   initial?: AnnouncementFormData;
   parishes: ParishOption[];
   mode: "create" | "edit";
+  /**
+   * Si false, el anuncio no puede tener alcance global. Se fuerza
+   * scope="selected" y se oculta el radio "Todas las parroquias".
+   */
+  allowGlobal?: boolean;
 }) {
   const router = useRouter();
-  const [form, setForm] = useState<AnnouncementFormData>(initial ?? empty);
+  const [form, setForm] = useState<AnnouncementFormData>(() => {
+    const base = initial ?? empty;
+    return allowGlobal ? base : { ...base, scope: "selected" };
+  });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -322,24 +331,34 @@ export function AnuncioForm({
           Destinatarios
         </h2>
         <div className="mt-3 flex flex-col gap-2 normal-case">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="scope"
-              checked={form.scope === "all"}
-              onChange={() => update("scope", "all")}
-            />
-            Todas las parroquias
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="scope"
-              checked={form.scope === "selected"}
-              onChange={() => update("scope", "selected")}
-            />
-            Parroquias específicas
-          </label>
+          {allowGlobal && (
+            <>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="scope"
+                  checked={form.scope === "all"}
+                  onChange={() => update("scope", "all")}
+                />
+                Todas las parroquias
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="scope"
+                  checked={form.scope === "selected"}
+                  onChange={() => update("scope", "selected")}
+                />
+                Parroquias específicas
+              </label>
+            </>
+          )}
+          {!allowGlobal && (
+            <p className="text-xs normal-case text-muted-foreground">
+              Como coordinator solo podés crear anuncios para tus parroquias.
+              Elegí al menos una abajo.
+            </p>
+          )}
         </div>
 
         {form.scope === "selected" && (

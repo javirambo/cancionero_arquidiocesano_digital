@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { getAdminAccess } from "./access";
 
 type Seccion = {
   href: string;
   titulo: string;
   descripcion: string;
+  show: (a: { isAdmin: boolean; isEditor: boolean; isAnyCoordinator: boolean }) => boolean;
 };
 
 const secciones: Seccion[] = [
@@ -11,25 +13,32 @@ const secciones: Seccion[] = [
     href: "/admin/parroquias",
     titulo: "Parroquias",
     descripcion: "Alta, edición y baja de parroquias de la Arquidiócesis.",
+    show: (a) => a.isAdmin,
   },
   {
     href: "/admin/anuncios",
     titulo: "Anuncios",
     descripcion: "Anuncios y novedades destacadas en la home, con destino global o multi-parroquia.",
+    show: (a) => a.isAdmin || a.isEditor || a.isAnyCoordinator,
   },
   {
     href: "/admin/playlists",
     titulo: "Playlists generales",
     descripcion: "Repertorio arquidiocesano: alta, edición y baja de playlists visibles en todas las parroquias.",
+    show: (a) => a.isAdmin || a.isEditor,
   },
   {
     href: "/admin/usuarios",
     titulo: "Usuarios",
     descripcion: "Asignación de roles globales y membresías por parroquia. El alta sigue siendo automática vía OAuth.",
+    show: (a) => a.isAdmin,
   },
 ];
 
-export default function AdminHomePage() {
+export default async function AdminHomePage() {
+  const access = await getAdminAccess();
+  const visibles = secciones.filter((s) => s.show(access));
+
   return (
     <main className="flex flex-col gap-6">
       <header>
@@ -40,7 +49,7 @@ export default function AdminHomePage() {
       </header>
 
       <ul className="grid gap-4 sm:grid-cols-2">
-        {secciones.map((s) => (
+        {visibles.map((s) => (
           <li key={s.href}>
             <Link
               href={s.href}

@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminAccess } from "../access";
 import { PendingParishRow } from "./pending-row";
 
 export default async function AdminParroquiasPage() {
+  const access = await getAdminAccess();
+  if (!access.isAdmin) redirect("/admin");
   const supabase = await createClient();
   const { data: parishes } = await supabase
     .from("parishes")

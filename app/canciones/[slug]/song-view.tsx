@@ -11,6 +11,7 @@ import {
 } from "@/lib/chordpro";
 import { WakeLockToggle } from "@/app/components/wake-lock-toggle";
 import { usePreferences } from "@/app/components/preferences";
+import { useFavorites } from "@/app/components/favorites";
 
 type Props = {
   songId: string;
@@ -25,8 +26,10 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
   const { suggestChords } = usePreferences();
-  // El usuario debe activar "Sugerir acordes" en su perfil para ver acordes.
-  const chordsAvailable = chordsExist && suggestChords;
+  const { isAuthenticated } = useFavorites();
+  // CU-03: los acordes y la transposición sólo se exponen a usuarios con
+  // sesión que además activaron "Sugerir acordes" en su perfil.
+  const chordsAvailable = chordsExist && suggestChords && isAuthenticated;
 
   const [showChords, setShowChords] = useState(true);
   const [showVideo, setShowVideo] = useState(false);

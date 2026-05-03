@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatearFecha } from "@/lib/dates";
+import { getAdminAccess } from "../access";
 import { PlaylistRowActions } from "./playlist-row-actions";
 
 export default async function AdminPlaylistsPage() {
+  const access = await getAdminAccess();
+  if (!access.isAdmin && !access.isEditor) redirect("/admin");
   const supabase = await createClient();
   const { data: playlists } = await supabase
     .from("playlists")

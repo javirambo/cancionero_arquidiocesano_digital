@@ -239,44 +239,39 @@ function RowMenu({
           ) : (
             <ul className="py-1 text-sm">
               {isAuthenticated ? (
-                <>
-                  <MenuButton
-                    label="Agregar a playlist"
-                    hasSubmenu
-                    onClick={() => setView("addToPlaylist")}
-                  />
-                  <MenuLink label="Ver canción" href={href} onClick={close} />
-                  <MenuButton label="Compartir" onClick={share} />
-                  <MenuButton
-                    label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
-                    onClick={() => {
-                      onToggleFavorite();
-                      close();
-                    }}
-                  />
-                  {canRemoveFromPlaylist && (
-                    <MenuButton
-                      label="Quitar de esta playlist"
-                      disabled={!canManagePlaylist}
-                      tooltip={
-                        canManagePlaylist
-                          ? undefined
-                          : "Necesitás permisos sobre esta playlist"
-                      }
-                      onClick={close}
-                      destructive
-                    />
-                  )}
-                </>
+                <MenuButton
+                  label="Agregar a playlist"
+                  hasSubmenu
+                  onClick={() => setView("addToPlaylist")}
+                />
               ) : (
-                <>
-                  <MenuLink label="Ver canción" href={href} onClick={close} />
-                  <MenuLink
-                    label="Iniciá sesión para más opciones…"
-                    href="/perfil"
-                    onClick={close}
-                  />
-                </>
+                <MenuLink
+                  label="Iniciá sesión para usar playlists"
+                  href="/perfil"
+                  onClick={close}
+                />
+              )}
+              <MenuLink label="Ver canción" href={href} onClick={close} />
+              <MenuButton label="Compartir" onClick={share} />
+              <MenuButton
+                label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
+                onClick={() => {
+                  onToggleFavorite();
+                  close();
+                }}
+              />
+              {canRemoveFromPlaylist && (
+                <MenuButton
+                  label="Quitar de esta playlist"
+                  disabled={!canManagePlaylist}
+                  tooltip={
+                    canManagePlaylist
+                      ? undefined
+                      : "Necesitás permisos sobre esta playlist"
+                  }
+                  onClick={close}
+                  destructive
+                />
               )}
             </ul>
           )}

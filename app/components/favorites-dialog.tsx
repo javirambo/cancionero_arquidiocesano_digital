@@ -19,7 +19,7 @@ const GROUP_LABELS: Record<FavoriteKind, string> = {
 const GROUP_ORDER: FavoriteKind[] = ["song", "playlist", "parish"];
 
 export function FavoritesDialog({ open, onClose }: Props) {
-  const { favorites, remove, isAuthenticated, loading } = useFavorites();
+  const { favorites, remove, loading } = useFavorites();
 
   // Cerrar con ESC.
   useEffect(() => {
@@ -72,19 +72,13 @@ export function FavoritesDialog({ open, onClose }: Props) {
         </header>
 
         <div className="max-h-[60vh] overflow-y-auto">
-          {!isAuthenticated ? (
-            <p className="px-6 py-10 text-center text-sm normal-case text-muted-foreground">
-              Iniciá sesión para guardar tus favoritos en la nube y verlos desde
-              cualquier dispositivo.
-            </p>
-          ) : loading ? (
+          {loading ? (
             <p className="px-6 py-10 text-center text-sm normal-case text-muted-foreground">
               Cargando…
             </p>
           ) : favorites.length === 0 ? (
             <p className="px-6 py-10 text-center text-sm normal-case text-muted-foreground">
-              Todavía no marcaste favoritos. Tocá el ❤ de una canción, playlist o
-              parroquia para guardarla acá.
+              Seleccioná canciones o playlists para guardar en tus favoritos.
             </p>
           ) : (
             GROUP_ORDER.filter((k) => grouped[k].length > 0).map((kind) => (

@@ -23,7 +23,7 @@ type Props = {
 };
 
 export function PlaylistCard({ playlist, badge }: Props) {
-  const { isFavorite, toggle, isAuthenticated } = useFavorites();
+  const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite("playlist", playlist.id);
 
   return (
@@ -49,26 +49,24 @@ export function PlaylistCard({ playlist, badge }: Props) {
           </span>
         )}
       </Link>
-      {isAuthenticated && (
-        <button
-          type="button"
-          aria-label={fav ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
-          title={fav ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
-          onClick={(e) => {
-            e.preventDefault();
-            toggle("playlist", playlist.id, {
-              title: playlist.name,
-              href: `/playlists/${playlist.id}`,
-              subtitle: playlist.parish?.name,
-            });
-          }}
-          className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-colors hover:border-border ${
-            fav ? "text-primary" : "text-muted-foreground hover:text-primary"
-          }`}
-        >
-          <HeartIcon filled={fav} />
-        </button>
-      )}
+      <button
+        type="button"
+        aria-label={fav ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
+        title={fav ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
+        onClick={(e) => {
+          e.preventDefault();
+          toggle("playlist", playlist.id, {
+            title: playlist.name,
+            href: `/playlists/${playlist.id}`,
+            subtitle: playlist.parish?.name,
+          });
+        }}
+        className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-colors hover:border-border ${
+          fav ? "text-primary" : "text-muted-foreground hover:text-primary"
+        }`}
+      >
+        <HeartIcon filled={fav} />
+      </button>
     </li>
   );
 }

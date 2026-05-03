@@ -5,7 +5,7 @@
     Ejemplo: Responsable y Direccion (ahora el Arzobispado !!)
     Email, (ahora yo.azimo@gmail.com !!)
 
-[ ] cambiar funcionamiento en invitado -> los favoritos se guardan en local storage, y si se loguea -por primera vez- se transfiere a la base. Si ya estuvo logueado se traen los favoritos de la base. Si se pisan porque son distintos preguntar que hacer.
+[x] cambiar funcionamiento en invitado -> los favoritos se guardan en local storage, y si se loguea -por primera vez- se transfiere a la base. Si ya estuvo logueado se traen los favoritos de la base. Si se pisan porque son distintos preguntar que hacer. (CU-13/15)
 
 [ ] **Backfill `parishes.latitude`/`longitude`.** Script Python (one-shot) que recorra las parroquias con `latitude IS NULL`, consulte Nominatim por nombre+ciudad+dirección y persista las coords. Documentar cómo correrlo. (Migración 0010 ya creó las columnas.)
 
@@ -35,11 +35,14 @@ Orden sugerido para evitar dependencias cruzadas. Cada uno enlaza al CU correspo
     http://localhost:3000/admin/playlists
     se ven feos los items!
 
-[ ] **CU-03 — Ocultar transposición al invitado.** La UI de + / − de tono debe esconderse cuando no hay sesión.
+[x] **CU-03 — Ocultar transposición al invitado.** Para invitados (sin sesión) se oculta todo el bloque de acordes: botones "Ocultar acordes", "Do·Re·Mi/C·D·E", transposición (− Tono +) y los acordes mismos en la letra. La canción se ve como letra pura. Para usuarios logueados sigue dependiendo de "Sugerir acordes" en el perfil.
 
-[ ] **CU-15 + CU-13 — Favoritos de invitado en localStorage.** Persistir en local cuando no hay sesión; al loguear primera vez transferir a `favorites` de BD (ver el ítem ya existente arriba con el detalle de "qué hacer si se pisan").
+[x] **CU-15 + CU-13 — Favoritos de invitado en localStorage.** Provider `<FavoritesProvider>` ahora soporta modo invitado (lee/escribe `localStorage` clave `favorites:guest:v1`). Al login: si la BD está vacía transfiere automático; si los conjuntos coinciden no pregunta; si hay conflicto real abre `<MergeFavoritesDialog>` con 3 opciones (combinar / mantener servidor / reemplazar con local). Bulk insert con upsert idempotente. Logout vuelve al modo invitado. UI: corazón en `playlist-card.tsx` y "Agregar a Mis favoritos" en `song-row.tsx` ahora disponibles para invitado; sólo "Agregar a playlist" sigue requiriendo sesión.
 
-[ ] **CU-21 — Anuncios con alcance parroquial.** Hoy solo admin gestiona globales. Coordinator debería poder crear/editar anuncios para sus parroquia(s) (`announcement_parishes`).
+[ ] buscar otro proveedor de avisos liturgicos y fiestas liturgicas que sea español.
+
+[x] **CU-21 — Anuncios con alcance parroquial.** Coordinator (y editor) ahora gestionan anuncios. Migración 0013 abre RLS de `announcements` y `announcement_parishes` para coordinator solo cuando hay al menos una parroquia destino donde es coordinator (no globales). `<AdminLayout>` deja entrar a admin/editor/cualquier-coordinator; sub-nav y home filtran por rol; sub-páginas (parroquias/usuarios) tienen guard admin-only. Form de anuncio recibe `allowGlobal`: si false, fuerza scope=selected y oculta opción "Todas las parroquias". Listado filtra para coordinator a sus anuncios.
+
 
 [ ] **CU-16 — Flujo `draft → review → published` para canciones.** UI de coordinator (crear/editar borradores, enviar a revisión) + UI de editor (cola de revisión, aprobar/rechazar canciones y `song_files`).
 
