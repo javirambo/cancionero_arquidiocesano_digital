@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Términos de Servicio · Cancionero Arquidiocesano Digital",
+  title: "Términos de Servicio · Cancionero Arquidiocesano",
   description:
-    "Términos de Servicio del Cancionero Arquidiocesano Digital que regulan el uso del Sitio por parte del Usuario.",
+    "Términos de Servicio del Cancionero Arquidiocesano que regulan el uso del Sitio por parte del Usuario.",
 };
 
 export default function TerminosPage() {

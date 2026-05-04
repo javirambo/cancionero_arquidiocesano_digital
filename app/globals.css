@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Tokens de diseño — Cancionero Arquidiocesano Digital
+ * Tokens de diseño — Cancionero Arquidiocesano
  * Valores tentativos basados en `documentacion/analisis_&_desarrollo.md` §5.3 y §10.1.
  * Ajustar cuando la Comisión defina la paleta final.
  */
@@ -85,4 +85,33 @@ input[type="search"]::-ms-reveal {
   display: none !important;
   width: 0;
   height: 0;
+}
+
+/* Selects: reemplazamos el chevron nativo (que iOS pinta horrible) por uno
+   propio en SVG. Heredamos color de `currentColor` y mantenemos espacio a
+   la derecha para que el texto no quede tapado por el chevron.
+   En mobile, forzamos font-size 16px para evitar el zoom automático de
+   iOS Safari al hacer focus (cualquier valor < 16px lo dispara).  */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.75rem;
+  padding-right: 2rem;
+}
+
+/* iOS Safari: si el font-size del input/select/textarea es menor a 16px,
+   hace zoom automático al hacer focus. Forzamos 16px en touch devices.
+   Aplica también a <option> porque iOS renderiza el popover del select
+   con el font-size del option, no el del select. */
+@media (pointer: coarse) {
+  select,
+  option,
+  input,
+  textarea {
+    font-size: 16px;
+  }
 }

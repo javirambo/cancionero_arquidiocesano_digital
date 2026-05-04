@@ -56,6 +56,113 @@ Valores actuales tomados de [`app/globals.css`](../app/globals.css). Tentativos 
 | `muted-foreground` | `#a39b8b` | ![#a39b8b](https://placehold.co/16x16/a39b8b/a39b8b.png)           | Texto secundario, metadata            |
 
 
+## Iconografía
+
+### Convención técnica
+
+Los iconos son **SVG inline propios**, definidos en [`app/components/icons.tsx`](../app/components/icons.tsx). **No** se usa `lucide-react` ni ninguna librería externa de iconos.
+
+Reglas comunes (`baseProps` en `icons.tsx`):
+
+- `viewBox="0 0 24 24"`, `fill="none"`, `stroke="currentColor"`, `strokeWidth={1.6}`, `strokeLinecap="round"`, `strokeLinejoin="round"`.
+- Tamaño por defecto **18×18**. Excepciones: 20×20 para `SearchIcon` y `UserIcon` (acciones del header), 16×16 para `HelpIcon` (inline en texto).
+- El color se hereda del contenedor vía `currentColor` — nunca hardcodear color en el SVG. Estados como "lleno" se logran cambiando `fill` (ver `HeartIcon` con `filled`).
+- `aria-hidden="true"` siempre que el icono sea decorativo y vaya acompañado de label/texto accesible.
+
+### Catálogo de iconos
+
+| Concepto                     | Forma visual                  | Componente       | Estado    |
+|------------------------------|-------------------------------|------------------|-----------|
+| Home / inicio                | Casa                          | `HomeIcon`       | a crear   |
+| Canciones / acordes / nota   | Nota musical                  | `ChordsIcon`     | existe    |
+| Agregar acorde               | Nota musical con signo `+`    | `AddChordIcon`   | a crear   |
+| Partitura                    | Hoja con pentagrama           | `ScoreIcon`      | a crear   |
+| Reproducir (YouTube/audio)   | Círculo con triángulo         | `PlayIcon`       | existe    |
+| Archivos genéricos           | Hoja con líneas               | `FilesIcon`      | existe    |
+| Favoritos                    | Corazón (`filled` opcional)   | `HeartIcon`      | existe    |
+| Menú "..."                   | Tres puntos horizontales      | `MoreIcon`       | existe    |
+| Buscar                       | Lupa                          | `SearchIcon`     | existe    |
+| Usuario / perfil             | Persona                       | `UserIcon`       | existe    |
+| Cerrar                       | Cruz (X)                      | `CloseIcon`      | existe    |
+| Avanzar / submenú            | Chevron derecho               | `ChevronRightIcon` | existe  |
+| Ayuda                        | Círculo con "?"               | `HelpIcon`       | existe    |
+| Descargar (PDF, partitura, cancionero, QR) | Flecha hacia abajo a bandeja | `DownloadIcon`   | a crear   |
+| Editar                       | Lápiz                         | `EditIcon`       | a crear   |
+| Eliminar (en listas inline)  | Tacho de basura               | `TrashIcon`      | a crear   |
+| Ver / vista previa           | Ojo                           | `ViewIcon`       | a crear   |
+| Agregar                      | Signo `+` (en círculo)        | `PlusIcon`       | a crear   |
+| Quitar                       | Signo `−` (en círculo)        | `MinusIcon`      | a crear   |
+| Guardar (form)               | Sin icono — solo texto        | —                | —         |
+| Cancelar (form)              | Sin icono — solo texto        | —                | —         |
+| Playlists                    | Lista con check / 3 líneas    | `PlaylistIcon`   | a crear   |
+| Parroquia                    | Iglesia simple (cruz arriba)  | `ParishIcon`     | a crear   |
+| Compartir                    | Nodos conectados              | `ShareIcon`      | a crear   |
+| QR                           | Cuadro QR                     | `QrIcon`         | existe (hoy embebido en `qr-button.tsx`, mover a `icons.tsx`) |
+
+### Botones de formulario
+
+Tres botones estandarizados, siempre en este orden visual: **Eliminar** alineado a la izquierda, **Cancelar** y **Guardar** alineados a la derecha.
+
+| Botón     | Variante         | Color base       | Icono       | Cuándo aparece                                   |
+|-----------|------------------|------------------|-------------|--------------------------------------------------|
+| Guardar   | primary          | `primary` (rojo) | — (sin icono) | Siempre en formularios de creación/edición.    |
+| Cancelar  | ghost / outline  | neutro           | — (sin icono) | Siempre en formularios.                        |
+| Eliminar  | destructive      | `destructive`    | `TrashIcon` a la izquierda del label | Solo en formularios de **edición** (no en creación). |
+
+### Botones de acción inline (en listas y filas)
+
+Botones-icono cuadrados, sin label visible, con `aria-label` accesible y `title` para tooltip. Tamaño táctil mínimo: 32×32 (área clickeable), icono 18×18 centrado. Color del icono: `muted-foreground` por defecto, `foreground` en hover; el de **eliminar** usa `destructive`.
+
+Iconos típicos en filas: `EditIcon`, `TrashIcon`, `ViewIcon`, `DownloadIcon`, `MoreIcon`.
+
+### Menús contextuales ("...")
+
+Patrón unificado para los menús que se abren desde un botón `MoreIcon`. Ejemplos: header del usuario, menú de canción dentro de una playlist, menú de playlist en `/admin/playlists`.
+
+Reglas:
+
+- Cada item del menú lleva **icono a la izquierda + label** (mismo gap, alineación vertical centrada). El icono usa el componente del catálogo, nunca un emoji o texto.
+- Items destructivos (Eliminar, Quitar de…) usan color `destructive` para el icono y el label.
+- Items deshabilitados se muestran con opacidad reducida (no se ocultan).
+- Submenús se indican con `ChevronRightIcon` al final del item (ej: "Agregar a playlist ›").
+
+**Ejemplo — menú de canción dentro de una playlist:**
+
+| Icono            | Label                       | Notas                          |
+|------------------|-----------------------------|--------------------------------|
+| `PlaylistIcon`   | Agregar a playlist          | Submenú → `ChevronRightIcon`   |
+| `ChordsIcon`     | Ver canción                 |                                |
+| `ShareIcon`      | Compartir                   |                                |
+| `HeartIcon`      | Agregar a Mis favoritos     | `filled` si ya es favorito     |
+| `MinusIcon`      | Quitar de esta playlist     | Color `destructive`            |
+
+**Ejemplo — menú del header del usuario** (ya implementado, sirve como referencia visual): `UserIcon` Perfil · `MoonIcon` Modo oscuro · `ChordsIcon` Sugerir acordes · `PlaylistIcon` Playlists · `ParishIcon` Parroquias · `ShieldIcon` Administración · `QrIcon` Descargar QR.
+
+## Lista de canciones (item)
+
+Layout estándar de cada fila de canción. Aplica en **todas** las listas: playlists, resultados de búsqueda, favoritos, canciones de parroquia, vistas de admin, etc.
+
+Estructura visual de la fila:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ N. Título de la canción                               ⋯  │
+│                       Autor  ♪  ▶  ♥                     │
+└──────────────────────────────────────────────────────────┘
+```
+
+- **Línea 1 — arriba a la izquierda:** `N.` + `Título`.
+  - Numeración **sin ceros a la izquierda** (`1.`, `2.`, … `10.`, nunca `01.`).
+  - Si la lista no tiene orden numérico (ej. resultados de búsqueda, favoritos), se omite el número.
+- **Línea 2 — abajo a la derecha:** `Autor` · iconos de metadata, en este orden:
+  1. `ChordsIcon` si la canción tiene acordes.
+  2. `PlayIcon` si tiene referencia de YouTube.
+  3. `HeartIcon` (`filled`) si es favorita del usuario actual.
+  - Solo se renderizan los iconos cuyo flag está activo — no se reservan placeholders.
+  - Color `muted-foreground`; tamaño 18×18 (default del catálogo).
+- **Botón de menú "..." (`MoreIcon`):** alineado a la **derecha** del item y **centrado verticalmente** respecto a las dos líneas de contenido. Se comporta como botón inline de acción (ver sección "Botones de acción inline").
+
+
 ## Componentes
 
 - badges:

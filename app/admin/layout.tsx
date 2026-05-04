@@ -43,6 +43,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </Link>
           )}
           {showEditorLinks && (
+            <Link href="/admin/canciones" className="text-primary hover:underline">
+              Canciones
+            </Link>
+          )}
+          {showEditorLinks && (
             <Link href="/admin/playlists" className="text-primary hover:underline">
               Playlists
             </Link>

@@ -11,31 +11,31 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-01   | Buscar cualquier cosa (parroquia, canción, playlist) | RF4       | ✅     |
 | CU-02.1 | Ver canción con letra                                | RF5       | ✅     |
 | CU-02.2 | Ver canción con letra y acordes                      | RF5       | ✅     |
-| CU-03   | Transponer tonalidad                                 | RF6       | ⏳ (falta ocultarla al invitado) |
+| CU-03   | Transponer tonalidad                                 | RF6       | ✅     |
 | CU-04   | Reproducir referencia de YouTube                     | RF8       | ✅     |
 | CU-05   | Ver playlist de parroquia                            | RF3, RF12 | ✅     |
 | CU-06.1 | Buscar parroquia                                     | RF11      | ✅     |
 | CU-06.2 | Acceder a parroquia por URL                          | RF11      | ✅     |
 | CU-07   | Visualizar novedades / festividad del día            | —         | ✅     |
 | CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | ✅     |
-| CU-09   | Descargar partitura                                  | RF7       | ⏳     |
-| CU-10   | Descargar canción para imprimir                      | RF14      | ⏳     |
-| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳     |
+| CU-09   | Descargar partitura                                  | RF7       | ⏳ PDF desde Storage cuando `song_files.kind = 'score_pdf'` está `published`. Colocar un icono de descarga de partitura cuando se está visualizando la canción. Para esto hay que subir la partitura en edición o creación de canciones. |
+| CU-10   | Descargar canción para imprimir                      | RF14      | ⏳ Render imprimible de letra/acordes con preview. Colocar un botón de descarga cuando se está visualizando la canción. |
+| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. |
 | CU-12   | Descargar QR de la página actual                     | RF13      | ✅     |
-| CU-13   | Login con Google                                     | RF16      | ✅ (falta migrar favoritos de localStorage) |
+| CU-13   | Login con Google                                     | RF16      | ✅     |
 | CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
-| CU-15   | Marcar favoritos                                     | RF18      | ✅ (falta favoritos de invitado en localStorage) |
-| CU-16   | ABM de canción                                       | RF1       | ⏳     |
-| CU-17   | ABM de playlist                                      | RF2       | ✅ (parcial: falta admin reasignar dueño) |
-| CU-18   | ABM de usuario                                       | RF9       | ⏳     |
-| CU-19   | ABM de parroquia                                     | RF10      | ✅ (falta flujo `pending` para coordinator) |
-| CU-20   | Gestionar permisos                                   | RF21      | ⏳     |
-| CU-21   | Gestionar anuncios                                   | RF19      | ✅ (parcial: falta alcance parroquial para coordinator) |
+| CU-15   | Marcar favoritos                                     | RF18      | ✅     |
+| CU-16   | ABM de canción                                       | RF1       | ⏳ Flujo `draft → review → published` para canciones. UI de coordinator (crear/editar borradores, enviar a revisión) + UI de editor (cola de revisión, aprobar/rechazar canciones y `song_files`). Asegurarse que el coordinator crea la canción y que no se ve hasta que la apruebe el editor. |
+| CU-17   | ABM de playlist                                      | RF2       | ✅     |
+| CU-18   | ABM de usuario                                       | RF9       | ✅     |
+| CU-19   | ABM de parroquia                                     | RF10      | ✅     |
+| CU-20   | Gestionar permisos (tal vez nunca se necesite)       | RF21      | ⏳ Solo si necesitamos granularidad por permiso atómico; hoy los permisos están hardcodeados en RLS por rol y puede ser suficiente. |
+| CU-21   | Gestionar anuncios                                   | RF19      | ✅     |
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      | ✅     |
-| CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅                                       |
+| CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
-| CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳     |
-| CU-26   | ABM de festividades litúrgicas                       | RF23      | ⏳     |
+| CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳ ABM de `categories` para coordinator/editor. En la edición o creación de cada canción debería aparecer una selección de categoría. |
+| CU-26   | ABM de festividades litúrgicas                       | RF23      | ⏳ Carga manual año a año (`liturgical_events`). Podría tener un botón de actualización automático que use servicios como romcal, y luego de validar todo se le da un OK general para que queden aceptadas. También que se pueda agregar algún evento manual. |
 
 ---
 

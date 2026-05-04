@@ -98,6 +98,16 @@ export function ChevronRightIcon(): ReactElement {
   );
 }
 
+export function EditIcon(): ReactElement {
+  // Lápiz (edición).
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M4 20h4l10-10-4-4L4 16v4z" />
+      <path d="M14 6l4 4" />
+    </svg>
+  );
+}
+
 export function HelpIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true" width={16} height={16}>

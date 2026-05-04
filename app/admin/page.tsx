@@ -22,6 +22,12 @@ const secciones: Seccion[] = [
     show: (a) => a.isAdmin || a.isEditor || a.isAnyCoordinator,
   },
   {
+    href: "/admin/canciones",
+    titulo: "Canciones",
+    descripcion: "Edición de canciones: metadatos, letra/acordes y archivos asociados (partituras, audios).",
+    show: (a) => a.isAdmin || a.isEditor,
+  },
+  {
     href: "/admin/playlists",
     titulo: "Playlists generales",
     descripcion: "Repertorio arquidiocesano: alta, edición y baja de playlists visibles en todas las parroquias.",

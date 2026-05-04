@@ -57,7 +57,7 @@ export default async function Home() {
 
   // Pasamos la fecha de hoy en Cordoba (mediodía UTC) para que
   // getLiturgicalDay no tome el día UTC del runtime del server.
-  const litDay = getLiturgicalDay(new Date(`${hoyEnCordoba()}T12:00:00Z`));
+  const litDay = await getLiturgicalDay(new Date(`${hoyEnCordoba()}T12:00:00Z`));
 
   const today = formatearFecha(new Date(), {
     weekday: "long",
@@ -100,7 +100,7 @@ export default async function Home() {
             Evangelizar a través de la música
           </p>
           <h1 className="text-4xl leading-tight sm:text-5xl">
-            Cancionero Arquidiocesano Digital
+            Cancionero Arquidiocesano
           </h1>
           <p className="max-w-2xl text-lg leading-8 text-muted-foreground normal-case">
             Una herramienta común para coros, ministerios de música y asambleas

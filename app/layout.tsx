@@ -18,7 +18,7 @@ const cardo = Cardo({
 });
 
 export const metadata: Metadata = {
-  title: "Cancionero Arquidiocesano Digital",
+  title: "Cancionero Arquidiocesano",
   description: "Evangelizar a través de la música",
   verification: {
     google: "MQOeacAEK6YldtteyizvMjjD4gBKlgIrQ0UAXATwLMo",
