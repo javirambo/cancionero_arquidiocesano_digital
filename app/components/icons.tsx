@@ -108,12 +108,72 @@ export function EditIcon(): ReactElement {
   );
 }
 
+export function YoutubeIcon(): ReactElement {
+  // Logo simplificado de YouTube: rectángulo relleno con un triángulo recortado
+  // (fill-rule="evenodd" hace que el path interno sea un hueco real, así el
+  // triángulo siempre muestra el color del botón detrás — funciona en hover).
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.5 6h13a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-13a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3zm4.5 3.5v5l5-2.5-5-2.5z"
+        fill="currentColor"
+        stroke="none"
+      />
+    </svg>
+  );
+}
+
+export function PlaylistIcon(): ReactElement {
+  // Lista con líneas y un check.
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M4 7h11M4 12h11M4 17h7" />
+      <path d="M16 16l2 2 4-4" />
+    </svg>
+  );
+}
+
+export function ShareIcon(): ReactElement {
+  // Tres nodos conectados.
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="6" r="2.5" />
+      <circle cx="18" cy="18" r="2.5" />
+      <path d="M8 11l8-4M8 13l8 4" />
+    </svg>
+  );
+}
+
+export function MinusIcon(): ReactElement {
+  // Signo menos en círculo.
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12h8" />
+    </svg>
+  );
+}
+
 export function HelpIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true" width={16} height={16}>
       <circle cx="12" cy="12" r="9" />
       <path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7" />
       <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+export function TrashIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M4 7h16" />
+      <path d="M9 7V4h6v3" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
     </svg>
   );
 }

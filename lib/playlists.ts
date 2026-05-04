@@ -92,6 +92,20 @@ export type MyPlaylistsSections = {
   archdiocesan: PlaylistSummary[];
 };
 
+// Listado de playlists arquidiocesanas (para invitados en /playlists).
+export async function listArchdiocesanPlaylists(): Promise<PlaylistSummary[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("playlists")
+    .select(PLAYLIST_SELECT)
+    .eq("is_archdiocesan", true)
+    .order("event_date", { ascending: false, nullsFirst: false });
+  if (error) throw error;
+  return (data ?? []).map((r) =>
+    rowToSummary(r as unknown as Parameters<typeof rowToSummary>[0])
+  );
+}
+
 export async function listMyPlaylistsSections(
   userId: string
 ): Promise<MyPlaylistsSections> {

@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSongBySlug, youtubeEmbedUrl } from "@/lib/songs";
 import { getPlaylistById } from "@/lib/playlists";
 import { SongView } from "./song-view";
-import { QrButton } from "@/app/components/qr-button";
+import { FavoriteHeartInline } from "./favorite-heart-inline";
+import { PlaylistNav } from "./playlist-nav";
 
 export default async function CancionPage({
   params,
@@ -50,35 +50,24 @@ export default async function CancionPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
-      <nav className="text-sm normal-case text-muted-foreground">
-        {playlistCtx ? (
-          <Link
-            href={`/playlists/${playlistCtx.playlistId}`}
-            className="hover:text-primary"
-          >
-            ← {playlistCtx.name}
-          </Link>
-        ) : (
-          <Link href="/canciones" className="hover:text-primary">
-            ← Canciones
-          </Link>
-        )}
-      </nav>
-
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             {song.number !== null ? `Nº ${song.number}` : "Canción"}
             {song.category && ` · ${song.category}`}
           </p>
-          <h1 className="text-3xl leading-tight">{song.title}</h1>
+          <h1 className="text-3xl leading-tight">
+            <span className="relative inline-block">
+              {song.title}
+              <FavoriteHeartInline songId={song.id} />
+            </span>
+          </h1>
           {song.author && (
             <p className="text-sm normal-case text-muted-foreground">
               Autor: {song.author}
             </p>
           )}
         </div>
-        <QrButton path={`/canciones/${song.slug}`} filename={`cancion-${song.slug}`} />
       </header>
 
       <SongView
@@ -89,41 +78,11 @@ export default async function CancionPage({
       />
 
       {playlistCtx && (
-        <nav
-          aria-label="Navegación dentro de la playlist"
-          className="mt-4 flex items-stretch justify-between gap-3 border-t border-border pt-4"
-        >
-          {playlistCtx.prev ? (
-            <Link
-              href={`/canciones/${playlistCtx.prev.slug}${plQuery}`}
-              className="flex flex-1 flex-col rounded-xl border border-border bg-background px-4 py-3 normal-case transition-colors hover:border-primary"
-            >
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                ← Anterior
-              </span>
-              <span className="text-base text-primary">
-                {playlistCtx.prev.title}
-              </span>
-            </Link>
-          ) : (
-            <span className="flex-1" />
-          )}
-          {playlistCtx.next ? (
-            <Link
-              href={`/canciones/${playlistCtx.next.slug}${plQuery}`}
-              className="flex flex-1 flex-col items-end rounded-xl border border-border bg-background px-4 py-3 normal-case transition-colors hover:border-primary"
-            >
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                Siguiente →
-              </span>
-              <span className="text-base text-primary">
-                {playlistCtx.next.title}
-              </span>
-            </Link>
-          ) : (
-            <span className="flex-1" />
-          )}
-        </nav>
+        <PlaylistNav
+          prev={playlistCtx.prev}
+          next={playlistCtx.next}
+          plQuery={plQuery}
+        />
       )}
     </main>
   );

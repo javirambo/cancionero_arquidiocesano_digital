@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getParishBySlug } from "@/lib/songs";
 import { listPlaylistsForParish } from "@/lib/playlists";
-import { QrButton } from "@/app/components/qr-button";
 import { formatearFecha } from "@/lib/dates";
 
 export default async function ParroquiaPage({
@@ -19,12 +18,6 @@ export default async function ParroquiaPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
-      <nav className="text-sm normal-case text-muted-foreground">
-        <Link href="/parroquias" className="hover:text-primary">
-          ← Parroquias
-        </Link>
-      </nav>
-
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
@@ -42,7 +35,6 @@ export default async function ParroquiaPage({
             </p>
           )}
         </div>
-        <QrButton path={`/parroquias/${parish.slug}`} filename={`parroquia-${parish.slug}`} />
       </header>
 
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">

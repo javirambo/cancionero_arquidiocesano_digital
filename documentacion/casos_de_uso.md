@@ -25,7 +25,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-13   | Login con Google                                     | RF16      | ✅     |
 | CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
 | CU-15   | Marcar favoritos                                     | RF18      | ✅     |
-| CU-16   | ABM de canción                                       | RF1       | ⏳ Flujo `draft → review → published` para canciones. UI de coordinator (crear/editar borradores, enviar a revisión) + UI de editor (cola de revisión, aprobar/rechazar canciones y `song_files`). Asegurarse que el coordinator crea la canción y que no se ve hasta que la apruebe el editor. |
+| CU-16   | ABM de canción                                       | RF1       | ✅     |
 | CU-17   | ABM de playlist                                      | RF2       | ✅     |
 | CU-18   | ABM de usuario                                       | RF9       | ✅     |
 | CU-19   | ABM de parroquia                                     | RF10      | ✅     |
@@ -451,7 +451,7 @@ Rol global con permisos plenos.
 - **6a (sin permisos):** Un usuario sin rol Coordinador o Editor no puede acceder a `/admin/canciones` (RLS rechaza).
 - **Edición concurrente:** Si la canción está en `'review'`, el coordinador no puede editarla; debe esperar a que el editor decida o "retirar de revisión" (vuelve a `'draft'`).
 - **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar. Se confirma con doble paso. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva.
-- **Edición de canción ya publicada:** Editar una canción `'published'` crea una nueva edición que pasa por el flujo `draft → review → published`. La versión publicada anterior sigue activa en `song_versions` hasta que se apruebe la nueva.
+- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`. *(Decisión: simplificación deliberada — el Editor tiene confianza total y el flujo de review se reserva para canciones nuevas. El coordinator no puede editar canciones publicadas.)*
 
 ### Postcondiciones
 

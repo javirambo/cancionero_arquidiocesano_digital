@@ -78,6 +78,7 @@ Reglas comunes (`baseProps` en `icons.tsx`):
 | Agregar acorde               | Nota musical con signo `+`    | `AddChordIcon`   | a crear   |
 | Partitura                    | Hoja con pentagrama           | `ScoreIcon`      | a crear   |
 | Reproducir (YouTube/audio)   | Círculo con triángulo         | `PlayIcon`       | existe    |
+| Reproducir YouTube           | Logo de YouTube (rect + ▶)    | `YoutubeIcon`    | existe    |
 | Archivos genéricos           | Hoja con líneas               | `FilesIcon`      | existe    |
 | Favoritos                    | Corazón (`filled` opcional)   | `HeartIcon`      | existe    |
 | Menú "..."                   | Tres puntos horizontales      | `MoreIcon`       | existe    |
@@ -91,13 +92,14 @@ Reglas comunes (`baseProps` en `icons.tsx`):
 | Eliminar (en listas inline)  | Tacho de basura               | `TrashIcon`      | a crear   |
 | Ver / vista previa           | Ojo                           | `ViewIcon`       | a crear   |
 | Agregar                      | Signo `+` (en círculo)        | `PlusIcon`       | a crear   |
-| Quitar                       | Signo `−` (en círculo)        | `MinusIcon`      | a crear   |
+| Quitar                       | Signo `−` (en círculo)        | `MinusIcon`      | existe    |
 | Guardar (form)               | Sin icono — solo texto        | —                | —         |
 | Cancelar (form)              | Sin icono — solo texto        | —                | —         |
-| Playlists                    | Lista con check / 3 líneas    | `PlaylistIcon`   | a crear   |
+| Playlists                    | Lista con check / 3 líneas    | `PlaylistIcon`   | existe    |
 | Parroquia                    | Iglesia simple (cruz arriba)  | `ParishIcon`     | a crear   |
-| Compartir                    | Nodos conectados              | `ShareIcon`      | a crear   |
+| Compartir                    | Nodos conectados              | `ShareIcon`      | existe    |
 | QR                           | Cuadro QR                     | `QrIcon`         | existe (hoy embebido en `qr-button.tsx`, mover a `icons.tsx`) |
+| No apagar pantalla           | Pantalla con base             | `ModoCoroIcon`   | existe (inline en `site-header.tsx`) |
 
 ### Botones de formulario
 
@@ -146,18 +148,20 @@ Estructura visual de la fila:
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ N. Título de la canción                               ⋯  │
-│                       Autor  ♪  ▶  ♥                     │
+│ N. Título de la canción                                  │
+│                                                       ⋯  │
+│ Autor                                         ♪  ▶  ♥    │
 └──────────────────────────────────────────────────────────┘
 ```
 
 - **Línea 1 — arriba a la izquierda:** `N.` + `Título`.
   - Numeración **sin ceros a la izquierda** (`1.`, `2.`, … `10.`, nunca `01.`).
   - Si la lista no tiene orden numérico (ej. resultados de búsqueda, favoritos), se omite el número.
-- **Línea 2 — abajo a la derecha:** `Autor` · iconos de metadata, en este orden:
+- **Línea 2 — abajo:** `Autor` alineado a la **izquierda**; iconos de metadata alineados a la **derecha**, en este orden:
   1. `ChordsIcon` si la canción tiene acordes.
   2. `PlayIcon` si tiene referencia de YouTube.
-  3. `HeartIcon` (`filled`) si es favorita del usuario actual.
+  3. `FilesIcon` si tiene partitura u otros archivos publicados.
+  4. `HeartIcon` (`filled`) si es favorita del usuario actual.
   - Solo se renderizan los iconos cuyo flag está activo — no se reservan placeholders.
   - Color `muted-foreground`; tamaño 18×18 (default del catálogo).
 - **Botón de menú "..." (`MoreIcon`):** alineado a la **derecha** del item y **centrado verticalmente** respecto a las dos líneas de contenido. Se comporta como botón inline de acción (ver sección "Botones de acción inline").

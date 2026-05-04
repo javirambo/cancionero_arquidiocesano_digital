@@ -34,6 +34,9 @@ export type AdminSongDetail = {
   youtube_url: string | null;
   author_id: string | null;
   category_id: string | null;
+  review_notes: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
 };
 
 export type AuthorOption = { id: string; name: string };
@@ -60,7 +63,8 @@ function firstName(rel: Named): string | null {
 }
 
 export async function listSongsForAdmin(
-  q: string = ""
+  q: string = "",
+  status: SongStatus | "todas" = "todas"
 ): Promise<AdminSongRow[]> {
   const supabase = await createClient();
   let query = supabase
@@ -71,7 +75,15 @@ export async function listSongsForAdmin(
     .order("updated_at", { ascending: false })
     .limit(200);
   const term = q.trim();
-  if (term) query = query.ilike("title", `%${term}%`);
+  if (term) {
+    const asNumber = /^\d+$/.test(term) ? Number(term) : null;
+    if (asNumber !== null) {
+      query = query.or(`title.ilike.%${term}%,number.eq.${asNumber}`);
+    } else {
+      query = query.ilike("title", `%${term}%`);
+    }
+  }
+  if (status !== "todas") query = query.eq("status", status);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -101,7 +113,7 @@ export async function getSongForAdmin(
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, status, body, original_key, tempo_bpm, tags, youtube_url, author_id, category_id"
+      "id, number, title, slug, status, body, original_key, tempo_bpm, tags, youtube_url, author_id, category_id, review_notes, submitted_at, reviewed_at"
     )
     .eq("id", id)
     .maybeSingle();
@@ -120,6 +132,9 @@ export async function getSongForAdmin(
     youtube_url: (data.youtube_url as string | null) ?? null,
     author_id: (data.author_id as string | null) ?? null,
     category_id: (data.category_id as string | null) ?? null,
+    review_notes: (data.review_notes as string | null) ?? null,
+    submitted_at: (data.submitted_at as string | null) ?? null,
+    reviewed_at: (data.reviewed_at as string | null) ?? null,
   };
 }
 

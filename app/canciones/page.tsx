@@ -1,5 +1,6 @@
 import { listSongsWithCapabilities } from "@/lib/songs";
 import { SongRow } from "@/app/components/song-row";
+import { SearchInput } from "./search-input";
 
 export const metadata = {
   title: "Canciones · Cancionero Arquidiocesano",
@@ -23,31 +24,7 @@ export default async function CancionesPage({
             ? `Resultados para "${term}"`
             : "Catálogo completo del cancionero."}
         </p>
-        <form
-          action="/canciones"
-          method="get"
-          role="search"
-          className="flex w-full max-w-xl items-center gap-2 rounded-full border border-border bg-background px-5 py-2 shadow-sm focus-within:border-primary"
-        >
-          <label htmlFor="q" className="sr-only">
-            Buscar canción
-          </label>
-          <input
-            id="q"
-            name="q"
-            type="search"
-            defaultValue={term}
-            placeholder="Título o fragmento de letra…"
-            autoComplete="off"
-            className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-primary-hover"
-          >
-            Buscar
-          </button>
-        </form>
+        <SearchInput initialValue={term} />
       </header>
 
       {songs.length === 0 ? (
