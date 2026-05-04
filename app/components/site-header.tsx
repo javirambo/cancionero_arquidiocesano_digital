@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import QRCode from "qrcode";
@@ -178,6 +178,22 @@ const QrIcon = () => (
   </svg>
 );
 
+const HomeIcon = () => (
+  <svg {...iconProps}>
+    <path d="M3 11l9-7 9 7" />
+    <path d="M5 10v10h14V10" />
+    <path d="M10 20v-6h4v6" />
+  </svg>
+);
+
+const CancionesIcon = () => (
+  <svg {...iconProps}>
+    <path d="M9 18V5l11-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="17" cy="16" r="3" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
@@ -186,6 +202,7 @@ export function SiteHeader() {
   const [user, setUser] = useState<User | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const showQr = pathname !== "/perfil";
   const { theme, toggle } = useTheme();
   const { favorites } = useFavorites();
@@ -268,12 +285,17 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <CircleButton
+            label="Inicio"
+            onClick={() => router.push("/")}
+            icon={<HomeIcon />}
+          />
+          <CircleButton
             label="Buscar"
             onClick={() => setSearchOpen(true)}
             icon={<SearchIcon />}
           />
           <CircleButton
-            label="Mis favoritos"
+            label="Favoritos"
             onClick={() => setFavOpen(true)}
             icon={
               <span className={favorites.length > 0 ? "text-primary" : undefined}>
@@ -338,24 +360,14 @@ export function SiteHeader() {
                       }}
                     />
                   </li>
-                  {user && (
-                    <li>
-                      <MenuToggleItem
-                        icon={<ChordsIcon />}
-                        label="Sugerir acordes"
-                        checked={suggestChords}
-                        disabled={!prefsAuth}
-                        tooltip={
-                          prefsAuth
-                            ? undefined
-                            : "Iniciá sesión para guardar tus preferencias"
-                        }
-                        onChange={() =>
-                          setPreference("suggestChords", !suggestChords)
-                        }
-                      />
-                    </li>
-                  )}
+                  <li>
+                    <MenuItem
+                      href="/canciones"
+                      icon={<CancionesIcon />}
+                      label="Canciones"
+                      onSelect={closeMenu}
+                    />
+                  </li>
                   {user && (
                     <li>
                       <MenuItem
@@ -381,6 +393,24 @@ export function SiteHeader() {
                         icon={<AdminIcon />}
                         label="Administración"
                         onSelect={closeMenu}
+                      />
+                    </li>
+                  )}
+                  {user && (
+                    <li>
+                      <MenuToggleItem
+                        icon={<ChordsIcon />}
+                        label="Sugerir acordes"
+                        checked={suggestChords}
+                        disabled={!prefsAuth}
+                        tooltip={
+                          prefsAuth
+                            ? undefined
+                            : "Iniciá sesión para guardar tus preferencias"
+                        }
+                        onChange={() =>
+                          setPreference("suggestChords", !suggestChords)
+                        }
                       />
                     </li>
                   )}
@@ -580,9 +610,12 @@ function CircleButton({
       aria-haspopup={ariaHaspopup}
       aria-expanded={ariaExpanded}
       onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+      className="group flex flex-col items-center gap-0.5 text-muted-foreground transition-colors hover:text-primary"
     >
-      {icon}
+      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition-colors group-hover:border-primary">
+        {icon}
+      </span>
+      <span className="text-[10px] leading-none">{label}</span>
     </button>
   );
 }
@@ -605,7 +638,7 @@ function AccountButton({
   if (!avatarUrl || imgFailed) {
     return (
       <CircleButton
-        label="Mi cuenta"
+        label="Menú"
         onClick={onClick}
         icon={<UserIcon />}
         ariaHaspopup="menu"
@@ -617,21 +650,24 @@ function AccountButton({
   return (
     <button
       type="button"
-      title="Mi cuenta"
-      aria-label="Mi cuenta"
+      title="Menú"
+      aria-label="Menú"
       aria-haspopup="menu"
       aria-expanded={ariaExpanded}
       onClick={onClick}
-      className="h-10 w-10 overflow-hidden rounded-full border border-border bg-background transition-colors hover:border-primary"
+      className="group flex flex-col items-center gap-0.5 text-muted-foreground transition-colors hover:text-primary"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={avatarUrl}
-        alt=""
-        referrerPolicy="no-referrer"
-        onError={() => setImgFailed(true)}
-        className="h-full w-full object-cover"
-      />
+      <span className="block h-10 w-10 overflow-hidden rounded-full border border-border bg-background transition-colors group-hover:border-primary">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={avatarUrl}
+          alt=""
+          referrerPolicy="no-referrer"
+          onError={() => setImgFailed(true)}
+          className="h-full w-full object-cover"
+        />
+      </span>
+      <span className="text-[10px] leading-none">Menú</span>
     </button>
   );
 }

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidad · Cancionero Arquidiocesano Digital",
+  title: "Política de Privacidad · Cancionero Arquidiocesano",
   description:
-    "Política de Privacidad del Cancionero Arquidiocesano Digital relativa al tratamiento de los datos personales del Usuario.",
+    "Política de Privacidad del Cancionero Arquidiocesano relativa al tratamiento de los datos personales del Usuario.",
 };
 
 export default function PrivacidadPage() {

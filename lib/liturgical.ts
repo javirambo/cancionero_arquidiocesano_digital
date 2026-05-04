@@ -1,177 +1,116 @@
-// `romcal` no tiene tipos publicados; lo importamos como any.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const romcal = require("romcal");
+// Calendario litúrgico católico-romano, locale español, con santoral
+// argentino. Usa romcal v3 (`romcal@dev`) y el plugin
+// `@romcal/calendar.argentina`. Los nombres ya vienen traducidos al
+// español; mantenemos un override mínimo solo para corregir mayúsculas
+// en los títulos visibles ("5º domingo" → "5° Domingo").
+//
+// Nota sobre el dev tag: romcal@dev se actualiza, lo pinneamos por
+// versión exacta en package.json para evitar drift.
 
-// `moment` puede venir como objeto Moment.js (con `.format()`) o, si el
-// objeto fue serializado a través de un boundary RSC, como string ISO o
-// como `{ _isAMomentObject: true, ... }`. Normalizamos siempre a YYYY-MM-DD.
-type RomcalDay = {
-  moment: unknown;
-  type: string;
-  name: string;
-  key: string;
-  data: { season?: { key: string; value?: string }; meta?: unknown };
-};
-
-function dayDate(d: RomcalDay): string {
-  const m = d.moment as
-    | { format?: (fmt: string) => string }
-    | string
-    | Date
-    | undefined;
-  if (m && typeof (m as { format?: unknown }).format === "function") {
-    return (m as { format: (fmt: string) => string }).format("YYYY-MM-DD");
-  }
-  // Fallback: convertir vía Date (acepta string ISO o Date).
-  const date = new Date(m as string | number | Date);
-  if (Number.isNaN(date.getTime())) return "";
-  const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(date.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
+import { Romcal } from "romcal";
+import { Argentina_Es } from "@romcal/calendar.argentina";
 
 export type LiturgicalDay = {
-  date: string;            // YYYY-MM-DD
-  name: string;            // nombre en español si lo conocemos, sino el de romcal (en)
-  type: string;            // SOLEMNITY | FEAST | MEMORIAL | OPT_MEMORIAL | SUNDAY | FERIA
-  seasonKey: string | null; // ej: "ORDINARY_TIME", "ADVENT", "CHRISTMASTIDE", "LENT", "EASTER"
-  seasonName: string;       // español
-  rank: number;             // 1 = solemnidad, 2 = fiesta, ... 5 = feria
+  date: string; // YYYY-MM-DD
+  name: string; // ya en español (ej. "5º domingo de Pascua")
+  type: string; // SOLEMNITY | SUNDAY | FEAST | MEMORIAL | OPTIONAL_MEMORIAL | WEEKDAY
+  seasonKey: string | null; // ej: "EASTER_TIME", "ORDINARY_TIME", "ADVENT", "LENT", "CHRISTMAS_TIME"
+  seasonName: string; // ya en español
+  rank: number; // 1 = solemnidad, 2 = domingo, 3 = fiesta, 4 = memoria, 5 = mem. opcional, 6 = feria
 };
 
+// Mapeo del `rank` (string en romcal v3) al número usado por la home.
 const TYPE_RANK: Record<string, number> = {
   SOLEMNITY: 1,
   SUNDAY: 2,
   FEAST: 3,
   MEMORIAL: 4,
-  OPT_MEMORIAL: 5,
-  FERIA: 6,
+  OPTIONAL_MEMORIAL: 5,
+  WEEKDAY: 6,
 };
 
-// Romcal devuelve `season.key` con varias formas según versión: "Easter",
-// "EASTER", "ordinary_time", etc. Normalizamos a UPPER_SNAKE_CASE.
-const SEASON_NAMES_ES: Record<string, string> = {
-  ADVENT: "Adviento",
-  CHRISTMASTIDE: "Tiempo de Navidad",
-  CHRISTMAS: "Tiempo de Navidad",
-  EARLY_ORDINARY_TIME: "Tiempo Ordinario",
-  LATER_ORDINARY_TIME: "Tiempo Ordinario",
-  ORDINARY_TIME: "Tiempo Ordinario",
-  LENT: "Cuaresma",
-  HOLY_WEEK: "Semana Santa",
-  PASCHAL_TRIDUUM: "Triduo Pascual",
-  EASTER: "Tiempo Pascual",
-  EASTERTIDE: "Tiempo Pascual",
+// Cache por año.
+const _calendarCache = new Map<number, Record<string, LiturgicalEntry[]>>();
+
+type LiturgicalEntry = {
+  date: string;
+  name: string;
+  rank: string;
+  seasonNames: string[];
+  seasons: string[];
 };
 
-function normalizeSeasonKey(raw: string | undefined | null): string | null {
-  if (!raw) return null;
-  // CamelCase / lowerCase → UPPER_SNAKE
-  return raw
-    .replace(/([a-z])([A-Z])/g, "$1_$2")
-    .replace(/[\s-]+/g, "_")
-    .toUpperCase();
+let _romcalInstance: InstanceType<typeof Romcal> | null = null;
+
+function getRomcal(): InstanceType<typeof Romcal> {
+  if (!_romcalInstance) {
+    _romcalInstance = new Romcal({
+      localizedCalendar: Argentina_Es,
+      scope: "gregorian",
+    });
+  }
+  return _romcalInstance;
 }
 
-// Traducciones de festividades comunes (general + Argentina).
-// El resto cae al nombre en inglés que devuelve romcal — visible pero
-// reemplazable canción por canción a futuro.
-const NAME_ES: Record<string, string> = {
-  // Solemnidades del Señor
-  maryMotherOfGod: "Santa María, Madre de Dios",
-  epiphany: "Epifanía del Señor",
-  baptismOfTheLord: "Bautismo del Señor",
-  presentationOfTheLord: "Presentación del Señor",
-  ashWednesday: "Miércoles de Ceniza",
-  palmSunday: "Domingo de Ramos",
-  holyThursday: "Jueves Santo",
-  goodFriday: "Viernes Santo",
-  holySaturday: "Sábado Santo",
-  easterVigil: "Vigilia Pascual",
-  easter: "Domingo de Resurrección",
-  divineMercySunday: "Domingo de la Divina Misericordia",
-  ascension: "Ascensión del Señor",
-  pentecostSunday: "Pentecostés",
-  trinitySunday: "Santísima Trinidad",
-  corpusChristi: "Corpus Christi",
-  mostSacredHeartOfJesus: "Sagrado Corazón de Jesús",
-  // Cristo Rey
-  ourLordJesusChristKingOfTheUniverse: "Cristo Rey del Universo",
-  immaculateConception: "Inmaculada Concepción",
-  christmas: "Natividad del Señor",
-  holyFamily: "Sagrada Familia",
-  // María
-  ourLadyOfLourdes: "Nuestra Señora de Lourdes",
-  annunciationOfTheLord: "Anunciación del Señor",
-  visitationOfTheBlessedVirginMary: "Visitación de la Virgen María",
-  assumption: "Asunción de la Virgen María",
-  birthOfTheBlessedVirginMary: "Natividad de la Virgen María",
-  ourLadyOfTheRosary: "Nuestra Señora del Rosario",
-  presentationOfTheBlessedVirginMary: "Presentación de la Virgen María",
-  ourLadyOfGuadalupe: "Nuestra Señora de Guadalupe",
-  ourLadyOfMountCarmel: "Nuestra Señora del Carmen",
-  ourLadyOfSorrows: "Nuestra Señora de los Dolores",
-  immaculateHeartOfMary: "Inmaculado Corazón de María",
-  // Santos populares
-  saintJoseph: "San José, esposo de la Bienaventurada Virgen María",
-  saintsPeterAndPaul: "Santos Pedro y Pablo, apóstoles",
-  saintCajetan: "San Cayetano",
-  allSaints: "Todos los Santos",
-  allSouls: "Todos los Fieles Difuntos",
-  saintFrancisOfAssisi: "San Francisco de Asís",
-  saintAnthonyOfPadua: "San Antonio de Padua",
-  saintTeresaOfAvila: "Santa Teresa de Jesús",
-  saintMaryMagdalene: "Santa María Magdalena",
-  // Argentina
-  ourLadyOfLujan: "Nuestra Señora de Luján, patrona de Argentina",
-  saintRoseOfLima: "Santa Rosa de Lima",
-};
-
-function translateName(key: string, fallback: string): string {
-  return NAME_ES[key] ?? fallback;
-}
-
-const _calendarCache = new Map<number, RomcalDay[]>();
-function calendarFor(year: number): RomcalDay[] {
+async function calendarFor(
+  year: number
+): Promise<Record<string, LiturgicalEntry[]>> {
   const cached = _calendarCache.get(year);
   if (cached) return cached;
-  const cal = romcal.Calendar.calendarFor({
-    country: "argentina",
-    year,
-    locale: "en",
-  }) as RomcalDay[];
-  _calendarCache.set(year, cal);
-  return cal;
+  const romcal = getRomcal();
+  const raw = (await romcal.generateCalendar(year)) as Record<
+    string,
+    Array<{
+      date: string;
+      name: string;
+      rank: string;
+      seasonNames: string[];
+      seasons: string[];
+    }>
+  >;
+  const out: Record<string, LiturgicalEntry[]> = {};
+  for (const [d, list] of Object.entries(raw)) {
+    out[d] = list.map((e) => ({
+      date: e.date,
+      name: e.name,
+      rank: e.rank,
+      seasonNames: e.seasonNames ?? [],
+      seasons: e.seasons ?? [],
+    }));
+  }
+  _calendarCache.set(year, out);
+  return out;
 }
 
-export function getLiturgicalDay(date: Date = new Date()): LiturgicalDay | null {
+function toDateKey(date: Date): string {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
-  const target = `${yyyy}-${mm}-${dd}`;
+  return `${yyyy}-${mm}-${dd}`;
+}
 
-  const cal = calendarFor(yyyy);
-  // Puede haber varias entradas para el mismo día (memorias opcionales que
-  // coinciden con feria, etc.). Tomamos la de mayor rango.
-  const matches = cal.filter((d) => dayDate(d) === target);
-  if (matches.length === 0) return null;
+export async function getLiturgicalDay(
+  date: Date = new Date()
+): Promise<LiturgicalDay | null> {
+  const target = toDateKey(date);
+  const cal = await calendarFor(date.getFullYear());
+  const matches = cal[target];
+  if (!matches || matches.length === 0) return null;
 
-  matches.sort(
-    (a, b) => (TYPE_RANK[a.type] ?? 99) - (TYPE_RANK[b.type] ?? 99)
+  // El primero en la lista es el de mayor precedencia (romcal v3 los
+  // ordena así). Si por alguna razón no fuera el caso, ordenamos por
+  // rank ascendente (1 = solemnidad, 6 = feria).
+  const sorted = [...matches].sort(
+    (a, b) => (TYPE_RANK[a.rank] ?? 99) - (TYPE_RANK[b.rank] ?? 99)
   );
-  const top = matches[0];
-
-  const seasonKey = normalizeSeasonKey(top.data?.season?.key);
-  const seasonName =
-    (seasonKey && SEASON_NAMES_ES[seasonKey]) ?? "Tiempo Ordinario";
+  const top = sorted[0];
 
   return {
     date: target,
-    name: translateName(top.key, top.name),
-    type: top.type,
-    seasonKey,
-    seasonName,
-    rank: TYPE_RANK[top.type] ?? 99,
+    name: top.name,
+    type: top.rank,
+    seasonKey: top.seasons[0] ?? null,
+    seasonName: top.seasonNames[0] ?? "Tiempo Ordinario",
+    rank: TYPE_RANK[top.rank] ?? 99,
   };
 }
