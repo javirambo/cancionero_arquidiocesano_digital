@@ -1,9 +1,9 @@
-name: Bump version on master
+name: Bump version on main
 
 on:
   push:
     branches:
-      - master
+      - main
 
 permissions:
   contents: write
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -40,4 +40,4 @@ jobs:
         run: |
           git add package.json package-lock.json
           git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
-          git push origin master
+          git push origin main
