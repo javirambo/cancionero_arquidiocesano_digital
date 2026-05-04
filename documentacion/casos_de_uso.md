@@ -47,8 +47,8 @@ Hay dos dimensiones que conviven: **roles globales** (catálogo `roles`, asignad
 
 Asamblea o fiel cualquiera. No tiene cuenta. **Caso de uso central:** escanear un QR pegado en un banco de la iglesia y ver la playlist de la celebración.
 
-- **Puede:** buscar (CU-01), ver canciones con letra y acordes (CU-02), reproducir YouTube (CU-04), ver playlists arquidiocesanas y públicas (CU-05), ver parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD.
-- **NO puede:** transponer (la UI de transposición se oculta — CU-03), crear/editar nada, asociarse a parroquias.
+- **Puede:** buscar (CU-01), ver canciones (CU-02), reproducir YouTube (CU-04), ver playlists arquidiocesanas y públicas (CU-05), ver parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD.
+- **NO puede:** ver acordes ni transponer (la UI de transposición se oculta — CU-03), crear/editar nada, asociarse a parroquias.
 - **Migración al loguearse:** al hacer su primer login (CU-13), los favoritos guardados en `localStorage` se transfieren a `favorites` en BD.
 
 ### 2. 🎵 Músico / Corista

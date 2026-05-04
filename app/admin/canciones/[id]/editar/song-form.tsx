@@ -102,6 +102,7 @@ export function SongForm({
       return;
     }
     setOkMsg("Cambios guardados.");
+    router.push("/admin/canciones");
     router.refresh();
   }
 
@@ -138,7 +139,7 @@ export function SongForm({
           onClick={() => router.push("/admin/canciones")}
           className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
         >
-          Volver
+          Cancelar
         </button>
       </div>
     </form>

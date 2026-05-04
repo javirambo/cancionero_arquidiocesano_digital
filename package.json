@@ -9,14 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.41.1",
+    "@romcal/calendar.argentina": "3.0.0-dev.125",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
+    "codemirror": "^6.0.2",
     "next": "16.2.4",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "romcal": "3.0.0-dev.125",
-    "@romcal/calendar.argentina": "3.0.0-dev.125"
+    "romcal": "3.0.0-dev.125"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

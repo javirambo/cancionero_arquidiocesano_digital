@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { detectSystem, parseBody, type ChordLine } from "@/lib/chordpro";
 import type { SongFormState } from "./song-form";
 import { Accordion } from "./accordion";
+import { ChordEditor, type ChordEditorHandle } from "./chord-editor";
 
 export function LyricsSection({
   form,
@@ -14,37 +15,13 @@ export function LyricsSection({
 }) {
   const [preview, setPreview] = useState(false);
   const lines = useMemo(() => parseBody(form.body), [form.body]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<ChordEditorHandle>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const detected = useMemo(() => detectSystem(lines), [lines]);
 
   function insertChord(chord: string) {
-    const ta = textareaRef.current;
-    const token = `[${chord}]`;
     setPickerOpen(false);
-    if (!ta) {
-      update("body", form.body + token);
-      return;
-    }
-    ta.focus();
-    // execCommand("insertText") está deprecado pero es la única forma de
-    // escribir en el undo stack nativo del textarea. React detecta el cambio
-    // y dispara onChange normalmente.
-    const ok = document.execCommand("insertText", false, token);
-    if (!ok) {
-      // Fallback (browsers que ya no lo soporten): pisa el undo stack.
-      const start = ta.selectionStart;
-      const end = ta.selectionEnd;
-      const next = form.body.slice(0, start) + token + form.body.slice(end);
-      update("body", next);
-      requestAnimationFrame(() => {
-        const el = textareaRef.current;
-        if (!el) return;
-        const pos = start + token.length;
-        el.focus();
-        el.setSelectionRange(pos, pos);
-      });
-    }
+    editorRef.current?.insertText(`[${chord}]`);
   }
 
   return (
@@ -101,14 +78,10 @@ export function LyricsSection({
             )}
           </div>
         ) : (
-          <textarea
-            ref={textareaRef}
+          <ChordEditor
+            ref={editorRef}
             value={form.body}
-            onChange={(e) => update("body", e.target.value)}
-            rows={20}
-            spellCheck={false}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm leading-relaxed normal-case"
-            placeholder="[G]Cristo [D]vive, ale[Em]luya…"
+            onChange={(v) => update("body", v)}
           />
         )}
       </div>
