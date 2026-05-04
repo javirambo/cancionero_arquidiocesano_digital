@@ -12,6 +12,7 @@ import { FavoritesDialog } from "./favorites-dialog";
 import { useFavorites } from "./favorites";
 import { usePreferences } from "./preferences";
 import { useUserRoles } from "./user-roles";
+import { useWakeLock } from "./wake-lock";
 import { ChordsIcon, CloseIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 type MenuItemProps = {
@@ -194,6 +195,13 @@ const CancionesIcon = () => (
   </svg>
 );
 
+const ModoCoroIcon = () => (
+  <svg {...iconProps}>
+    <rect x="3" y="4" width="18" height="13" rx="2" />
+    <path d="M8 21h8M12 17v4" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
@@ -207,6 +215,7 @@ export function SiteHeader() {
   const { theme, toggle } = useTheme();
   const { favorites } = useFavorites();
   const { suggestChords, setPreference, isAuthenticated: prefsAuth } = usePreferences();
+  const { active: wakeLockActive, supported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
   const { isAdmin, isEditor } = useUserRoles();
 
   useEffect(() => {
@@ -368,16 +377,14 @@ export function SiteHeader() {
                       onSelect={closeMenu}
                     />
                   </li>
-                  {user && (
-                    <li>
-                      <MenuItem
-                        href="/playlists"
-                        icon={<ListasIcon />}
-                        label="Playlists"
-                        onSelect={closeMenu}
-                      />
-                    </li>
-                  )}
+                  <li>
+                    <MenuItem
+                      href="/playlists"
+                      icon={<ListasIcon />}
+                      label="Playlists"
+                      onSelect={closeMenu}
+                    />
+                  </li>
                   <li>
                     <MenuItem
                       href="/parroquias"
@@ -386,16 +393,6 @@ export function SiteHeader() {
                       onSelect={closeMenu}
                     />
                   </li>
-                  {(isAdmin || isEditor) && (
-                    <li>
-                      <MenuItem
-                        href="/admin"
-                        icon={<AdminIcon />}
-                        label="Administración"
-                        onSelect={closeMenu}
-                      />
-                    </li>
-                  )}
                   {user && (
                     <li>
                       <MenuToggleItem
@@ -414,6 +411,20 @@ export function SiteHeader() {
                       />
                     </li>
                   )}
+                  {wakeLockSupported !== false && (
+                    <li>
+                      <MenuToggleItem
+                        icon={<ModoCoroIcon />}
+                        label="No apagar pantalla"
+                        checked={wakeLockActive}
+                        disabled={wakeLockSupported === null}
+                        tooltip="Mantiene la pantalla encendida durante la celebración"
+                        onChange={() => {
+                          toggleWakeLock();
+                        }}
+                      />
+                    </li>
+                  )}
                   {showQr && (
                     <li>
                       <MenuItem
@@ -423,6 +434,16 @@ export function SiteHeader() {
                           closeMenu();
                           setQrOpen(true);
                         }}
+                      />
+                    </li>
+                  )}
+                  {(isAdmin || isEditor) && (
+                    <li>
+                      <MenuItem
+                        href="/admin"
+                        icon={<AdminIcon />}
+                        label="Administración"
+                        onSelect={closeMenu}
                       />
                     </li>
                   )}

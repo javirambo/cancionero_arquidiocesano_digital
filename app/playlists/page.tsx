@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { listMyPlaylistsSections } from "@/lib/playlists";
-import { GoogleSignInButton } from "@/app/perfil/google-sign-in-button";
+import {
+  listArchdiocesanPlaylists,
+  listMyPlaylistsSections,
+} from "@/lib/playlists";
 import { PlaylistCard } from "./playlist-card";
 
 export const metadata = {
@@ -15,21 +17,48 @@ export default async function PlaylistsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
+    const archdiocesan = await listArchdiocesanPlaylists();
     return (
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
         <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Playlists
+          <h1 className="text-3xl">Playlists</h1>
+          <p className="text-base italic normal-case text-muted-foreground">
+            Estás navegando como invitado. Iniciá sesión para guardar tus
+            favoritos en la nube, vincular tu parroquia y acceder a tus listas.
           </p>
-          <h1 className="text-3xl">Iniciar sesión</h1>
+          <p className="text-base normal-case text-muted-foreground">
+            Listas de cantos arquidiocesanos.
+          </p>
         </header>
-        <section className="rounded-2xl border border-border bg-sidebar p-6">
-          <p className="text-sm normal-case text-muted-foreground">
-            Iniciá sesión con tu cuenta de Google para guardar favoritos,
-            vincular tu parroquia y acceder a tus listas.
-          </p>
-          <GoogleSignInButton />
-        </section>
+
+        {archdiocesan.length > 0 ? (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
+              Arquidiócesis
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {archdiocesan.map((p) => (
+                <PlaylistCard
+                  key={p.id}
+                  playlist={{
+                    id: p.id,
+                    name: p.name,
+                    description: p.description,
+                    event_date: p.event_date,
+                    parish: p.parish,
+                  }}
+                  badge="De la Arquidiócesis"
+                />
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-border bg-sidebar p-6">
+            <p className="text-sm normal-case text-muted-foreground">
+              Todavía no hay playlists arquidiocesanas disponibles.
+            </p>
+          </section>
+        )}
       </main>
     );
   }

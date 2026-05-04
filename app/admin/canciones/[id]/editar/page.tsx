@@ -8,6 +8,7 @@ import {
   listSongFiles,
 } from "@/lib/songs-admin";
 import { SongForm } from "./song-form";
+import { ReviewActions } from "./review-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,13 @@ export default async function EditarCancionPage({
         </span>
         <h1 className="text-2xl">{song.title}</h1>
       </header>
+
+      <ReviewActions
+        songId={song.id}
+        status={song.status}
+        reviewNotes={song.review_notes}
+        canReview={access.isEditor || access.isAdmin}
+      />
 
       <SongForm
         song={song}

@@ -8,6 +8,7 @@ import { MergeFavoritesDialog } from "./components/merge-favorites-dialog";
 import { PreferencesProvider } from "./components/preferences";
 import { UserRolesProvider } from "./components/user-roles";
 import { ToastProvider } from "./components/toast";
+import { WakeLockProvider } from "./components/wake-lock";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -53,9 +54,11 @@ export default function RootLayout({
             <PreferencesProvider>
               <FavoritesProvider>
                 <ToastProvider>
-                  <SiteHeader />
-                  {children}
-                  <MergeFavoritesDialog />
+                  <WakeLockProvider>
+                    <SiteHeader />
+                    {children}
+                    <MergeFavoritesDialog />
+                  </WakeLockProvider>
                 </ToastProvider>
               </FavoritesProvider>
             </PreferencesProvider>

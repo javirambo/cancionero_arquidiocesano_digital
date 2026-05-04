@@ -9,9 +9,15 @@ import {
   type ChordLine,
   type ChordSystem,
 } from "@/lib/chordpro";
-import { WakeLockToggle } from "@/app/components/wake-lock-toggle";
 import { usePreferences } from "@/app/components/preferences";
 import { useFavorites } from "@/app/components/favorites";
+import { YoutubeIcon } from "@/app/components/icons";
+import {
+  useLetterScale,
+  LETTER_SCALE_MIN,
+  LETTER_SCALE_MAX,
+  LETTER_SCALE_STEP,
+} from "@/app/components/letter-scale";
 
 type Props = {
   songId: string;
@@ -34,6 +40,7 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
   const [showChords, setShowChords] = useState(true);
   const [showVideo, setShowVideo] = useState(false);
   const [semitones, setSemitones] = useState(0);
+  const { scale: letterScale, adjust: adjustLetterScale } = useLetterScale();
   const detected = useMemo<"latin" | "english">(
     () => detectSystem(lines),
     [lines]
@@ -70,7 +77,7 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
       <div
         role="toolbar"
         aria-label="Controles de la canción"
-        className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-sidebar px-4 py-3"
+        className="flex flex-wrap items-center justify-end gap-2 rounded-xl border border-border bg-sidebar px-2 py-3 sm:gap-3 sm:px-4"
       >
         {chordsAvailable && (
           <>
@@ -78,9 +85,15 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
           type="button"
           onClick={() => setShowChords((v) => !v)}
           aria-pressed={showChords}
-          className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
+          aria-label={showChords ? "Ocultar acordes" : "Mostrar acordes"}
+          title={showChords ? "Ocultar acordes" : "Mostrar acordes"}
+          className={`flex h-10 w-10 items-center justify-center rounded-full border border-primary transition-colors ${
+            showChords
+              ? "bg-primary text-white hover:bg-primary-hover"
+              : "text-primary hover:bg-primary hover:text-white"
+          }`}
         >
-          {showChords ? "Ocultar acordes" : "Mostrar acordes"}
+          <span className="text-lg leading-none">🎸</span>
         </button>
 
         <button
@@ -88,68 +101,97 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
           onClick={() =>
             setSystem(effectiveSystem === "latin" ? "english" : "latin")
           }
+          disabled={!showChords}
           title={
             effectiveSystem === "latin"
               ? "Cambiar a cifrado americano (C, D, E…)"
               : "Cambiar a cifrado latino (Do, Re, Mi…)"
           }
           aria-label="Cambiar sistema de cifrado"
-          className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
         >
-          {effectiveSystem === "latin" ? "Do · Re · Mi" : "C · D · E"}
+          <span className="text-sm font-semibold leading-none">
+            {effectiveSystem === "latin" ? "Do" : "C"}
+          </span>
         </button>
 
         <div
-          className="flex items-center gap-2"
+          className="flex items-center gap-0.5"
           aria-label="Transposición"
         >
           <button
             type="button"
             onClick={() => setSemitones((s) => s - 1)}
+            disabled={!showChords}
             aria-label="Bajar un semitono"
-            className="h-8 w-8 rounded-full border border-border text-foreground transition-colors hover:border-primary"
+            title="Bajar un semitono"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
           >
-            −
+            <span className="text-base font-semibold leading-none">♪−</span>
           </button>
-          <span className="min-w-16 text-center text-sm normal-case text-muted-foreground">
-            {originalKey ? `Tono: ${originalKey}` : "Tono"}
-            {semitones !== 0 && (
-              <span className="ml-1 text-primary">
-                ({semitones > 0 ? `+${semitones}` : semitones})
-              </span>
-            )}
-          </span>
+          <button
+            type="button"
+            onClick={() => semitones !== 0 && setSemitones(0)}
+            disabled={!showChords || semitones === 0}
+            aria-label={
+              semitones === 0
+                ? "Tono original"
+                : "Restablecer tono original"
+            }
+            title={
+              semitones === 0 ? "Tono original" : "Restablecer tono original"
+            }
+            className="min-w-8 rounded-full px-1 text-center text-sm normal-case text-muted-foreground transition-colors enabled:hover:text-primary disabled:cursor-default disabled:opacity-50"
+          >
+            {semitones === 0
+              ? originalKey ?? "Tono"
+              : `${semitones > 0 ? "+" : ""}${semitones}`}
+          </button>
           <button
             type="button"
             onClick={() => setSemitones((s) => s + 1)}
+            disabled={!showChords}
             aria-label="Subir un semitono"
-            className="h-8 w-8 rounded-full border border-border text-foreground transition-colors hover:border-primary"
+            title="Subir un semitono"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
           >
-            +
+            <span className="text-base font-semibold leading-none">♪+</span>
           </button>
-          {semitones !== 0 && (
-            <button
-              type="button"
-              onClick={() => setSemitones(0)}
-              className="text-xs uppercase tracking-wide text-muted-foreground hover:text-primary"
-            >
-              Restablecer
-            </button>
-          )}
         </div>
           </>
         )}
 
-        <div className="ml-auto flex flex-wrap items-center gap-3">
-          <WakeLockToggle />
+        <div className="flex w-full basis-full items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:basis-auto sm:gap-3">
+          <button
+            type="button"
+            onClick={() => adjustLetterScale(-LETTER_SCALE_STEP)}
+            disabled={letterScale <= LETTER_SCALE_MIN}
+            aria-label="Reducir tamaño de letra"
+            title="Reducir tamaño de letra"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-primary"
+          >
+            <span className="text-base font-semibold leading-none">A−</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => adjustLetterScale(LETTER_SCALE_STEP)}
+            disabled={letterScale >= LETTER_SCALE_MAX}
+            aria-label="Ampliar tamaño de letra"
+            title="Ampliar tamaño de letra"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-primary"
+          >
+            <span className="text-base font-semibold leading-none">A+</span>
+          </button>
           {youtubeEmbed && (
             <button
               type="button"
               onClick={() => setShowVideo((v) => !v)}
               aria-pressed={showVideo}
-              className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
+              aria-label={showVideo ? "Ocultar video" : "Reproducir"}
+              title={showVideo ? "Ocultar video" : "Reproducir"}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white [&_svg]:h-6 [&_svg]:w-6"
             >
-              {showVideo ? "Ocultar video" : "Reproducir"}
+              <YoutubeIcon />
             </button>
           )}
         </div>
@@ -167,7 +209,10 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
         </div>
       )}
 
-      <div className="font-serif text-base leading-8 normal-case text-foreground">
+      <div
+        className="font-serif text-base leading-8 normal-case text-foreground"
+        style={{ fontSize: `${letterScale}rem` }}
+      >
         {transposed.map((line, i) => (
           <LineView
             key={i}
@@ -214,7 +259,7 @@ function LineView({ line, showChords }: { line: ChordLine; showChords: boolean }
     <div className="mt-5 flex flex-wrap items-end leading-tight">
       {segments.map((seg, i) => (
         <span key={i} className="inline-flex flex-col">
-          <span className="-mb-0.5 text-sm font-bold leading-none text-primary">
+          <span className="-mb-0.5 text-[0.875em] font-bold leading-none text-primary">
             {seg.chord ?? " "}
           </span>
           <span className="whitespace-pre">{seg.text || " "}</span>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import type { ReactElement } from "react";
 import {
   ChordsIcon,
   PlayIcon,
@@ -9,6 +10,9 @@ import {
   HeartIcon,
   MoreIcon,
   ChevronRightIcon,
+  PlaylistIcon,
+  ShareIcon,
+  MinusIcon,
 } from "./icons";
 import { useFavorites } from "./favorites";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
@@ -42,7 +46,7 @@ export function SongRow({ index, song, playlistContext }: Props) {
   const showCatNumber = index === undefined;
   const numberDisplay = showCatNumber
     ? song.number !== null
-      ? String(song.number).padStart(3, "0")
+      ? `${song.number}.`
       : "—"
     : `${index}.`;
 
@@ -53,14 +57,14 @@ export function SongRow({ index, song, playlistContext }: Props) {
     (song.number !== null ? `N° ${song.number}` : undefined);
 
   return (
-    <li className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar">
+    <li className="group flex items-center gap-3 py-3 pl-2 pr-5 transition-colors hover:bg-sidebar">
       <Link
         href={href}
         title={`Ver canción ${song.title}`}
-        className="flex min-w-0 flex-1 items-center gap-4"
+        className="flex min-w-0 flex-1 items-start gap-1"
         prefetch={false}
       >
-        <span className="relative flex h-6 w-10 shrink-0 items-center justify-start text-sm normal-case text-muted-foreground">
+        <span className="relative flex h-7 w-8 shrink-0 items-center justify-start text-lg normal-case text-muted-foreground">
           <span aria-hidden="true" className="sm:group-hover:invisible">
             {numberDisplay}
           </span>
@@ -74,11 +78,13 @@ export function SongRow({ index, song, playlistContext }: Props) {
 
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-lg text-primary">{song.title}</span>
-          <span className="flex items-center gap-2 text-muted-foreground">
-            {song.author && (
+          <span className="flex items-center justify-between gap-2 text-muted-foreground">
+            {song.author ? (
               <span className="truncate text-xs normal-case">
                 {song.author}
               </span>
+            ) : (
+              <span />
             )}
             <span className="flex shrink-0 items-center gap-2">
               {song.hasChords && (
@@ -240,35 +246,42 @@ function RowMenu({
             <ul className="py-1 text-sm">
               {isAuthenticated ? (
                 <MenuButton
+                  icon={<PlaylistIcon />}
                   label="Agregar a playlist"
                   hasSubmenu
                   onClick={() => setView("addToPlaylist")}
                 />
               ) : (
                 <MenuLink
+                  icon={<PlaylistIcon />}
                   label="Iniciá sesión para usar playlists"
                   href="/perfil"
                   onClick={close}
                 />
               )}
-              <MenuLink label="Ver canción" href={href} onClick={close} />
-              <MenuButton label="Compartir" onClick={share} />
+              <MenuLink
+                icon={<ChordsIcon />}
+                label="Ver canción"
+                href={href}
+                onClick={close}
+              />
               <MenuButton
+                icon={<ShareIcon />}
+                label="Compartir"
+                onClick={share}
+              />
+              <MenuButton
+                icon={<HeartIcon filled={favorited} />}
                 label={favorited ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
                 onClick={() => {
                   onToggleFavorite();
                   close();
                 }}
               />
-              {canRemoveFromPlaylist && (
+              {canRemoveFromPlaylist && canManagePlaylist && (
                 <MenuButton
+                  icon={<MinusIcon />}
                   label="Quitar de esta playlist"
-                  disabled={!canManagePlaylist}
-                  tooltip={
-                    canManagePlaylist
-                      ? undefined
-                      : "Necesitás permisos sobre esta playlist"
-                  }
                   onClick={close}
                   destructive
                 />
@@ -286,7 +299,7 @@ function menuItemClass(
   destructive?: boolean
 ): string {
   const base =
-    "flex w-full items-center px-4 py-2 text-left normal-case transition-colors";
+    "flex w-full items-center gap-3 px-4 py-2 text-left normal-case transition-colors";
   if (disabled) return `${base} text-muted-foreground cursor-not-allowed`;
   if (destructive)
     return `${base} text-destructive hover:bg-sidebar`;
@@ -294,6 +307,7 @@ function menuItemClass(
 }
 
 function MenuButton({
+  icon,
   label,
   onClick,
   disabled,
@@ -301,6 +315,7 @@ function MenuButton({
   destructive,
   hasSubmenu,
 }: {
+  icon?: ReactElement;
   label: string;
   onClick: () => void;
   disabled?: boolean;
@@ -319,6 +334,11 @@ function MenuButton({
         aria-haspopup={hasSubmenu ? "menu" : undefined}
         className={menuItemClass(disabled, destructive)}
       >
+        {icon && (
+          <span className="shrink-0" aria-hidden="true">
+            {icon}
+          </span>
+        )}
         <span className="flex-1">{label}</span>
         {hasSubmenu && (
           <span className="ml-2 text-muted-foreground">
@@ -331,10 +351,12 @@ function MenuButton({
 }
 
 function MenuLink({
+  icon,
   label,
   href,
   onClick,
 }: {
+  icon?: ReactElement;
   label: string;
   href: string;
   onClick: () => void;
@@ -347,7 +369,12 @@ function MenuLink({
         onClick={onClick}
         className={menuItemClass()}
       >
-        {label}
+        {icon && (
+          <span className="shrink-0" aria-hidden="true">
+            {icon}
+          </span>
+        )}
+        <span className="flex-1">{label}</span>
       </Link>
     </li>
   );

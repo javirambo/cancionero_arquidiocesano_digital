@@ -9,26 +9,35 @@ import {
   FilesIcon,
   PlayIcon,
 } from "@/app/components/icons";
+import { SongStatusBadge } from "./status-badge";
 
-const statusLabel: Record<SongStatus, string> = {
-  draft: "Borrador",
-  review: "En revisión",
-  published: "Publicada",
-  rejected: "Rechazada",
-  archived: "Archivada",
-};
+type EstadoTab = SongStatus | "todas";
+
+const TABS: { value: EstadoTab; label: string }[] = [
+  { value: "todas", label: "Todas" },
+  { value: "draft", label: "Borradores" },
+  { value: "review", label: "En revisión" },
+  { value: "published", label: "Publicadas" },
+  { value: "rejected", label: "Rechazadas" },
+  { value: "archived", label: "Archivadas" },
+];
+
+function isEstadoTab(v: string | undefined): v is EstadoTab {
+  return TABS.some((t) => t.value === v);
+}
 
 export default async function AdminCancionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; estado?: string }>;
 }) {
   const access = await getAdminAccess();
   if (!access.isAdmin && !access.isEditor) redirect("/admin");
 
   const sp = await searchParams;
   const q = sp.q ?? "";
-  const songs = await listSongsForAdmin(q);
+  const estado: EstadoTab = isEstadoTab(sp.estado) ? sp.estado : "todas";
+  const songs = await listSongsForAdmin(q, estado);
 
   return (
     <main className="flex flex-col gap-6">
@@ -36,17 +45,49 @@ export default async function AdminCancionesPage({
         <div className="flex flex-1 flex-col gap-1">
           <h1 className="text-2xl">Canciones</h1>
           <p className="text-sm normal-case text-muted-foreground">
-            Edición de metadatos, letra/acordes y archivos. (El flujo de revisión se habilita más adelante.)
+            Edición de metadatos, letra/acordes y archivos. Flujo editorial draft → revisión → publicada.
           </p>
         </div>
+        <Link
+          href="/admin/canciones/nueva"
+          className="rounded-full border border-primary bg-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90"
+        >
+          + Nueva canción
+        </Link>
       </header>
 
+      <nav className="flex flex-wrap gap-2" aria-label="Filtrar por estado">
+        {TABS.map((t) => {
+          const params = new URLSearchParams();
+          if (q) params.set("q", q);
+          if (t.value !== "todas") params.set("estado", t.value);
+          const href = `/admin/canciones${params.toString() ? `?${params.toString()}` : ""}`;
+          const active = t.value === estado;
+          return (
+            <Link
+              key={t.value}
+              href={href}
+              className={
+                active
+                  ? "rounded-full border border-primary bg-primary px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground"
+                  : "rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+              }
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </nav>
+
       <form className="flex flex-wrap gap-2" action="/admin/canciones">
+        {estado !== "todas" && (
+          <input type="hidden" name="estado" value={estado} />
+        )}
         <input
           type="text"
           name="q"
           defaultValue={q}
-          placeholder="Buscar por título…"
+          placeholder="Buscar por título o número…"
           className="flex-1 min-w-[200px] rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
         />
         <button
@@ -64,7 +105,7 @@ export default async function AdminCancionesPage({
       ) : (
         <ul className="divide-y divide-border rounded-xl border border-border">
           {songs.map((s) => {
-            const line2Parts: string[] = [statusLabel[s.status]];
+            const line2Parts: string[] = [];
             if (s.category) line2Parts.push(s.category);
             return (
               <li
@@ -85,7 +126,9 @@ export default async function AdminCancionesPage({
                     {s.title}
                   </span>
                   <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs normal-case text-muted-foreground">
-                    <span className="truncate">{line2Parts.join(" · ")}</span>
+                    {line2Parts.length > 0 && (
+                      <span className="truncate">{line2Parts.join(" · ")}</span>
+                    )}
                     {(s.hasChords || s.hasYoutube || s.hasFiles) && (
                       <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                         {s.hasChords && (
@@ -106,8 +149,11 @@ export default async function AdminCancionesPage({
                       </span>
                     )}
                   </span>
-                  <span className="truncate text-xs normal-case text-muted-foreground">
-                    Modificada {formatearFecha(s.updated_at)}
+                  <span className="flex flex-wrap items-center gap-2 text-xs normal-case text-muted-foreground">
+                    <span className="truncate">
+                      Modificada {formatearFecha(s.updated_at)}
+                    </span>
+                    <SongStatusBadge status={s.status} size="sm" />
                   </span>
                 </div>
                 <div className="hidden justify-end sm:flex sm:justify-start">

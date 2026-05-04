@@ -55,12 +55,6 @@ export default async function ParroquiaPlaylistsPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
-      <nav className="text-sm normal-case text-muted-foreground">
-        <Link href={`/parroquias/${parish.slug}`} className="hover:text-primary">
-          ← {parish.name}
-        </Link>
-      </nav>
-
       <header className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 flex-col gap-1">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">

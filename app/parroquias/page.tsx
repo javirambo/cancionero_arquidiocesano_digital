@@ -25,13 +25,21 @@ export default async function ParroquiasPage() {
   let memberIds: string[] = [];
   let primaryId: string | null = null;
   let isAdmin = false;
+  let canAddParish = false;
   if (user) {
     const [membersRes, profileRes, rolesRes] = await Promise.all([
-      supabase.from("parish_members").select("parish_id").eq("user_id", user.id),
+      supabase
+        .from("parish_members")
+        .select("parish_id, role")
+        .eq("user_id", user.id),
       supabase.from("users").select("parish_id").eq("id", user.id).maybeSingle(),
       supabase.from("user_roles").select("roles(name)").eq("user_id", user.id),
     ]);
-    memberIds = (membersRes.data ?? []).map((m) => m.parish_id as string);
+    const memberRows = (membersRes.data ?? []) as Array<{
+      parish_id: string;
+      role: string | null;
+    }>;
+    memberIds = memberRows.map((m) => m.parish_id);
     primaryId = (profileRes.data?.parish_id as string | null) ?? null;
     const roleNames = (rolesRes.data ?? [])
       .map((r) => {
@@ -41,6 +49,9 @@ export default async function ParroquiasPage() {
       })
       .filter((n): n is string => Boolean(n));
     isAdmin = roleNames.includes("admin");
+    const isEditor = roleNames.includes("editor");
+    const isCoordinator = memberRows.some((m) => m.role === "coordinator");
+    canAddParish = isAdmin || isEditor || isCoordinator;
   }
 
   return (
@@ -66,7 +77,7 @@ export default async function ParroquiasPage() {
             </div>
           )}
         </div>
-        {user && (
+        {canAddParish && (
           <Link
             href={isAdmin ? "/admin/parroquias/nueva" : "/parroquias/nueva"}
             className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
