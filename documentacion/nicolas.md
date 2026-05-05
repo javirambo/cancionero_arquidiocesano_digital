@@ -1,0 +1,31 @@
+# cosas a tener en cuenta (Nicolas Glaser)
+
+Invitado:
+En caso de haber una misa diocesana próxima tiene que estar primero (pienso en su estreno el 7 de octubre).
+
+Logueado:
+Primero la playlist de su parroquia, después la diocesana.
+
+(Pensando en el músico)
+Sería bueno que, luego de lo anterior, lo siguiente sea el acceso rápido. Luego la fiesta y después las novedades. (Aunque no me convence lo de la fiesta).
+
+Estribillo en negrita o en mayúscula.
+
+Que sea más predecible la búsqueda de las sugerencias de acordes, los tuve que buscar demasiado.
+
+No veo el acceso a partituras. (Podría haber patituras "simples y corales", conviene un link a Drive?)
+
+Administrador parroquial:
+Una texto o algo donde diga con quién contactarse para ser administrador parroquial y/o que aparezca su parroquia.
+
+Posibilidad de cambiar el orden de los cantos de las playlist.
+
+Crear varias playlist para su parroquia
+
+Editor:
+
+Existen algunos cantos que tiene más de una función (Ej algunos sirven tanto de Entrada como de Comunión). ¿Podría haber más de una etiqueta?
+
+
+IDEAS:
+Créditos y fuentes? Un lugar donde diga que estos cantos han sido aprobados por la Comisión de Música Liturgica de la ciudad de Rosario y tomados del cantoral oficial de la diócesis de Argentina y otros países.

@@ -29,6 +29,7 @@ export type Song = SongSummary & {
   body: string;
   original_key: string | null;
   youtube_url: string | null;
+  hasFiles: boolean;
 };
 
 export async function listPublishedSongs(limit = 100): Promise<SongSummary[]> {
@@ -56,13 +57,14 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, original_key, youtube_url, categories(name), authors(name)"
+      "id, number, title, slug, body, original_key, youtube_url, categories(name), authors(name), song_files(id)"
     )
     .eq("status", "published")
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  const files = (data.song_files as { id: string }[] | null) ?? [];
   return {
     id: data.id as string,
     number: data.number as number | null,
@@ -73,6 +75,7 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
     youtube_url: data.youtube_url as string | null,
     category: firstName(data.categories as Named),
     author: firstName(data.authors as Named),
+    hasFiles: files.length > 0,
   };
 }
 
@@ -96,7 +99,7 @@ export async function listSongsWithCapabilities(
     const { data: rows, error } = await supabase
       .from("songs")
       .select(
-        "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id, status)"
+        "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id)"
       )
       .in("id", ids);
     if (error) throw error;
@@ -107,7 +110,7 @@ export async function listSongsWithCapabilities(
       .filter((row): row is NonNullable<typeof row> => row !== undefined)
       .map((row) => {
         const body = (row.body as string | null) ?? "";
-        const files = (row.song_files as { status: string }[] | null) ?? [];
+        const files = (row.song_files as { id: string }[] | null) ?? [];
         return {
           id: row.id as string,
           number: row.number as number | null,
@@ -117,7 +120,7 @@ export async function listSongsWithCapabilities(
           author: firstName(row.authors as Named),
           hasChords: /\[[^\]]+\]/.test(body),
           hasYoutube: Boolean(row.youtube_url),
-          hasFiles: files.some((f) => f.status === "published"),
+          hasFiles: files.length > 0,
         };
       });
   }
@@ -126,7 +129,7 @@ export async function listSongsWithCapabilities(
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id, status)"
+      "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id)"
     )
     .eq("status", "published")
     .order("number", { ascending: true, nullsFirst: false })
@@ -134,7 +137,7 @@ export async function listSongsWithCapabilities(
   if (error) throw error;
   return (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
-    const files = (row.song_files as { status: string }[] | null) ?? [];
+    const files = (row.song_files as { id: string }[] | null) ?? [];
     return {
       id: row.id as string,
       number: row.number as number | null,
@@ -144,7 +147,7 @@ export async function listSongsWithCapabilities(
       author: firstName(row.authors as Named),
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
-      hasFiles: files.some((f) => f.status === "published"),
+      hasFiles: files.length > 0,
     };
   });
 }

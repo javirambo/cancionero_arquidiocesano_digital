@@ -51,7 +51,6 @@ export type AdminSongFile = {
   label: string | null;
   is_primary: boolean;
   size_bytes: number | null;
-  status: SongStatus;
   created_at: string;
 };
 
@@ -166,7 +165,7 @@ export async function listSongFiles(
   const { data, error } = await supabase
     .from("song_files")
     .select(
-      "id, song_id, kind, bucket, path, label, is_primary, size_bytes, status, created_at"
+      "id, song_id, kind, bucket, path, label, is_primary, size_bytes, created_at"
     )
     .eq("song_id", songId)
     .order("created_at", { ascending: false });

@@ -12,6 +12,7 @@ import {
 import { usePreferences } from "@/app/components/preferences";
 import { useFavorites } from "@/app/components/favorites";
 import { YoutubeIcon } from "@/app/components/icons";
+import { DownloadFilesMenu } from "@/app/components/download-files-menu";
 import {
   useLetterScale,
   LETTER_SCALE_MIN,
@@ -21,14 +22,23 @@ import {
 
 type Props = {
   songId: string;
+  songTitle: string;
   body: string;
   originalKey: string | null;
   youtubeEmbed: string | null;
+  hasFiles: boolean;
 };
 
 const STORAGE_KEY_PREFIX = "song:transpose:";
 
-export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
+export function SongView({
+  songId,
+  songTitle,
+  body,
+  originalKey,
+  youtubeEmbed,
+  hasFiles,
+}: Props) {
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
   const { suggestChords } = usePreferences();
@@ -193,6 +203,9 @@ export function SongView({ songId, body, originalKey, youtubeEmbed }: Props) {
             >
               <YoutubeIcon />
             </button>
+          )}
+          {hasFiles && (
+            <DownloadFilesMenu songId={songId} songTitle={songTitle} />
           )}
         </div>
       </div>

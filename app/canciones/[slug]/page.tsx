@@ -72,9 +72,11 @@ export default async function CancionPage({
 
       <SongView
         songId={song.id}
+        songTitle={song.title}
         body={song.body}
         originalKey={song.original_key}
         youtubeEmbed={embed}
+        hasFiles={song.hasFiles}
       />
 
       {playlistCtx && (

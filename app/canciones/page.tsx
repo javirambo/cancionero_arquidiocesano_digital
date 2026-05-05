@@ -13,7 +13,12 @@ export default async function CancionesPage({
 }) {
   const { q } = await searchParams;
   const term = (q ?? "").trim();
-  const songs = await listSongsWithCapabilities(term);
+  const VISIBLE = 100;
+  const fetched = await listSongsWithCapabilities(term, VISIBLE + 1);
+  const hasMore = !term && fetched.length > VISIBLE;
+  const songs = hasMore ? fetched.slice(0, VISIBLE) : fetched;
+  const fadeStart = hasMore ? Math.max(0, songs.length - 5) : songs.length;
+  const fadeOpacities = [0.8, 0.6, 0.4, 0.25, 0.1];
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
@@ -32,11 +37,31 @@ export default async function CancionesPage({
           No se encontraron canciones para tu búsqueda. Probá con otro término.
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
-          {songs.map((s) => (
-            <SongRow key={s.id} song={s} />
-          ))}
-        </ul>
+        <>
+          <div
+            role="list"
+            className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background"
+          >
+            {songs.map((s, i) => {
+              if (i >= fadeStart) {
+                return (
+                  <div
+                    key={s.id}
+                    style={{ opacity: fadeOpacities[i - fadeStart] ?? 1 }}
+                  >
+                    <SongRow song={s} />
+                  </div>
+                );
+              }
+              return <SongRow key={s.id} song={s} />;
+            })}
+          </div>
+          {hasMore && (
+            <p className="text-center text-sm normal-case text-muted-foreground">
+              … existen más canciones. Usá el buscador para encontrar la que querés.
+            </p>
+          )}
+        </>
       )}
     </main>
   );

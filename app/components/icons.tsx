@@ -167,6 +167,35 @@ export function HelpIcon(): ReactElement {
   );
 }
 
+export function DragHandleIcon(): ReactElement {
+  // Hamburguesa de 3 líneas (handle para arrastrar y reordenar).
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M5 7h14M5 12h14M5 17h14" />
+    </svg>
+  );
+}
+
+export function DownloadIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M12 4v12" />
+      <path d="M7 11l5 5 5-5" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+export function MusicIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M9 18V6l10-2v10" />
+      <circle cx="7" cy="18" r="2" />
+      <circle cx="17" cy="14" r="2" />
+    </svg>
+  );
+}
+
 export function TrashIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true">

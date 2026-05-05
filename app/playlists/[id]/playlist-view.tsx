@@ -23,10 +23,9 @@ export function PlaylistView({ playlist }: Props) {
         </p>
       ) : (
         <ol className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
-          {sorted.map((s, i) => (
+          {sorted.map((s) => (
             <SongRow
               key={s.id}
-              index={i + 1}
               song={s}
               playlistContext={{ playlistId: playlist.id, canManage: false }}
             />

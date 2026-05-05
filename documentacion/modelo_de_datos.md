@@ -6,7 +6,7 @@ Tablas tentativas necesarias para soportar los casos de uso definidos en [`casos
 
 ## Flujo editorial: `draft → review → published`
 
-Tanto las **canciones** (`songs`) como los **archivos asociados** (`song_files`, partituras y audios) atraviesan el siguiente flujo:
+Las **canciones** (`songs`) atraviesan el siguiente flujo. Los **archivos asociados** (`song_files`) no tienen estado propio: heredan visibilidad de la canción a la que pertenecen (ver migración 0017).
 
 1. **`draft`** — un **Coordinador parroquial** (o Editor) crea/edita el recurso. No es visible al público.
 2. **`review`** — el Coordinador envía a revisión. El recurso queda bloqueado para edición salvo por el Editor.
@@ -165,29 +165,22 @@ Historial inmutable de versiones de una canción. Cada vez que el Editor publica
 ### `song_files`
 Archivos asociados a una canción (puede haber varias partituras y audios). Apunta a Supabase Storage.
 
-| Columna        | Tipo        | Notas                                                       |
-| -------------- | ----------- | ----------------------------------------------------------- |
-| `id`           | uuid        | PK                                                          |
-| `song_id`      | uuid        | FK → `songs.id` ON DELETE CASCADE                           |
-| `kind`         | text        | CHECK in ('score_pdf','audio_mp3','audio_ogg','other')      |
-| `bucket`       | text        | NOT NULL — `partituras` o `audios`                          |
-| `path`         | text        | NOT NULL — ruta dentro del bucket                           |
-| `label`        | text        | ej. "Partitura SATB", "Voz guía"                            |
-| `is_primary`   | boolean     | default false — el primario es el que ofrece CU-09          |
-| `size_bytes`   | bigint      |                                                             |
-| `status`       | text        | CHECK in ('draft','review','published','rejected','archived'); default 'draft' |
-| `uploaded_by`  | uuid        | FK → `users.id` — Coordinador o Editor que subió el archivo |
-| `submitted_by` | uuid        | FK → `users.id`                                             |
-| `submitted_at` | timestamptz |                                                             |
-| `reviewed_by`  | uuid        | FK → `users.id` — Editor que aprobó/rechazó                 |
-| `reviewed_at`  | timestamptz |                                                             |
-| `review_notes` | text        |                                                             |
-| `published_at` | timestamptz |                                                             |
-| `created_at`   | timestamptz | default now()                                               |
+| Columna       | Tipo        | Notas                                                       |
+| ------------- | ----------- | ----------------------------------------------------------- |
+| `id`          | uuid        | PK                                                          |
+| `song_id`     | uuid        | FK → `songs.id` ON DELETE CASCADE                           |
+| `kind`        | text        | CHECK in ('score_pdf','audio_mp3','audio_ogg','other')      |
+| `bucket`      | text        | NOT NULL — `partituras` o `audios`                          |
+| `path`        | text        | NOT NULL — ruta dentro del bucket                           |
+| `label`       | text        | ej. "Partitura SATB", "Voz guía"                            |
+| `is_primary`  | boolean     | default false                                               |
+| `size_bytes`  | bigint      |                                                             |
+| `uploaded_by` | uuid        | FK → `users.id` — Coordinador o Editor que subió el archivo |
+| `created_at`  | timestamptz | default now()                                               |
 
-**Índices:** `song_id`, `(song_id, kind)`, `status`.
+**Índices:** `song_id`, `(song_id, kind)`.
 
-> **Nota:** archivos en `draft` o `review` se almacenan igualmente en Supabase Storage pero el bucket aplica RLS para que solo Coordinador y Editor puedan leerlos. Solo `published` queda accesible públicamente vía URL firmada.
+> **Nota:** los archivos no tienen workflow editorial propio; su visibilidad deriva del `status` de la canción. Si la canción está en `published`, sus archivos son descargables públicamente (CU-09); en cualquier otro estado, solo el uploader y editor/admin pueden verlos. Migración 0017 quitó las columnas `status`, `submitted_by`, `submitted_at`, `reviewed_by`, `reviewed_at`, `review_notes` y `published_at`.
 
 ---
 
@@ -441,7 +434,7 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 | `audios`      | mp3/ogg de referencia           | lectura pública (solo `published`); escritura: Coordinador/Editor; revisión: Editor    |
 | `parishes`    | logos / imágenes de parroquia   | lectura pública; escritura: admin                                                      |
 
-> RLS de Storage debe verificar `song_files.status = 'published'` antes de permitir lectura pública (los archivos en `draft`/`review` solo son visibles para Coordinador y Editor).
+> RLS de Storage verifica que el `song_files` que apunta al objeto pertenezca a una canción en `songs.status = 'published'` (vía join) antes de permitir lectura pública. Si la canción está en `draft`/`review`/`rejected`, los archivos solo son visibles para el uploader y Editor/Admin.
 
 ---
 

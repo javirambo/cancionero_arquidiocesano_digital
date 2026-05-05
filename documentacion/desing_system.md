@@ -146,25 +146,39 @@ Layout estándar de cada fila de canción. Aplica en **todas** las listas: playl
 
 Estructura visual de la fila:
 
+**Variante pública** (listas, playlists, búsqueda, favoritos, parroquia):
+
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ N. Título de la canción                                  │
-│                                                       ⋯  │
-│ Autor                                         ♪  ▶  ♥    │
+│ N · Título de la canción                              ⋯  │
+│ Category · Autor  ♪  ▶  📄  ♥                            │
 └──────────────────────────────────────────────────────────┘
 ```
 
-- **Línea 1 — arriba a la izquierda:** `N.` + `Título`.
-  - Numeración **sin ceros a la izquierda** (`1.`, `2.`, … `10.`, nunca `01.`).
-  - Si la lista no tiene orden numérico (ej. resultados de búsqueda, favoritos), se omite el número.
-- **Línea 2 — abajo:** `Autor` alineado a la **izquierda**; iconos de metadata alineados a la **derecha**, en este orden:
-  1. `ChordsIcon` si la canción tiene acordes.
-  2. `PlayIcon` si tiene referencia de YouTube.
-  3. `FilesIcon` si tiene partitura u otros archivos publicados.
-  4. `HeartIcon` (`filled`) si es favorita del usuario actual.
-  - Solo se renderizan los iconos cuyo flag está activo — no se reservan placeholders.
-  - Color `muted-foreground`; tamaño 18×18 (default del catálogo).
-- **Botón de menú "..." (`MoreIcon`):** alineado a la **derecha** del item y **centrado verticalmente** respecto a las dos líneas de contenido. Se comporta como botón inline de acción (ver sección "Botones de acción inline").
+**Variante admin** (listados editoriales, ej. `/admin/canciones`):
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ N · Título de la canción                                 │
+│ Category · Autor  ♪  ▶  📄                          [✎]  │
+│ Modificada 05 de mayo de 2026 · PUBLICADA                │
+└──────────────────────────────────────────────────────────┘
+```
+
+- **Línea 1 — izquierda:** `N · Título`.
+  - Numeración sin ceros a la izquierda (`1`, `2`, … `10`, nunca `01`).
+  - Si la lista no tiene orden numérico (búsqueda, favoritos), se omite el número.
+- **Línea 2 — izquierda:** `Category · Autor` seguido de los iconos de metadata (en este orden, solo si su flag está activo):
+  1. `ChordsIcon` — la canción tiene acordes.
+  2. `PlayIcon` — tiene video de YouTube.
+  3. `FilesIcon` — tiene partitura u otros archivos.
+  4. `HeartIcon` (`filled`) — es favorita del usuario actual (solo variante pública).
+  - Color `muted-foreground`; tamaño 18×18.
+- **Línea 3 (solo admin):** `Modificada {fecha}` + `SongStatusBadge` con el estado editorial.
+- **Botón de acción a la derecha:**
+  - Pública: `MoreIcon` (`⋯`) que abre menú de acciones.
+  - Admin: `EditIcon` (lápiz) que linkea al editor.
+  - En ambos casos, alineado a la derecha y centrado verticalmente respecto a las líneas del item.
 
 
 ## Componentes

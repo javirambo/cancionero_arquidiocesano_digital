@@ -17,7 +17,8 @@
       "Bash(PGPASSWORD='cry5ay1E1ZKdpFI8' psql \"postgresql://postgres.fddtkuokgekbvuslzath@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require\" -c \"select policyname, cmd, qual::text, with_check::text from pg_policies where tablename='playlists' order by policyname;\")",
       "Bash(curl -sS -H \"Accept: application/json\" \"https://litcal.johnromanodorazio.com/api/v5/calendar?year=2026&locale=es_AR\" -o /tmp/litcal.json -w \"HTTP %{http_code}\\\\nbytes=%{size_download}\\\\ncontent-type=%{content_type}\\\\n\")",
       "Bash(git log *)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(npx eslint *)"
     ]
   }
 }
