@@ -39,7 +39,6 @@ export default async function AdminParroquiasPage() {
                 key={p.id}
                 id={p.id as string}
                 name={p.name as string}
-                slug={p.slug as string}
                 city={(p.city as string | null) ?? null}
                 address={(p.address as string | null) ?? null}
               />
@@ -62,7 +61,7 @@ export default async function AdminParroquiasPage() {
                 className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar"
               >
                 <Link
-                  href={`/admin/parroquias/${p.slug}`}
+                  href={`/admin/parroquias/${p.id}`}
                   className="flex flex-1 flex-col gap-0.5"
                 >
                   <span className="text-base text-primary">{p.name}</span>

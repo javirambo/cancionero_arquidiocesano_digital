@@ -12,7 +12,7 @@
 - login como member fiel simple
 
 
-- permitir marcar BOLD los estribillos: poder marcar un parrafo (parrafo completo seleccionando texto) o el inicio y fin del parrafo [parrafo-start] [parrafo-end] y marcar como párrafo para que se vea con letra bold.
+- ~~permitir marcar BOLD los estribillos~~ ✅ Implementado con directivas ChordPro `{start_of_chorus}…{end_of_chorus}` (alias `{soc}/{eoc}`). Render con borde lateral + itálica.
 
 - en admin colocar 
     [] mostrar playlists arquidiocesanas primero, luego las parroquiales.
@@ -24,7 +24,7 @@
     - quitar Nº en la lista de canciones para editar:
         "Nº 7 · La Virgen María nos reúne"
 
-- mostrar iconos en edicion de canciones +insertar acorde | previsualizar
+- ~~mostrar iconos en edicion de canciones +insertar acorde | previsualizar~~ ✅ Implementado: en móvil solo iconos, en desktop icono + texto. Botones: insertar acorde, estribillo, previsualizar/editar, ayuda.
 
 - quitar el sugerir acordes y dejar la guitarra siempre visible en las canciones a la izq, A+A- a la der. Al pulsar la guitarra aparecen los tonos + -  para cambiar.
 
@@ -34,6 +34,3 @@
 
 - las categorias podrian tener en descripcion un tiempo liturgico
 
-- poner estribillo !!!!
-
-- me quiere traducir ! poner ESPAÑOL !!

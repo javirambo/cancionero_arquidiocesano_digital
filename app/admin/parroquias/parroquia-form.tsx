@@ -183,7 +183,7 @@ export function ParroquiaForm({
       const { data, error } = await supabase
         .from("parishes")
         .insert(payload)
-        .select("slug")
+        .select("id")
         .single();
       if (error) {
         if (error.code === "23505") {
@@ -194,7 +194,7 @@ export function ParroquiaForm({
         setSaving(false);
         return;
       }
-      router.push(`/admin/parroquias/${data.slug}`);
+      router.push(`/admin/parroquias/${data.id}`);
       router.refresh();
     } else {
       const { error } = await supabase

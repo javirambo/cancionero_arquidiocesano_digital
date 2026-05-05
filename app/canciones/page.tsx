@@ -57,7 +57,7 @@ export default async function CancionesPage({
             })}
           </div>
           {hasMore && (
-            <p className="text-center text-sm normal-case text-muted-foreground">
+            <p className="text-center text-lg normal-case text-muted-foreground">
               … existen más canciones. Usá el buscador para encontrar la que querés.
             </p>
           )}

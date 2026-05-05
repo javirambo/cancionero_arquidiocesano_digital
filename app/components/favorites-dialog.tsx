@@ -97,13 +97,10 @@ export function FavoritesDialog({ open, onClose }: Props) {
                         onClick={onClose}
                         className="flex flex-1 items-baseline gap-3"
                       >
-                        {f.kind === "song" && f.number != null && (
-                          <span className="w-10 shrink-0 text-sm normal-case text-muted-foreground">
-                            {String(f.number).padStart(3, "0")}
-                          </span>
-                        )}
                         <span className="flex-1 truncate text-base text-primary">
-                          {f.title}
+                          {f.kind === "song" && f.number != null
+                            ? `${f.number} · ${f.title}`
+                            : f.title}
                         </span>
                       </Link>
                       <button

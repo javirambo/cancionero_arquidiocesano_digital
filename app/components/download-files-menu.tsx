@@ -151,9 +151,11 @@ function FilesDropdown({
                   <KindIcon kind={f.kind} />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate">{f.label ?? defaultLabel(f)}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-base text-primary">
                     {kindShortLabel(f.kind)}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {f.label ?? defaultLabel(f)}
                   </span>
                 </span>
               </button>
@@ -269,9 +271,11 @@ export function DownloadFilesPanel({
               <KindIcon kind={f.kind} />
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate">{f.label ?? defaultLabel(f)}</span>
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="truncate text-base text-primary">
                 {kindShortLabel(f.kind)}
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {f.label ?? defaultLabel(f)}
               </span>
             </span>
           </button>
