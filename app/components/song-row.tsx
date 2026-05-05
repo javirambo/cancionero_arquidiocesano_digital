@@ -13,9 +13,11 @@ import {
   PlaylistIcon,
   ShareIcon,
   MinusIcon,
+  DownloadIcon,
 } from "./icons";
 import { useFavorites } from "./favorites";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
+import { DownloadFilesPanel } from "./download-files-menu";
 
 export type SongRowItem = {
   id: string;
@@ -44,11 +46,11 @@ export function SongRow({ index, song, playlistContext }: Props) {
     : `/canciones/${song.slug}`;
 
   const showCatNumber = index === undefined;
-  const numberDisplay = showCatNumber
-    ? song.number !== null
-      ? `${song.number}.`
-      : "—"
-    : `${index}.`;
+  const numberValue = showCatNumber ? song.number : index;
+  const titleLine =
+    numberValue !== null && numberValue !== undefined
+      ? `${numberValue} · ${song.title}`
+      : song.title;
 
   const { isFavorite, toggle: toggleFavorite, isAuthenticated } = useFavorites();
   const fav = isFavorite("song", song.id);
@@ -57,34 +59,19 @@ export function SongRow({ index, song, playlistContext }: Props) {
     (song.number !== null ? `N° ${song.number}` : undefined);
 
   return (
-    <li className="group flex items-center gap-3 py-3 pl-2 pr-5 transition-colors hover:bg-sidebar">
+    <li className="group flex items-center gap-3 py-3 pl-3 pr-5 transition-colors hover:bg-sidebar">
       <Link
         href={href}
         title={`Ver canción ${song.title}`}
-        className="flex min-w-0 flex-1 items-start gap-1"
+        className="flex min-w-0 flex-1 flex-col gap-0.5"
         prefetch={false}
       >
-        <span className="relative flex h-7 w-8 shrink-0 items-center justify-start text-lg normal-case text-muted-foreground">
-          <span aria-hidden="true" className="sm:group-hover:invisible">
-            {numberDisplay}
-          </span>
-          <span
-            aria-hidden="true"
-            className="absolute inset-0 hidden items-center justify-start text-primary sm:group-hover:flex"
-          >
-            <PlayIcon />
-          </span>
-        </span>
-
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-lg text-primary">{song.title}</span>
-          <span className="flex items-center justify-between gap-2 text-muted-foreground">
-            {song.author ? (
+        <span className="truncate text-lg text-primary">{titleLine}</span>
+          <span className="flex items-center gap-2 text-muted-foreground">
+            {song.author && (
               <span className="truncate text-xs normal-case">
                 {song.author}
               </span>
-            ) : (
-              <span />
             )}
             <span className="flex shrink-0 items-center gap-2">
               {song.hasChords && (
@@ -109,7 +96,6 @@ export function SongRow({ index, song, playlistContext }: Props) {
               )}
             </span>
           </span>
-        </span>
       </Link>
 
       <RowMenu
@@ -118,6 +104,7 @@ export function SongRow({ index, song, playlistContext }: Props) {
         title={song.title}
         favorited={fav}
         isAuthenticated={isAuthenticated}
+        hasFiles={song.hasFiles}
         onToggleFavorite={() =>
           toggleFavorite("song", song.id, {
             title: song.title,
@@ -138,6 +125,7 @@ function RowMenu({
   title,
   favorited,
   isAuthenticated,
+  hasFiles,
   onToggleFavorite,
   canRemoveFromPlaylist,
   canManagePlaylist,
@@ -147,12 +135,13 @@ function RowMenu({
   title: string;
   favorited: boolean;
   isAuthenticated: boolean;
+  hasFiles: boolean;
   onToggleFavorite: () => void;
   canRemoveFromPlaylist: boolean;
   canManagePlaylist: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"main" | "addToPlaylist">("main");
+  const [view, setView] = useState<"main" | "addToPlaylist" | "download">("main");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -242,6 +231,26 @@ function RowMenu({
                 onClose={close}
               />
             </div>
+          ) : view === "download" ? (
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => setView("main")}
+                  className="text-xs uppercase tracking-[0.15em] text-secondary hover:underline"
+                >
+                  ← Volver
+                </button>
+                <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+                  Descargar archivos
+                </span>
+              </div>
+              <DownloadFilesPanel
+                songId={songId}
+                songTitle={title}
+                onAfter={close}
+              />
+            </div>
           ) : (
             <ul className="py-1 text-sm">
               {isAuthenticated ? (
@@ -278,6 +287,14 @@ function RowMenu({
                   close();
                 }}
               />
+              {hasFiles && (
+                <MenuButton
+                  icon={<DownloadIcon />}
+                  label="Descargar archivos"
+                  hasSubmenu
+                  onClick={() => setView("download")}
+                />
+              )}
               {canRemoveFromPlaylist && canManagePlaylist && (
                 <MenuButton
                   icon={<MinusIcon />}

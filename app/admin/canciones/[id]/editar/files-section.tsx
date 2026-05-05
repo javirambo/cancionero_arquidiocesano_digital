@@ -8,6 +8,10 @@ import { Accordion } from "./accordion";
 
 type FileKind = AdminSongFile["kind"];
 
+// Tipo elegido por el usuario al subir. "audio" se desambigua a mp3/ogg
+// según la extensión del archivo subido.
+type UploadType = "partitura" | "audio" | "otro";
+
 const kindLabel: Record<FileKind, string> = {
   score_pdf: "Partitura (PDF)",
   audio_mp3: "Audio MP3",
@@ -21,11 +25,13 @@ function bucketForKind(kind: FileKind): string {
   return STORAGE_BUCKETS.partituras;
 }
 
-function detectKind(file: File): FileKind {
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".pdf")) return "score_pdf";
-  if (name.endsWith(".mp3")) return "audio_mp3";
-  if (name.endsWith(".ogg") || name.endsWith(".oga")) return "audio_ogg";
+function resolveKind(uploadType: UploadType, file: File): FileKind {
+  if (uploadType === "partitura") return "score_pdf";
+  if (uploadType === "audio") {
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".ogg") || name.endsWith(".oga")) return "audio_ogg";
+    return "audio_mp3";
+  }
   return "other";
 }
 
@@ -47,6 +53,7 @@ export function FilesSection({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [label, setLabel] = useState("");
+  const [uploadType, setUploadType] = useState<UploadType>("partitura");
 
   async function handleUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -56,7 +63,7 @@ export function FilesSection({
     setUploading(true);
     const supabase = createClient();
 
-    const kind = detectKind(file);
+    const kind = resolveKind(uploadType, file);
     const bucket = bucketForKind(kind);
     const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
     const path = `${songId}/${Date.now()}-${Math.random()
@@ -83,7 +90,7 @@ export function FilesSection({
         size_bytes: file.size,
       })
       .select(
-        "id, song_id, kind, bucket, path, label, is_primary, size_bytes, status, created_at"
+        "id, song_id, kind, bucket, path, label, is_primary, size_bytes, created_at"
       )
       .single();
 
@@ -120,6 +127,20 @@ export function FilesSection({
     <Accordion title="Archivos (partituras y audios)" defaultOpen={false}>
       <div className="flex flex-col gap-4 normal-case">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <label className="flex flex-col gap-1 sm:w-40">
+            <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+              Tipo
+            </span>
+            <select
+              value={uploadType}
+              onChange={(e) => setUploadType(e.target.value as UploadType)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
+            >
+              <option value="partitura">Partitura</option>
+              <option value="audio">Audio</option>
+              <option value="otro">Otro</option>
+            </select>
+          </label>
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-xs uppercase tracking-[0.15em] text-secondary">
               Etiqueta (opcional)
@@ -170,8 +191,6 @@ export function FilesSection({
                     <span className="truncate text-xs text-muted-foreground">
                       {kindLabel[f.kind]}
                       {f.size_bytes ? ` · ${formatSize(f.size_bytes)}` : ""}
-                      {" · "}
-                      {f.status === "published" ? "Publicado" : "Borrador"}
                     </span>
                   </div>
                   <button

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { TrashIcon } from "@/app/components/icons";
 
 export type PlaylistFormData = {
   id?: string;
@@ -268,7 +269,7 @@ export function PlaylistForm({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full border border-primary bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          className="rounded-full border border-primary bg-primary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60 sm:px-5 sm:py-2 sm:text-sm"
         >
           {saving ? "Guardando…" : mode === "create" ? "Crear" : "Guardar"}
         </button>
@@ -283,19 +284,31 @@ export function PlaylistForm({
                 : `/playlists`
             )
           }
-          className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+          className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:px-5 sm:py-2 sm:text-sm"
         >
           Cancelar
         </button>
         {mode === "edit" && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={saving}
-            className="ml-auto rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
-          >
-            Eliminar playlist
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving}
+              aria-label="Eliminar playlist"
+              title="Eliminar playlist"
+              className="ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-destructive text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60 sm:hidden"
+            >
+              <TrashIcon />
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving}
+              className="ml-auto hidden rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60 sm:inline-block"
+            >
+              Eliminar playlist
+            </button>
+          </>
         )}
       </div>
     </form>

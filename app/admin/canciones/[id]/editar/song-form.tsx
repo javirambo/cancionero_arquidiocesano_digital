@@ -52,9 +52,17 @@ export function SongForm({
 }) {
   const router = useRouter();
   const [form, setForm] = useState<SongFormState>(toFormState(song));
+  const [authorOptions, setAuthorOptions] = useState<AuthorOption[]>(authors);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+
+  function handleAuthorCreated(author: AuthorOption) {
+    setAuthorOptions((prev) =>
+      [...prev, author].sort((a, b) => a.name.localeCompare(b.name))
+    );
+    setForm((prev) => ({ ...prev, author_id: author.id }));
+  }
 
   function update<K extends keyof SongFormState>(key: K, value: SongFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -111,8 +119,9 @@ export function SongForm({
       <MetadataSection
         form={form}
         update={update}
-        authors={authors}
+        authors={authorOptions}
         categories={categories}
+        onAuthorCreated={handleAuthorCreated}
       />
 
       <LyricsSection form={form} update={update} />

@@ -26,4 +26,14 @@
 
 - mostrar iconos en edicion de canciones +insertar acorde | previsualizar
 
-- 
+- quitar el sugerir acordes y dejar la guitarra siempre visible en las canciones a la izq, A+A- a la der. Al pulsar la guitarra aparecen los tonos + -  para cambiar.
+
+- el corazon en el titulo de la cancion se ve horrible.
+
+- cambiar categoria para poder aceptar varias categorias por cancion. o usar los tags.
+
+- las categorias podrian tener en descripcion un tiempo liturgico
+
+- poner estribillo !!!!
+
+- me quiere traducir ! poner ESPAÑOL !!

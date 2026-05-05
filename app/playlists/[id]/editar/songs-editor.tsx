@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { DragHandleIcon, TrashIcon, CloseIcon } from "@/app/components/icons";
 
 type SongInPlaylist = {
   song_id: string;
@@ -33,6 +34,7 @@ export function PlaylistSongsEditor({
   const [searching, setSearching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Buscar canciones publicadas usando el mismo endpoint que el buscador global.
   useEffect(() => {
@@ -63,6 +65,12 @@ export function PlaylistSongsEditor({
       clearTimeout(t);
     };
   }, [query, songs]);
+
+  function clearSearch() {
+    setQuery("");
+    setResults([]);
+    inputRef.current?.focus();
+  }
 
   async function addSong(c: SongCandidate) {
     setBusy(true);
@@ -125,42 +133,57 @@ export function PlaylistSongsEditor({
           <span className="text-xs uppercase tracking-[0.15em] text-secondary normal-case">
             Agregar canción
           </span>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por título, número o letra…"
-            disabled={busy}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
-          />
+          <div className="relative flex w-full items-center">
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  clearSearch();
+                }
+              }}
+              placeholder="Buscar por título, número o letra…"
+              disabled={busy}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm normal-case"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label="Cancelar búsqueda"
+                title="Cancelar búsqueda (Esc)"
+                className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-sidebar hover:text-foreground"
+              >
+                <CloseIcon />
+              </button>
+            )}
+          </div>
         </label>
         {searching && (
           <p className="mt-2 text-xs normal-case text-muted-foreground">Buscando…</p>
         )}
         {results.length > 0 && (
-          <ul className="mt-3 divide-y divide-border rounded-lg border border-border bg-background">
+          <ul className="mt-3 flex flex-col divide-y divide-border rounded-lg border border-border bg-background">
             {results.map((c) => (
-              <li key={c.id}>
+              <li
+                key={c.id}
+                className="flex items-center gap-2 py-2 pl-3 pr-3"
+              >
+                <span className="min-w-0 flex-1 truncate text-base text-primary">
+                  {c.number !== null ? `${c.number} · ${c.title}` : c.title}
+                </span>
                 <button
                   type="button"
                   onClick={() => addSong(c)}
                   disabled={busy}
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left normal-case hover:bg-sidebar disabled:opacity-50"
+                  aria-label={`Agregar ${c.title}`}
+                  title="Agregar a la playlist"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-50"
                 >
-                  <span className="w-12 shrink-0 text-sm text-muted-foreground">
-                    {c.number !== null ? String(c.number).padStart(3, "0") : "—"}
-                  </span>
-                  <span className="flex flex-1 flex-col">
-                    <span className="text-sm text-primary">{c.title}</span>
-                    {c.author && (
-                      <span className="text-xs text-muted-foreground">
-                        {c.author}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-xs uppercase tracking-wide text-secondary">
-                    + Agregar
-                  </span>
+                  <span className="text-lg font-semibold leading-none">+</span>
                 </button>
               </li>
             ))}
@@ -176,33 +199,38 @@ export function PlaylistSongsEditor({
           La playlist no tiene canciones todavía.
         </p>
       ) : (
-        <ol className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
           {songs
             .slice()
             .sort((a, b) => a.position - b.position)
-            .map((s, i) => (
-              <li key={`${s.song_id}-${s.position}`} className="flex items-center gap-3 px-4 py-3">
-                <span className="w-8 shrink-0 text-sm normal-case text-muted-foreground">
-                  {i + 1}.
+            .map((s) => (
+              <li
+                key={`${s.song_id}-${s.position}`}
+                className="flex items-center gap-2 py-3 pl-1 pr-3"
+              >
+                <span
+                  aria-hidden="true"
+                  title="Arrastrar para reordenar"
+                  className="flex h-9 w-7 shrink-0 cursor-grab items-center justify-center text-muted-foreground"
+                >
+                  <DragHandleIcon />
                 </span>
-                <span className="w-12 shrink-0 text-sm normal-case text-muted-foreground">
-                  {s.number !== null ? String(s.number).padStart(3, "0") : "—"}
-                </span>
-                <span className="flex-1 truncate text-base text-primary">
-                  {s.title}
+                <span className="min-w-0 flex-1 truncate text-base text-primary">
+                  {s.number !== null ? `${s.number} · ${s.title}` : s.title}
                 </span>
                 <button
                   type="button"
                   onClick={() => removeSong(s.song_id, s.position)}
                   disabled={busy}
+                  aria-label={`Quitar ${s.title}`}
                   title="Quitar de la playlist"
-                  className="rounded-full border border-transparent px-3 py-1 text-xs uppercase tracking-wide text-destructive hover:border-destructive disabled:opacity-50"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent text-destructive transition-colors hover:border-destructive disabled:opacity-50"
                 >
-                  Quitar
+                  <TrashIcon />
                 </button>
               </li>
             ))}
-        </ol>
+        </ul>
       )}
     </div>
   );

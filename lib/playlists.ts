@@ -305,7 +305,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
   const { data: items, error: iErr } = await supabase
     .from("playlist_songs")
     .select(
-      "position, created_at, songs(id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(status))"
+      "position, created_at, songs(id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id))"
     )
     .eq("playlist_id", id)
     .order("position", { ascending: true });
@@ -320,7 +320,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
     youtube_url: string | null;
     categories: Named;
     authors: Named;
-    song_files: { status: string }[] | null;
+    song_files: { id: string }[] | null;
   };
 
   const songs = (items ?? [])
@@ -339,7 +339,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
         author: firstName(s.authors),
         hasChords: /\[[^\]]+\]/.test(body),
         hasYoutube: Boolean(s.youtube_url),
-        hasFiles: files.some((f) => f.status === "published"),
+        hasFiles: files.length > 0,
         position: row.position as number,
         created_at: row.created_at as string,
       };

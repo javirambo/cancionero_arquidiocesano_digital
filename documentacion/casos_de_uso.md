@@ -18,7 +18,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-06.2 | Acceder a parroquia por URL                          | RF11      | ✅     |
 | CU-07   | Visualizar novedades / festividad del día            | —         | ✅     |
 | CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | ✅     |
-| CU-09   | Descargar partitura                                  | RF7       | ⏳ PDF desde Storage cuando `song_files.kind = 'score_pdf'` está `published`. Colocar un icono de descarga de partitura cuando se está visualizando la canción. Para esto hay que subir la partitura en edición o creación de canciones. |
+| CU-09   | Descargar archivos de la canción                     | RF7       | ✅     |
 | CU-10   | Descargar canción para imprimir                      | RF14      | ⏳ Render imprimible de letra/acordes con preview. Colocar un botón de descarga cuando se está visualizando la canción. |
 | CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. |
 | CU-12   | Descargar QR de la página actual                     | RF13      | ✅     |
@@ -26,7 +26,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
 | CU-15   | Marcar favoritos                                     | RF18      | ✅     |
 | CU-16   | ABM de canción                                       | RF1       | ✅     |
-| CU-17   | ABM de playlist                                      | RF2       | ✅     |
+| CU-17   | ABM de playlist                                      | RF2       | ⏳ falta drag & drop    |
 | CU-18   | ABM de usuario                                       | RF9       | ✅     |
 | CU-19   | ABM de parroquia                                     | RF10      | ✅     |
 | CU-20   | Gestionar permisos (tal vez nunca se necesite)       | RF21      | ⏳ Solo si necesitamos granularidad por permiso atómico; hoy los permisos están hardcodeados en RLS por rol y puede ser suficiente. |
@@ -34,7 +34,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      | ✅     |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
-| CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳ ABM de `categories` para coordinator/editor. En la edición o creación de cada canción debería aparecer una selección de categoría. |
+| CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳ ABM de `categories` para coordinator/editor. En la edición o creación de cada canción debería aparecer una selección de categoría y otra e tags. |
 | CU-26   | ABM de festividades litúrgicas                       | RF23      | ⏳ Carga manual año a año (`liturgical_events`). Podría tener un botón de actualización automático que use servicios como romcal, y luego de validar todo se le da un OK general para que queden aceptadas. También que se pueda agregar algún evento manual. |
 
 ---
@@ -293,19 +293,28 @@ Rol global con permisos plenos.
 
 ---
 
-## CU-09: Descargar partitura
+## CU-09: Descargar archivos de la canción
 
 - **RF:** RF7
 - **Actor primario:** Músico
-- **Precondiciones:** La canción tiene una partitura asociada en Supabase Storage.
-- **Disparador:** El usuario hace clic en "Descargar partitura".
+- **Precondiciones:** La canción está en estado `published` y tiene al menos un archivo en `song_files` (kind: `score_pdf`, `audio_mp3`, `audio_ogg` u `other`) almacenado en los buckets `partituras` o `audios`.
+- **Disparador:** El usuario abre la lista de archivos descargables desde:
+  - El botón de descarga (ícono ↓) en la toolbar de la vista pública de canción `/canciones/[slug]`.
+  - El ítem "Descargar archivos" del menú "..." de cada fila de canción en los listados (catálogo, playlists, favoritos).
 - **Flujo principal:**
-  1. El sistema solicita una URL firmada al bucket `partituras`.
-  2. El navegador descarga el PDF.
+  1. El sistema lista todos los archivos de la canción, mostrando etiqueta y tipo (Partitura / Audio / Otro).
+  2. El usuario selecciona un archivo.
+  3. El sistema solicita una URL firmada al bucket correspondiente (`partituras` o `audios`) con expiración corta y nombre de archivo sugerido (basado en el label del archivo o el título de la canción).
+  4. El navegador descarga el archivo.
 - **Flujos alternativos:**
-  - 1a. Sin partitura: el botón no aparece.
-  - 1b. Falla la firma: se muestra mensaje de error con opción de reintentar.
+  - 1a. Sin archivos en la canción: el botón/ítem no aparece (se decide a partir de `hasFiles`, calculado en `lib/songs.ts` y `lib/playlists.ts`).
+  - 1b. Falla la carga del listado o la firma: se muestra mensaje de error en el panel.
 - **Postcondiciones:** Ninguna persistente.
+- **Notas de implementación:**
+  - El admin elige el tipo (Partitura / Audio / Otro) al subir cada archivo en el editor de canción (`app/admin/canciones/[id]/editar/files-section.tsx`); eso determina el `kind` y el bucket destino.
+  - Los archivos no tienen status propio: la visibilidad pública deriva del `status` de la canción (ver migración `0017_song_files_remove_status` y nota en `modelo_de_datos.md` → `song_files`).
+  - En la vista pública la lista se abre como dropdown adyacente al botón.
+  - En los menús "..." de fila (`app/components/song-row.tsx`), la lista se renderiza como **vista interna** del mismo dropdown (mismo patrón que "Agregar a playlist") para evitar problemas de clipping con `overflow-hidden`. El componente reusable es `DownloadFilesPanel` en `app/components/download-files-menu.tsx`.
 
 ---
 
@@ -535,9 +544,11 @@ En `/playlists/{id}/editar`, sección **"Canciones"** (Tanda 1 implementada):
 
 a. **Buscador "Agregar canción"** — input que consulta `/api/songs/buscar` (mismo motor que CU-01, accent-insensitive vía RPC `search_songs`). Al elegir un resultado, se inserta en `playlist_songs` con `position = max(position)+1`.
 
-b. **Listado actual** — cada fila muestra `[posición] [número] [título] [Quitar]`. Click en **Quitar** pide confirmación y elimina la fila.
+b. **Listado actual** — cada fila muestra `[handle ☰] [número] [título] [tacho]`. El handle hamburguesa marca la zona arrastrable. Click en el tacho pide confirmación y elimina la fila.
 
-c. *(Pendiente — Tanda 2)* **Edición en lote** con drag para reordenar y marcado para eliminación múltiple.
+c. *(Pendiente — Tanda 2)* **Drag & drop para reordenar** — arrastrar el handle ☰ para cambiar la posición de una canción dentro de la playlist (actualiza `playlist_songs.position`). Hoy el icono está visible pero la lógica de drag aún no está implementada (requiere librería tipo `@dnd-kit/core`).
+
+d. *(Pendiente — Tanda 2)* **Edición en lote** con marcado para eliminación múltiple.
 
 ### CU-17.2: Quitar canción de una playlist
 

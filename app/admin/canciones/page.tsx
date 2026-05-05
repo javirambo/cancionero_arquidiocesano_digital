@@ -103,67 +103,65 @@ export default async function AdminCancionesPage({
           No hay canciones que mostrar.
         </p>
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border">
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
           {songs.map((s) => {
-            const line2Parts: string[] = [];
-            if (s.category) line2Parts.push(s.category);
+            const titleLine =
+              s.number !== null ? `${s.number} · ${s.title}` : s.title;
+            const line2LeftParts: string[] = [];
+            if (s.category) line2LeftParts.push(s.category);
+            if (s.author) line2LeftParts.push(s.author);
             return (
               <li
                 key={s.id}
-                className="relative flex flex-col gap-2 px-5 py-3 transition-colors hover:bg-sidebar sm:flex-row sm:items-center sm:gap-3"
+                className="group flex items-center gap-3 py-3 pl-3 pr-5 transition-colors hover:bg-sidebar"
               >
                 <Link
                   href={`/admin/canciones/${s.id}/editar`}
-                  aria-label="Editar"
-                  title="Editar"
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:text-primary sm:hidden"
+                  className="flex min-w-0 flex-1 flex-col gap-0.5"
+                  prefetch={false}
                 >
-                  <EditIcon />
-                </Link>
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate text-base text-primary">
-                    {s.number !== null ? `Nº ${s.number} · ` : ""}
-                    {s.title}
+                  <span className="truncate text-lg text-primary">
+                    {titleLine}
                   </span>
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs normal-case text-muted-foreground">
-                    {line2Parts.length > 0 && (
-                      <span className="truncate">{line2Parts.join(" · ")}</span>
-                    )}
-                    {(s.hasChords || s.hasYoutube || s.hasFiles) && (
-                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      {line2LeftParts.length > 0 && (
+                        <span className="truncate text-xs normal-case">
+                          {line2LeftParts.join(" · ")}
+                        </span>
+                      )}
+                      <span className="flex shrink-0 items-center gap-2">
                         {s.hasChords && (
-                          <span aria-label="Tiene acordes" title="Tiene acordes">
+                          <span title="Tiene acordes">
                             <ChordsIcon />
                           </span>
                         )}
                         {s.hasYoutube && (
-                          <span aria-label="Tiene YouTube" title="Tiene YouTube">
+                          <span title="Tiene video de YouTube">
                             <PlayIcon />
                           </span>
                         )}
                         {s.hasFiles && (
-                          <span aria-label="Tiene archivos" title="Tiene archivos">
+                          <span title="Tiene partitura o archivos">
                             <FilesIcon />
                           </span>
                         )}
                       </span>
-                    )}
-                  </span>
-                  <span className="flex flex-wrap items-center gap-2 text-xs normal-case text-muted-foreground">
-                    <span className="truncate">
-                      Modificada {formatearFecha(s.updated_at)}
                     </span>
-                    <SongStatusBadge status={s.status} size="sm" />
-                  </span>
-                </div>
-                <div className="hidden justify-end sm:flex sm:justify-start">
-                  <Link
-                    href={`/admin/canciones/${s.id}/editar`}
-                    className="rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-foreground hover:border-primary hover:text-primary"
-                  >
-                    Editar
-                  </Link>
-                </div>
+                    <span className="flex flex-wrap items-center gap-2 text-xs normal-case text-muted-foreground">
+                      <span className="truncate">
+                        Modificada {formatearFecha(s.updated_at)}
+                      </span>
+                      <SongStatusBadge status={s.status} size="sm" />
+                    </span>
+                </Link>
+                <Link
+                  href={`/admin/canciones/${s.id}/editar`}
+                  aria-label={`Editar ${s.title}`}
+                  title="Editar"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-colors hover:border-border hover:text-primary"
+                >
+                  <EditIcon />
+                </Link>
               </li>
             );
           })}

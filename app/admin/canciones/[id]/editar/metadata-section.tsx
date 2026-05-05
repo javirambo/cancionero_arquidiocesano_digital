@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { AuthorOption, CategoryOption } from "@/lib/songs-admin";
 import type { SongFormState } from "./song-form";
 import { Accordion } from "./accordion";
@@ -7,17 +9,66 @@ import { Accordion } from "./accordion";
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
 
+const NEW_AUTHOR_VALUE = "__new__";
+
 export function MetadataSection({
   form,
   update,
   authors,
   categories,
+  onAuthorCreated,
 }: {
   form: SongFormState;
   update: <K extends keyof SongFormState>(key: K, value: SongFormState[K]) => void;
   authors: AuthorOption[];
   categories: CategoryOption[];
+  onAuthorCreated: (author: AuthorOption) => void;
 }) {
+  const [creatingAuthor, setCreatingAuthor] = useState(false);
+  const [newAuthorName, setNewAuthorName] = useState("");
+  const [authorError, setAuthorError] = useState<string | null>(null);
+  const [savingAuthor, setSavingAuthor] = useState(false);
+
+  function handleAuthorSelectChange(value: string) {
+    if (value === NEW_AUTHOR_VALUE) {
+      setCreatingAuthor(true);
+      setAuthorError(null);
+      setNewAuthorName("");
+      return;
+    }
+    update("author_id", value);
+  }
+
+  function cancelCreateAuthor() {
+    setCreatingAuthor(false);
+    setNewAuthorName("");
+    setAuthorError(null);
+  }
+
+  async function saveNewAuthor() {
+    const name = newAuthorName.trim();
+    if (!name) {
+      setAuthorError("Ingresá un nombre.");
+      return;
+    }
+    setSavingAuthor(true);
+    setAuthorError(null);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("authors")
+      .insert({ name })
+      .select("id, name")
+      .single();
+    setSavingAuthor(false);
+    if (error || !data) {
+      setAuthorError(error?.message ?? "No se pudo crear el autor.");
+      return;
+    }
+    onAuthorCreated({ id: data.id as string, name: data.name as string });
+    setCreatingAuthor(false);
+    setNewAuthorName("");
+  }
+
   return (
     <Accordion title="Metadatos" defaultOpen>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -52,16 +103,60 @@ export function MetadataSection({
         <Field label="Autor">
           <select
             value={form.author_id}
-            onChange={(e) => update("author_id", e.target.value)}
+            onChange={(e) => handleAuthorSelectChange(e.target.value)}
             className={inputClass}
           >
             <option value="">— Sin autor —</option>
+            <option value={NEW_AUTHOR_VALUE}>+ Nuevo autor…</option>
             {authors.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
             ))}
           </select>
+          {creatingAuthor && (
+            <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-2">
+              <input
+                type="text"
+                autoFocus
+                value={newAuthorName}
+                onChange={(e) => setNewAuthorName(e.target.value)}
+                placeholder="Nombre del autor"
+                className={inputClass}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void saveNewAuthor();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelCreateAuthor();
+                  }
+                }}
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void saveNewAuthor()}
+                  disabled={savingAuthor}
+                  className="rounded-full border border-primary bg-primary px-4 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  {savingAuthor ? "Guardando…" : "Guardar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelCreateAuthor}
+                  className="rounded-full border border-border px-4 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  Cancelar
+                </button>
+              </div>
+              {authorError && (
+                <span className="text-xs text-destructive normal-case">
+                  {authorError}
+                </span>
+              )}
+            </div>
+          )}
         </Field>
 
         <Field label="Categoría litúrgica">
