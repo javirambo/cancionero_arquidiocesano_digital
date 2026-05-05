@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Cardo } from "next/font/google";
 import Script from "next/script";
 import { SiteHeader } from "./components/site-header";
+import { SiteFooter } from "./components/site-footer";
 import { ThemeProvider, themeInitScript } from "./components/theme";
 import { FavoritesProvider } from "./components/favorites";
 import { MergeFavoritesDialog } from "./components/merge-favorites-dialog";
@@ -61,7 +62,8 @@ export default function RootLayout({
                 <ToastProvider>
                   <WakeLockProvider>
                     <SiteHeader />
-                    {children}
+                    <div className="flex flex-1 flex-col">{children}</div>
+                    <SiteFooter />
                     <MergeFavoritesDialog />
                   </WakeLockProvider>
                 </ToastProvider>
