@@ -6,14 +6,14 @@ import { ParroquiaForm } from "../parroquia-form";
 export default async function EditarParroquiaPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = await params;
+  const { id } = await params;
   const supabase = await createClient();
   const { data: parish } = await supabase
     .from("parishes")
     .select("id, name, slug, address, city, phone, email, description, status")
-    .eq("slug", slug)
+    .eq("id", id)
     .maybeSingle();
 
   if (!parish) notFound();

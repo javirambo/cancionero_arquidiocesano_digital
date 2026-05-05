@@ -5,6 +5,13 @@ import { detectSystem, parseBody, type ChordLine } from "@/lib/chordpro";
 import type { SongFormState } from "./song-form";
 import { Accordion } from "./accordion";
 import { ChordEditor, type ChordEditorHandle } from "./chord-editor";
+import {
+  ChordsIcon,
+  EditIcon,
+  EyeIcon,
+  HelpIcon,
+  RepeatIcon,
+} from "@/app/components/icons";
 
 export function LyricsSection({
   form,
@@ -17,6 +24,7 @@ export function LyricsSection({
   const lines = useMemo(() => parseBody(form.body), [form.body]);
   const editorRef = useRef<ChordEditorHandle>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const detected = useMemo(() => detectSystem(lines), [lines]);
 
   function insertChord(chord: string) {
@@ -24,45 +32,126 @@ export function LyricsSection({
     editorRef.current?.insertText(`[${chord}]`);
   }
 
+  function insertChorus() {
+    editorRef.current?.wrapSelectionAsBlock(
+      "{start_of_chorus}",
+      "{end_of_chorus}"
+    );
+  }
+
   return (
     <Accordion title="Letra y acordes" defaultOpen>
       <div className="flex flex-col gap-3 normal-case">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            Notación ChordPro: los acordes van entre corchetes sobre la sílaba.
-            Ejemplo: <code className="rounded bg-sidebar px-1">[G]Cris[D]to vi[Em]ve</code>
-          </p>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setHelpOpen((v) => !v)}
+              aria-expanded={helpOpen}
+              aria-label="Ayuda sobre notación ChordPro"
+              title="Ayuda sobre notación ChordPro"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <HelpIcon />
+            </button>
+            {helpOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setHelpOpen(false)}
+                  aria-hidden
+                />
+                <div
+                  role="dialog"
+                  className="fixed left-1/2 top-1/2 z-30 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-background p-3 text-xs leading-5 shadow-lg sm:absolute sm:left-0 sm:top-full sm:mt-2 sm:translate-x-0 sm:translate-y-0"
+                >
+                  <p className="mb-1 font-semibold text-foreground">
+                    Notación ChordPro:
+                  </p>
+                  <ul className="list-disc space-y-1 pl-4 text-muted-foreground">
+                    <li>
+                      Los acordes van entre corchetes sobre la sílaba.
+                      Ejemplo:{" "}
+                      <code className="rounded bg-sidebar px-1">
+                        [G]Cris[D]to vi[Em]ve
+                      </code>
+                    </li>
+                    <li>
+                      El estribillo va entre{" "}
+                      <code className="rounded bg-sidebar px-1">{"{soc}"}</code>{" "}
+                      ...{" "}
+                      <code className="rounded bg-sidebar px-1">{"{eoc}"}</code>{" "}
+                      o{" "}
+                      <code className="rounded bg-sidebar px-1">
+                        {"{start_of_chorus}"}
+                      </code>{" "}
+                      ...{" "}
+                      <code className="rounded bg-sidebar px-1">
+                        {"{end_of_chorus}"}
+                      </code>
+                    </li>
+                  </ul>
+                  <p className="mt-2 text-muted-foreground">Ejemplo:</p>
+                  <pre className="mt-1 overflow-x-auto rounded bg-sidebar p-2 font-mono text-foreground">
+{`{start_of_chorus}
+Abba Padre, venga tu Reino
+{end_of_chorus}`}
+                  </pre>
+                </div>
+              </>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             {!preview && (
-              <div className="relative">
+              <>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen((v) => !v)}
+                    aria-expanded={pickerOpen}
+                    aria-label="Insertar acorde"
+                    title="Insertar acorde"
+                    className="flex items-center gap-2 rounded-full border border-primary px-3 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground sm:px-4"
+                  >
+                    <ChordsIcon />
+                    <span className="hidden sm:inline">Insertar acorde</span>
+                  </button>
+                  {pickerOpen && (
+                    <ChordPicker
+                      system={detected}
+                      onPick={insertChord}
+                      onClose={() => setPickerOpen(false)}
+                    />
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={() => setPickerOpen((v) => !v)}
-                  aria-expanded={pickerOpen}
-                  className="rounded-full border border-primary px-4 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  onClick={insertChorus}
+                  aria-label="Marcar como estribillo"
+                  title="Marcar la selección (o insertar) como estribillo"
+                  className="flex items-center gap-2 rounded-full border border-primary px-3 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground sm:px-4"
                 >
-                  + Insertar acorde
+                  <RepeatIcon />
+                  <span className="hidden sm:inline">Estribillo</span>
                 </button>
-                {pickerOpen && (
-                  <ChordPicker
-                    system={detected}
-                    onPick={insertChord}
-                    onClose={() => setPickerOpen(false)}
-                  />
-                )}
-              </div>
+              </>
             )}
             <button
               type="button"
               onClick={() => setPreview((v) => !v)}
               aria-pressed={preview}
-              className={`rounded-full border px-4 py-1.5 text-sm uppercase tracking-wide transition-colors ${
+              aria-label={preview ? "Editar" : "Previsualizar"}
+              title={preview ? "Editar" : "Previsualizar"}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm uppercase tracking-wide transition-colors sm:px-4 ${
                 preview
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               }`}
             >
-              {preview ? "Editar" : "Previsualizar"}
+              {preview ? <EditIcon /> : <EyeIcon />}
+              <span className="hidden sm:inline">
+                {preview ? "Editar" : "Previsualizar"}
+              </span>
             </button>
           </div>
         </div>
@@ -74,7 +163,24 @@ export function LyricsSection({
                 (Todavía no hay letra cargada.)
               </p>
             ) : (
-              lines.map((line, i) => <LineView key={i} line={line} />)
+              groupChorus(lines).map((block, i) =>
+                block.inChorus ? (
+                  <div
+                    key={i}
+                    className="my-2 border-l-4 border-primary pl-4 italic"
+                  >
+                    {block.lines.map((line, j) => (
+                      <LineView key={j} line={line} />
+                    ))}
+                  </div>
+                ) : (
+                  <div key={i}>
+                    {block.lines.map((line, j) => (
+                      <LineView key={j} line={line} />
+                    ))}
+                  </div>
+                )
+              )
             )}
           </div>
         ) : (
@@ -173,6 +279,22 @@ function ChordPicker({
       </div>
     </>
   );
+}
+
+type LineBlock = { inChorus: boolean; lines: ChordLine[] };
+
+function groupChorus(lines: ChordLine[]): LineBlock[] {
+  const blocks: LineBlock[] = [];
+  for (const line of lines) {
+    const inChorus = line.inChorus === true;
+    const last = blocks[blocks.length - 1];
+    if (last && last.inChorus === inChorus) {
+      last.lines.push(line);
+    } else {
+      blocks.push({ inChorus, lines: [line] });
+    }
+  }
+  return blocks;
 }
 
 function LineView({ line }: { line: ChordLine }) {

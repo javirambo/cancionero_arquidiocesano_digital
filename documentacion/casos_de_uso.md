@@ -26,7 +26,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
 | CU-15   | Marcar favoritos                                     | RF18      | ✅     |
 | CU-16   | ABM de canción                                       | RF1       | ✅     |
-| CU-17   | ABM de playlist                                      | RF2       | ⏳ falta drag & drop    |
+| CU-17   | ABM de playlist                                      | RF2       | ✅     |
 | CU-18   | ABM de usuario                                       | RF9       | ✅     |
 | CU-19   | ABM de parroquia                                     | RF10      | ✅     |
 | CU-20   | Gestionar permisos (tal vez nunca se necesite)       | RF21      | ⏳ Solo si necesitamos granularidad por permiso atómico; hoy los permisos están hardcodeados en RLS por rol y puede ser suficiente. |
@@ -540,15 +540,19 @@ Edición específica de la información musical.
 
 ### CU-17.1: Edición de canciones dentro de la playlist
 
-En `/playlists/{id}/editar`, sección **"Canciones"** (Tanda 1 implementada):
+En `/playlists/{id}/editar`, sección **"Canciones"**:
 
-a. **Buscador "Agregar canción"** — input que consulta `/api/songs/buscar` (mismo motor que CU-01, accent-insensitive vía RPC `search_songs`). Al elegir un resultado, se inserta en `playlist_songs` con `position = max(position)+1`.
+Las operaciones (agregar, quitar, reordenar) modifican únicamente el estado local del editor y marcan el formulario como "sucio". Nada se persiste hasta que el usuario presiona **[Grabar cambios]**. Si se navega o recarga sin grabar, los cambios se pierden.
 
-b. **Listado actual** — cada fila muestra `[handle ☰] [número] [título] [tacho]`. El handle hamburguesa marca la zona arrastrable. Click en el tacho pide confirmación y elimina la fila.
+a. **Buscador "Agregar canción"** — input que consulta `/api/songs/buscar` (mismo motor que CU-01, accent-insensitive vía RPC `search_songs`). Al elegir un resultado, se agrega al final del listado local con `position = max(position)+1` y se marca dirty.
 
-c. *(Pendiente — Tanda 2)* **Drag & drop para reordenar** — arrastrar el handle ☰ para cambiar la posición de una canción dentro de la playlist (actualiza `playlist_songs.position`). Hoy el icono está visible pero la lógica de drag aún no está implementada (requiere librería tipo `@dnd-kit/core`).
+b. **Listado actual** — cada fila muestra `[handle ☰] [número] [título] [tacho]`. Click en el tacho pide confirmación y quita la fila del estado local (marca dirty). El handle ☰ es el área arrastrable.
 
-d. *(Pendiente — Tanda 2)* **Edición en lote** con marcado para eliminación múltiple.
+c. **Drag & drop para reordenar** — implementado con `@dnd-kit/core` + `@dnd-kit/sortable`. Se arrastra desde el handle ☰; al soltar, se actualiza el orden local y se marca dirty.
+
+d. **Botón [Grabar cambios]** — visible solo cuando hay cambios pendientes. Llama a `PUT /api/playlists/{id}/songs` enviando el array completo `[{song_id, position}]`. El endpoint borra todas las filas de `playlist_songs` para esa playlist e inserta las nuevas con sus posiciones (RLS valida permisos).
+
+e. *(Pendiente)* **Edición en lote** con marcado para eliminación múltiple.
 
 ### CU-17.2: Quitar canción de una playlist
 

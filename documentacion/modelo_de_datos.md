@@ -100,6 +100,8 @@ Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.).
 ### `songs`
 Núcleo del catálogo. Almacena letra y acordes en un único campo `body` con notación tipo ChordPro (acordes entre `[ ]` sobre la sílaba), lo que permite renderizar con o sin acordes (CU-02.1, CU-02.2) y transponer (CU-03).
 
+El `body` también soporta directivas ChordPro de estribillo: las líneas que se ubiquen entre `{start_of_chorus}` y `{end_of_chorus}` (alias `{soc}` / `{eoc}`) se renderizan como bloque de estribillo (borde lateral + itálica). Las directivas se consumen en el parser y no aparecen en la salida.
+
 | Columna             | Tipo        | Notas                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------ |
 | `id`                | uuid        | PK                                                                       |

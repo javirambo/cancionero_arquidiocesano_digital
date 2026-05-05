@@ -9,12 +9,11 @@ import { useToast } from "@/app/components/toast";
 type Props = {
   id: string;
   name: string;
-  slug: string;
   city: string | null;
   address: string | null;
 };
 
-export function PendingParishRow({ id, name, slug, city, address }: Props) {
+export function PendingParishRow({ id, name, city, address }: Props) {
   const router = useRouter();
   const { show: showToast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -45,7 +44,7 @@ export function PendingParishRow({ id, name, slug, city, address }: Props) {
   return (
     <li className="flex flex-wrap items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar">
       <Link
-        href={`/admin/parroquias/${slug}`}
+        href={`/admin/parroquias/${id}`}
         className="flex min-w-0 flex-1 flex-col gap-0.5"
       >
         <span className="truncate text-base text-primary">{name}</span>

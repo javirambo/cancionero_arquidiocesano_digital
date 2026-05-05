@@ -226,16 +226,51 @@ export function SongView({
         className="font-serif text-base leading-8 normal-case text-foreground"
         style={{ fontSize: `${letterScale}rem` }}
       >
-        {transposed.map((line, i) => (
-          <LineView
-            key={i}
-            line={line}
-            showChords={showChords && !chordsDisabled}
-          />
-        ))}
+        {groupChorus(transposed).map((block, i) =>
+          block.inChorus ? (
+            <div
+              key={i}
+              className="my-2 border-l-4 border-primary pl-4 italic"
+            >
+              {block.lines.map((line, j) => (
+                <LineView
+                  key={j}
+                  line={line}
+                  showChords={showChords && !chordsDisabled}
+                />
+              ))}
+            </div>
+          ) : (
+            <div key={i}>
+              {block.lines.map((line, j) => (
+                <LineView
+                  key={j}
+                  line={line}
+                  showChords={showChords && !chordsDisabled}
+                />
+              ))}
+            </div>
+          )
+        )}
       </div>
     </div>
   );
+}
+
+type LineBlock = { inChorus: boolean; lines: ChordLine[] };
+
+function groupChorus(lines: ChordLine[]): LineBlock[] {
+  const blocks: LineBlock[] = [];
+  for (const line of lines) {
+    const inChorus = line.inChorus === true;
+    const last = blocks[blocks.length - 1];
+    if (last && last.inChorus === inChorus) {
+      last.lines.push(line);
+    } else {
+      blocks.push({ inChorus, lines: [line] });
+    }
+  }
+  return blocks;
 }
 
 function LineView({ line, showChords }: { line: ChordLine; showChords: boolean }) {

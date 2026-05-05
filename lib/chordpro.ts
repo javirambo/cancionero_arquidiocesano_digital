@@ -4,13 +4,23 @@
 // como m, m7, 7, maj7, sus, dim, aug, /Bajo.
 
 export type ChordToken = { chord: string; index: number };
-export type ChordLine = { lyrics: string; chords: ChordToken[] };
+export type ChordLine = {
+  lyrics: string;
+  chords: ChordToken[];
+  // true si la línea está dentro de un bloque {start_of_chorus}…{end_of_chorus}.
+  inChorus?: boolean;
+};
 
 // Cada llamada crea su propia regex para evitar bugs de `lastIndex`
 // compartido al reusar un regex global entre `matchAll`/`exec`/`test`.
 function chordRe(): RegExp {
   return /\[([^\]]+)\]/g;
 }
+
+// Directivas ChordPro de inicio/fin de estribillo (con alias soc/eoc).
+// Tolerantes a espacios y mayúsculas.
+const SOC_RE = /^\s*\{\s*(?:start_of_chorus|soc)\s*\}\s*$/i;
+const EOC_RE = /^\s*\{\s*(?:end_of_chorus|eoc)\s*\}\s*$/i;
 
 export function parseLine(line: string): ChordLine {
   const chords: ChordToken[] = [];
@@ -29,7 +39,22 @@ export function parseLine(line: string): ChordLine {
 }
 
 export function parseBody(body: string): ChordLine[] {
-  return body.split(/\r?\n/).map(parseLine);
+  const out: ChordLine[] = [];
+  let inChorus = false;
+  for (const raw of body.split(/\r?\n/)) {
+    if (SOC_RE.test(raw)) {
+      inChorus = true;
+      continue;
+    }
+    if (EOC_RE.test(raw)) {
+      inChorus = false;
+      continue;
+    }
+    const parsed = parseLine(raw);
+    if (inChorus) parsed.inChorus = true;
+    out.push(parsed);
+  }
+  return out;
 }
 
 export function hasAnyChord(body: string): boolean {

@@ -9,11 +9,16 @@ Primero la playlist de su parroquia, después la diocesana.
 (Pensando en el músico)
 Sería bueno que, luego de lo anterior, lo siguiente sea el acceso rápido. Luego la fiesta y después las novedades. (Aunque no me convence lo de la fiesta).
 
-Estribillo en negrita o en mayúscula.
+- Estribillo en negrita o en mayúscula.
+    - ver si asi se ve bien, es el estandar ChordPro, pero puede cambiarse.
+    - Podria agregarse en la seccion configuracion general del cancionesro -> como ver estribillos.
 
 Que sea más predecible la búsqueda de las sugerencias de acordes, los tuve que buscar demasiado.
 
-No veo el acceso a partituras. (Podría haber patituras "simples y corales", conviene un link a Drive?)
+- No veo el acceso a partituras. (Podría haber patituras "simples y corales", conviene un link a Drive?)
+    - ahora se pueden agregar PDF y descargar (mas de 1!)
+    - tambien audios o cualquier otro archivo.
+    - (basta con colocar el PDF y un nombre o descripcion)
 
 Administrador parroquial:
 Una texto o algo donde diga con quién contactarse para ser administrador parroquial y/o que aparezca su parroquia.

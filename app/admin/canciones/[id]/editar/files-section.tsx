@@ -90,7 +90,7 @@ export function FilesSection({
         size_bytes: file.size,
       })
       .select(
-        "id, song_id, kind, bucket, path, label, is_primary, size_bytes, created_at"
+        "id, song_id, kind, bucket, path, label, size_bytes, created_at"
       )
       .single();
 
