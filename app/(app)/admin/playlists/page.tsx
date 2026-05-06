@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatearFecha } from "@/lib/dates";
 import { getAdminAccess } from "../access";
 import { PlaylistRowActions } from "./playlist-row-actions";
 
@@ -12,10 +11,10 @@ export default async function AdminPlaylistsPage() {
   const { data: playlists } = await supabase
     .from("playlists")
     .select(
-      "id, name, event_date, visibility, description, playlist_songs(count)"
+      "id, name, visibility, description, playlist_songs(count)"
     )
     .eq("is_archdiocesan", true)
-    .order("event_date", { ascending: false, nullsFirst: false });
+    .order("created_at", { ascending: false });
 
   return (
     <main className="flex flex-col gap-6">
@@ -49,7 +48,6 @@ export default async function AdminPlaylistsPage() {
               ? songsRel[0]?.count ?? 0
               : songsRel?.count ?? 0;
             const subtitleParts: string[] = [];
-            if (p.event_date) subtitleParts.push(formatearFecha(p.event_date as string));
             if (p.visibility === "public") subtitleParts.push("Pública");
             if (p.visibility === "unlisted") subtitleParts.push("No listada");
             if (p.visibility === "private") subtitleParts.push("Privada");

@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useFavorites } from "@/app/components/favorites";
 import { HeartIcon } from "@/app/components/icons";
-import { formatearFecha } from "@/lib/dates";
 
 export type PlaylistCardData = {
   id: string;
   name: string;
   description: string | null;
-  event_date: string | null;
   parish: { id: string; name: string; slug: string } | null;
 };
 
@@ -36,11 +34,6 @@ export function PlaylistCard({ playlist, badge }: Props) {
         {badge && (
           <span className="text-xs uppercase tracking-wide text-secondary">
             {badge}
-          </span>
-        )}
-        {playlist.event_date && (
-          <span className="text-xs normal-case text-muted-foreground">
-            {formatearFecha(playlist.event_date)}
           </span>
         )}
         {playlist.description && (

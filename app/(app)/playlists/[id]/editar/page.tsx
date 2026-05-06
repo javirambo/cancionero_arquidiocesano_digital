@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getPlaylistById } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
+import { loadSchedulesForEntity } from "@/lib/schedule.server";
 import { PlaylistForm } from "@/app/(app)/playlists/playlist-form";
 import { PlaylistSongsEditor } from "./songs-editor";
 import { AccordionSection } from "@/app/components/accordion-section";
@@ -48,6 +49,7 @@ export default async function EditarPlaylistPage({
   if (!canEdit) redirect(`/playlists/${pl.id}`);
 
   const showArchdiocesan = pl.parish?.slug === "arquidiocesis";
+  const schedules = await loadSchedulesForEntity("playlist", pl.id);
 
   // Sólo admin puede reasignar el dueño de la playlist (CU-17).
   let adminParishOptions:
@@ -100,9 +102,17 @@ export default async function EditarPlaylistPage({
             parish_id: pl.parish?.id ?? null,
             name: pl.name,
             description: pl.description ?? "",
-            event_date: pl.event_date ?? "",
             visibility: pl.visibility,
             is_archdiocesan: pl.is_archdiocesan,
+            schedules: schedules.map((s) => ({
+              date_mode: s.date_mode,
+              weekdays: s.weekdays,
+              start_date: s.start_date,
+              end_date: s.end_date,
+              time_mode: s.time_mode,
+              start_time: s.start_time,
+              end_time: s.end_time,
+            })),
           }}
         />
       </AccordionSection>

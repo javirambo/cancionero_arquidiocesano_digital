@@ -1,20 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatearFechaHora } from "@/lib/dates";
+import { isVisibleNow } from "@/lib/schedule";
+import { loadSchedules } from "@/lib/schedule.server";
 import { getAdminAccess } from "../access";
 
 type AnnouncementRow = {
   id: string;
   title: string;
-  starts_at: string;
-  ends_at: string;
   priority: number;
+  kind: string | null;
   target_kind: string;
 };
 
 type ParishRow = { id: string; slug: string; name: string };
-
-const fmt = (iso: string) => formatearFechaHora(iso);
 
 export default async function AdminAnunciosPage() {
   const supabase = await createClient();
@@ -23,8 +21,8 @@ export default async function AdminAnunciosPage() {
   const [annRes, apRes, parishesRes] = await Promise.all([
     supabase
       .from("announcements")
-      .select("id, title, starts_at, ends_at, priority, target_kind")
-      .order("starts_at", { ascending: false }),
+      .select("id, title, kind, priority, target_kind")
+      .order("priority", { ascending: false }),
     supabase.from("announcement_parishes").select("announcement_id, parish_id"),
     supabase.from("parishes").select("id, slug, name"),
   ]);
@@ -43,8 +41,6 @@ export default async function AdminAnunciosPage() {
     destByAnnouncement.set(link.announcement_id, arr);
   }
 
-  // Si el usuario no es admin/editor, mostramos solo los anuncios donde
-  // tiene rol de coordinator en alguna parroquia destinataria.
   let coordinatorParishIds = new Set<string>();
   if (!access.isAdmin && !access.isEditor && access.userId) {
     const { data: members } = await supabase
@@ -64,16 +60,16 @@ export default async function AdminAnunciosPage() {
           return dests.some((p) => coordinatorParishIds.has(p.id));
         });
 
-  const now = Date.now();
+  const sched = await loadSchedules(
+    "announcement",
+    announcements.map((a) => a.id)
+  );
+
   const vigentes: AnnouncementRow[] = [];
-  const programados: AnnouncementRow[] = [];
-  const vencidos: AnnouncementRow[] = [];
+  const noVigentes: AnnouncementRow[] = [];
   for (const a of announcements) {
-    const starts = new Date(a.starts_at).getTime();
-    const ends = new Date(a.ends_at).getTime();
-    if (now < starts) programados.push(a);
-    else if (now > ends) vencidos.push(a);
-    else vigentes.push(a);
+    if (isVisibleNow(sched.get(a.id))) vigentes.push(a);
+    else noVigentes.push(a);
   }
 
   return (
@@ -94,9 +90,13 @@ export default async function AdminAnunciosPage() {
         </p>
       ) : (
         <>
-          <Group title="Vigentes" rows={vigentes} dest={destByAnnouncement} />
-          <Group title="Programados" rows={programados} dest={destByAnnouncement} />
-          <Group title="Vencidos" rows={vencidos} dest={destByAnnouncement} muted />
+          <Group title="Vigentes ahora" rows={vigentes} dest={destByAnnouncement} />
+          <Group
+            title="No vigentes ahora"
+            rows={noVigentes}
+            dest={destByAnnouncement}
+            muted
+          />
         </>
       )}
     </main>
@@ -123,6 +123,10 @@ function Group({
       <ul className="divide-y divide-border rounded-xl border border-border">
         {rows.map((a) => {
           const destinatarios = dest.get(a.id) ?? [];
+          const meta: string[] = [];
+          if (a.kind) meta.push(a.kind);
+          if (a.priority !== 0) meta.push(`prioridad ${a.priority}`);
+          if (a.target_kind !== "none") meta.push(`atajo: ${a.target_kind}`);
           return (
             <li
               key={a.id}
@@ -135,11 +139,11 @@ function Group({
                 className="flex flex-1 flex-col gap-0.5"
               >
                 <span className="text-base text-primary">{a.title}</span>
-                <span className="text-xs normal-case text-muted-foreground">
-                  {fmt(a.starts_at)} — {fmt(a.ends_at)}
-                  {a.priority !== 0 && ` · prioridad ${a.priority}`}
-                  {a.target_kind !== "none" && ` · atajo: ${a.target_kind}`}
-                </span>
+                {meta.length > 0 && (
+                  <span className="text-xs normal-case text-muted-foreground">
+                    {meta.join(" · ")}
+                  </span>
+                )}
               </Link>
               <span className="hidden sm:inline-block text-xs normal-case text-muted-foreground">
                 {destinatarios.length === 0

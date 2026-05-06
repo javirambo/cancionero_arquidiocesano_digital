@@ -4,15 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TrashIcon } from "@/app/components/icons";
+import { ScheduleEditor } from "@/app/components/schedule-editor";
+import { replaceSchedulesWith, type ScheduleInput } from "@/lib/schedule";
 
 export type PlaylistFormData = {
   id?: string;
   parish_id: string | null;
   name: string;
   description: string;
-  event_date: string; // YYYY-MM-DD
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
+  schedules: ScheduleInput[];
 };
 
 export type ParishOption = { id: string; name: string };
@@ -49,9 +51,9 @@ export function PlaylistForm({
       parish_id: null,
       name: "",
       description: "",
-      event_date: "",
       visibility: "public",
       is_archdiocesan: false,
+      schedules: [],
     }
   );
   const [saving, setSaving] = useState(false);
@@ -105,7 +107,6 @@ export function PlaylistForm({
       parish_id: form.parish_id,
       name: form.name.trim(),
       description: form.description.trim() || null,
-      event_date: form.event_date || null,
       visibility: form.visibility,
       is_archdiocesan: archdiocesanVisible ? form.is_archdiocesan : false,
     };
@@ -123,6 +124,13 @@ export function PlaylistForm({
         setSaving(false);
         return;
       }
+      try {
+        await replaceSchedulesWith(supabase, "playlist", data.id, form.schedules);
+      } catch (err) {
+        setError((err as Error).message);
+        setSaving(false);
+        return;
+      }
       router.push(`/playlists/${data.id}/editar`);
       router.refresh();
     } else {
@@ -132,6 +140,13 @@ export function PlaylistForm({
         .eq("id", form.id!);
       if (error) {
         setError(error.message);
+        setSaving(false);
+        return;
+      }
+      try {
+        await replaceSchedulesWith(supabase, "playlist", form.id!, form.schedules);
+      } catch (err) {
+        setError((err as Error).message);
         setSaving(false);
         return;
       }
@@ -228,14 +243,6 @@ export function PlaylistForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Fecha del evento">
-          <input
-            type="date"
-            value={form.event_date}
-            onChange={(e) => update("event_date", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
         <Field label="Visibilidad">
           <select
             value={form.visibility}
@@ -262,6 +269,19 @@ export function PlaylistForm({
           </Field>
         )}
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-secondary">
+          Vigencia
+        </h2>
+        <p className="text-sm normal-case text-muted-foreground">
+          Si no agregás reglas, la playlist se muestra siempre. Las reglas se evalúan en hora de Argentina; si hay varias, basta con que una se cumpla.
+        </p>
+        <ScheduleEditor
+          value={form.schedules}
+          onChange={(schedules) => update("schedules", schedules)}
+        />
+      </section>
 
       {error && <p className="text-sm normal-case text-destructive">{error}</p>}
 

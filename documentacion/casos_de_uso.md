@@ -35,7 +35,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
 | CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳ ABM de `categories` para coordinator/editor. En la edición o creación de cada canción debería aparecer una selección de categoría y otra e tags. |
-| CU-26   | ABM de festividades litúrgicas                       | RF23      | ⏳ Carga manual año a año (`liturgical_events`). Podría tener un botón de actualización automático que use servicios como romcal, y luego de validar todo se le da un OK general para que queden aceptadas. También que se pueda agregar algún evento manual. |
+| CU-26   | ABM de festividades litúrgicas                       | RF23      | ❌ Deprecado — fusionado en CU-21 (anuncios con `kind` litúrgico).                                                                                                                                                                                              |
 
 ---
 
@@ -213,12 +213,14 @@ Rol global con permisos plenos.
 - **Precondiciones:** La playlist existe y es pública.
 - **Disparador:** El usuario navega a `/playlist/{id}` (o desde la parroquia).
 - **Flujo principal:**
-  1. El sistema carga la playlist: nombre, parroquia, fecha, lista ordenada de canciones.
+  1. El sistema carga la playlist: nombre, parroquia, lista ordenada de canciones.
   2. El usuario puede entrar a cada canción (CU-02) sin perder el orden de la playlist.
   3. El sistema ofrece navegación "anterior / siguiente" dentro de la playlist.
 - **Flujos alternativos:**
   - 1a. Playlist inexistente: 404.
 - **Postcondiciones:** Ninguna persistente.
+
+> **Vigencia temporal:** una playlist puede tener reglas de vigencia configuradas (ver CU-17). Si las tiene y *ahora* no estamos dentro de su ventana, la playlist no aparece en listados públicos. Igualmente, abrir directamente la URL `/playlists/{id}` la muestra (mismo criterio que `unlisted` y `private`).
 
 ---
 
@@ -258,9 +260,9 @@ Rol global con permisos plenos.
 - **Precondiciones:** Existe contenido marcado como "novedad" o "festividad" para la fecha actual.
 - **Disparador:** El usuario abre la home `/`.
 - **Flujo principal:**
-  1. El sistema busca un evento en `liturgical_events` con `event_date = hoy`. Si existe, lo muestra como "Festividad de hoy" con su descripción y CTA a la playlist asociada (si aplica).
-  2. Si no hay evento en la base, el sistema **calcula la festividad litúrgica del día** usando la librería `romcal` con calendario `argentina` (ver `lib/liturgical.ts`). Si el rango de la celebración es ≥ memoria (solemnidad, domingo, fiesta, memoria), la muestra como título; si es feria, muestra el tiempo litúrgico (Adviento, Cuaresma, Tiempo Ordinario, etc.).
-  3. El sistema muestra los **anuncios vigentes** (`announcements` con `now() between starts_at and ends_at`) en la sección "Novedades", ordenados por `priority desc, starts_at desc`. Cada anuncio se muestra una sola vez (sin duplicados aunque el usuario esté en varias parroquias destinatarias). Si tiene atajo (`target_kind` ≠ `'none'`), el banner enlaza al recurso.
+  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo','otro')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
+  2. *(Pausado)* Cálculo automático con `romcal` cuando no hay festividad cargada — se moverá a una página dedicada "¿Qué hay hoy de nuevo?" en una iteración posterior.
+  3. El sistema muestra los **anuncios comunes vigentes** (`announcements` con `kind is null` cuya vigencia en `entity_schedules` matchee el momento actual) en la sección "Novedades", ordenados por `priority desc`. Cada anuncio se muestra una sola vez (sin duplicados aunque el usuario esté en varias parroquias destinatarias). Si tiene atajo (`target_kind` ≠ `'none'`), el banner enlaza al recurso.
   4. **Visibilidad de anuncios:**
      - **Anónimo:** ve únicamente anuncios **globales** (sin filas en `announcement_parishes`).
      - **Autenticado:** ve los globales + los anuncios cuyas parroquias destinatarias intersectan con sus `parish_members`.
@@ -525,9 +527,22 @@ Edición específica de la información musical.
 ### Flujo principal — Crear
 
 1. Coordinador (o admin) entra a `/parroquias/{slug}/playlists/nueva`.
-2. Completa nombre (obligatorio), descripción, fecha del evento, visibilidad, y opcionalmente `is_archdiocesan` (solo visible si la parroquia es `arquidiocesis`).
+2. Completa nombre (obligatorio), descripción, visibilidad, **vigencia** (ver más abajo) y opcionalmente `is_archdiocesan` (solo visible si la parroquia es `arquidiocesis`).
 3. Al guardar, el sistema redirige a `/playlists/{nuevo-id}/editar`.
 4. En la pantalla de edición, abajo aparece el editor de canciones (CU-17.1.a).
+
+### Vigencia temporal (CU-17.3)
+
+La playlist puede configurarse para mostrarse solo en ciertos días/horarios. Persistencia en `entity_schedules` (`entity_type='playlist'`, evaluación en hora **America/Argentina/Buenos_Aires**). Default: sin reglas → siempre visible.
+
+Por cada **regla** se elige:
+
+- **Calendario**: `Siempre` / `Días de la semana` (uno o varios; orden D-L-M-M-J-V-S, índice 0..6) / `Rango de fechas` (desde + hasta opcional; sin hasta = nunca termina).
+- **Horario**: `Todo el día` / `Franja horaria` (inicio + fin; si `fin < inicio`, la franja **cruza la medianoche**).
+
+Pueden agregarse varias reglas; se evalúan con **OR** (basta con que una se cumpla para que la playlist sea visible). Por regla, calendario y horario se evalúan con **AND**.
+
+Las pantallas de **configuración** (admin / edición) muestran todas las playlists sin filtrar por vigencia. El filtro aplica solo a listados públicos.
 
 ### Flujo principal — Editar metadatos / eliminar
 
@@ -649,11 +664,12 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 - **Actor primario:** Administrador.
 - **Precondiciones:** Sesión con rol admin.
 - **Disparador:** Acceso a `/admin/anuncios`.
-- **Alcance:** "anuncio" y "novedad" son el mismo concepto. Un anuncio es una pieza de contenido con ventana de vigencia (`starts_at` → `ends_at`) que aparece en la home (CU-07). Solo el Administrador los gestiona; los usuarios finales no pueden cerrarlos ni ocultarlos: el anuncio desaparece automáticamente al pasar `ends_at`.
+- **Alcance:** "anuncio" y "novedad" son el mismo concepto. Un anuncio es una pieza de contenido con **vigencia configurable** (ver `entity_schedules`, CU-17.3) que aparece en la home (CU-07). Pueden ser **anuncios comunes** (`kind is null`) o **festividades litúrgicas** (`kind` con valor) que reemplazan a la antigua tabla `liturgical_events` (eliminada en migración 0018).
 
 ### Modelo
 
-- **Vigencia:** `now() between starts_at and ends_at`. No hay flag de activo/inactivo: la vigencia es estrictamente temporal.
+- **Vigencia:** se evalúa con `entity_schedules` (`entity_type='announcement'`) en hora AR. Sin reglas → siempre vigente.
+- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo` / `otro`) para festividades litúrgicas que la home muestra en el bloque "Festividad de hoy".
 - **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo.
 - **Destinatarios:** tabla N–N `announcement_parishes(announcement_id, parish_id)`.
   - Sin filas → **anuncio global** (lo ven todos: anónimos y autenticados).
@@ -663,7 +679,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ### Flujo principal — Crear
 
 1. El admin entra a `/admin/anuncios/nuevo`.
-2. Completa: `title` (obligatorio), `body` (opcional), `starts_at`, `ends_at`, `priority`.
+2. Completa: `title` (obligatorio), `body` (opcional), `kind` (opcional — festividad), `priority`, **vigencia** (ver CU-17.3 — mismo editor reusado).
 3. Selecciona destinatarios:
    - **Todas las parroquias** (default) — no se insertan filas en `announcement_parishes`.
    - **Parroquias específicas** — selector multi-select. Debe elegir al menos una.
@@ -684,11 +700,10 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 
 ### Listados disponibles
 
-- `/admin/anuncios` — listado server-side, agrupado en **vigentes** (vigencia atravesando ahora), **programados** (futuros) y **vencidos** (pasados). Cada fila muestra título, ventana de fechas y destinatarios (badge "Todas" o lista de slugs). Botón "+ Nuevo anuncio".
+- `/admin/anuncios` — listado server-side, agrupado en **vigentes ahora** y **no vigentes ahora** (computado con `isVisibleNow` sobre los schedules). Cada fila muestra título, `kind` si aplica, prioridad, atajo y destinatarios. Botón "+ Nuevo anuncio". **No filtra por vigencia** — admin ve todos los anuncios para poder editarlos.
 
 ### Flujos alternativos
 
-- 2a. **`ends_at <= starts_at`** → error de validación inline; no se permite guardar.
 - 3a. **Selección "específicas" sin elegir ninguna parroquia** → error de validación.
 - 4a. **Atajo con tipo `song`/`playlist`/`parish` y `target_id` ausente** → error de validación.
 - 4b. **Atajo con tipo `external` y `target_url` inválida** → error de validación.
@@ -786,7 +801,9 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 
 ---
 
-## CU-26: ABM de festividades litúrgicas
+## CU-26: ABM de festividades litúrgicas (DEPRECADO — fusionado en CU-21)
+
+> **Nota:** la migración 0018 eliminó la tabla `liturgical_events`. Las festividades litúrgicas ahora son **anuncios** con `kind in ('solemnidad','fiesta','memoria','tiempo','otro')` (ver CU-21). El ABM se hace desde `/admin/anuncios`. La sección que sigue queda como referencia histórica.
 
 - **RF:** RF23
 - **Actor primario:** Administrador.
