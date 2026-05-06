@@ -3,7 +3,7 @@ import { getEventForToday, listActiveFeatured } from "@/lib/songs";
 import { getLiturgicalDay } from "@/lib/liturgical";
 import { createClient } from "@/lib/supabase/server";
 import { formatearFecha, hoyEnCordoba } from "@/lib/dates";
-import { GoogleSignInButton } from "@/app/perfil/google-sign-in-button";
+import { GoogleSignInButton } from "@/app/(app)/perfil/google-sign-in-button";
 
 type AccesoRapido = {
   href: string;

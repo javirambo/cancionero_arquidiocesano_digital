@@ -10,10 +10,9 @@ import { useTheme } from "./theme";
 import { SearchDialog } from "./search-dialog";
 import { FavoritesDialog } from "./favorites-dialog";
 import { useFavorites } from "./favorites";
-import { usePreferences } from "./preferences";
 import { useUserRoles } from "./user-roles";
 import { useWakeLock } from "./wake-lock";
-import { ChordsIcon, CloseIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
+import { CloseIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 type MenuItemProps = {
   href?: string;
@@ -214,7 +213,6 @@ export function SiteHeader() {
   const showQr = pathname !== "/perfil";
   const { theme, toggle } = useTheme();
   const { favorites } = useFavorites();
-  const { suggestChords, setPreference, isAuthenticated: prefsAuth } = usePreferences();
   const { active: wakeLockActive, supported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
   const { isAdmin, isEditor } = useUserRoles();
 
@@ -393,24 +391,6 @@ export function SiteHeader() {
                       onSelect={closeMenu}
                     />
                   </li>
-                  {user && (
-                    <li>
-                      <MenuToggleItem
-                        icon={<ChordsIcon />}
-                        label="Sugerir acordes"
-                        checked={suggestChords}
-                        disabled={!prefsAuth}
-                        tooltip={
-                          prefsAuth
-                            ? undefined
-                            : "Iniciá sesión para guardar tus preferencias"
-                        }
-                        onChange={() =>
-                          setPreference("suggestChords", !suggestChords)
-                        }
-                      />
-                    </li>
-                  )}
                   {wakeLockSupported !== false && (
                     <li>
                       <MenuToggleItem

@@ -10,8 +10,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useSession } from "./session";
 
 export type FavoriteKind = "song" | "playlist" | "parish";
 
@@ -244,8 +244,8 @@ async function deleteAllFavorites(userId: string): Promise<void> {
 }
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
+  const { user } = useSession();
   const [favorites, setFavorites] = useState<FavoriteEntry[]>([]);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingConflict, setPendingConflict] = useState<Ctx["pendingConflict"]>(
     null
@@ -253,29 +253,20 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   // Para detectar la transición invitado → autenticado y disparar el merge.
   const lastUserIdRef = useRef<string | null>(null);
 
-  // Inicializar desde localStorage (sin sesión) y suscribirse a auth.
+  // Pre-carga inmediata desde localStorage para que el invitado vea sus
+  // favoritos sin parpadeo.
   useEffect(() => {
-    const supabase = createClient();
-    // Pre-carga inmediata desde localStorage para que el invitado vea sus
-    // favoritos sin parpadeo.
     setFavorites(readGuestFavorites());
     setLoading(false);
-
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      const next = session?.user ?? null;
-      setUser(next);
-      if (!next) {
-        // Logout: volvemos al modo invitado.
-        lastUserIdRef.current = null;
-        setFavorites(readGuestFavorites());
-        setPendingConflict(null);
-      }
-    });
-    return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Logout: volvemos al modo invitado.
+  useEffect(() => {
+    if (user) return;
+    lastUserIdRef.current = null;
+    setFavorites(readGuestFavorites());
+    setPendingConflict(null);
+  }, [user]);
 
   // Cuando cambia el user (login), cargar de BD y mergear con locales.
   useEffect(() => {

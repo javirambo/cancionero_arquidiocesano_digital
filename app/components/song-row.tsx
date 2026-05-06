@@ -100,6 +100,8 @@ export function SongRow({ index, song, playlistContext }: Props) {
 
       <RowMenu
         songId={song.id}
+        slug={song.slug}
+        hasChords={song.hasChords}
         href={href}
         title={song.title}
         favorited={fav}
@@ -121,6 +123,8 @@ export function SongRow({ index, song, playlistContext }: Props) {
 
 function RowMenu({
   songId,
+  slug,
+  hasChords,
   href,
   title,
   favorited,
@@ -131,6 +135,8 @@ function RowMenu({
   canManagePlaylist,
 }: {
   songId: string;
+  slug: string;
+  hasChords: boolean;
   href: string;
   title: string;
   favorited: boolean;
@@ -248,6 +254,10 @@ function RowMenu({
               <DownloadFilesPanel
                 songId={songId}
                 songTitle={title}
+                print={{
+                  slug,
+                  canPrintWithChords: hasChords && isAuthenticated,
+                }}
                 onAfter={close}
               />
             </div>

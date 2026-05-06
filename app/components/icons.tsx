@@ -226,3 +226,14 @@ export function TrashIcon(): ReactElement {
     </svg>
   );
 }
+
+export function PrinterIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M6 9V3h12v6" />
+      <rect x="4" y="9" width="16" height="8" rx="1" />
+      <path d="M6 17v4h12v-4" />
+      <path d="M9 13h6" />
+    </svg>
+  );
+}

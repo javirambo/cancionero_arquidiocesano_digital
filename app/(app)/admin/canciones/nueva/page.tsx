@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAdminAccess } from "@/app/admin/access";
+import { getAdminAccess } from "@/app/(app)/admin/access";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
