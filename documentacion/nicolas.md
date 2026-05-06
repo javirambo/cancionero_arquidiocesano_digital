@@ -5,9 +5,23 @@
 - >> ordenar eventos por fecha desc, primero diocesanas luego parroquiales fav, luego parroquiales resto.
 - >> ahora eventos son anuncios o playlists con calendario.
 
+        - titulo y subtitulo, hasta ahi todo igual.
+        - si es invitado: colocar primero playlists diocesanas, luego anuncios diocesanos ('solemnidad','fiesta','memoria','tiempo'), ordenados por fecha mas nuevos primero.
+        - luego la lista de canciones 
+        - mas abajo anuncios con kind=null (novedades)
+        - luego abajo accesos rapidos
+        - finalmente cartel de Iniciá sesión con google...
+
 - Logueado:
 - Primero la playlist de su parroquia, después la diocesana.
 - >> (otro orden en logueados)
+
+        - titulo y subtitulo, hasta ahi todo igual.
+        - si esta logueado: colocar primero playlists de mi parroquia, luego diocesanas, luego anuncios diocesanos ('solemnidad','fiesta','memoria','tiempo'), ordenados por fecha mas nuevos primero.
+        - luego la lista de canciones 
+        - mas abajo anuncios con kind=null (novedades)
+        - luego abajo accesos rapidos
+        
 
 - (Pensando en el músico)
 - Sería bueno que, luego de lo anterior, lo siguiente sea el acceso rápido.
@@ -47,3 +61,6 @@
     Créditos y fuentes? Un lugar donde diga que estos cantos han sido aprobados por la Comisión de Música Liturgica de la ciudad de Rosario y tomados del cantoral oficial de la diócesis de Argentina y otros países.
     >> LISTO, pero falta que me digan el texto exacto que quieren colocar ...
     - FALTA PONER CON QUIEN CONTACTARSE
+
+- ver si ponemos CANTOS o CANCIONES
+

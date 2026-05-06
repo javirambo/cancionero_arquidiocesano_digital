@@ -260,7 +260,7 @@ Rol global con permisos plenos.
 - **Precondiciones:** Existe contenido marcado como "novedad" o "festividad" para la fecha actual.
 - **Disparador:** El usuario abre la home `/`.
 - **Flujo principal:**
-  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo','otro')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
+  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
   2. *(Pausado)* Cálculo automático con `romcal` cuando no hay festividad cargada — se moverá a una página dedicada "¿Qué hay hoy de nuevo?" en una iteración posterior.
   3. El sistema muestra los **anuncios comunes vigentes** (`announcements` con `kind is null` cuya vigencia en `entity_schedules` matchee el momento actual) en la sección "Novedades", ordenados por `priority desc`. Cada anuncio se muestra una sola vez (sin duplicados aunque el usuario esté en varias parroquias destinatarias). Si tiene atajo (`target_kind` ≠ `'none'`), el banner enlaza al recurso.
   4. **Visibilidad de anuncios:**
@@ -669,7 +669,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ### Modelo
 
 - **Vigencia:** se evalúa con `entity_schedules` (`entity_type='announcement'`) en hora AR. Sin reglas → siempre vigente.
-- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo` / `otro`) para festividades litúrgicas que la home muestra en el bloque "Festividad de hoy".
+- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo`) para festividades litúrgicas que la home muestra en el bloque "Festividad de hoy".
 - **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo.
 - **Destinatarios:** tabla N–N `announcement_parishes(announcement_id, parish_id)`.
   - Sin filas → **anuncio global** (lo ven todos: anónimos y autenticados).
@@ -803,7 +803,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 
 ## CU-26: ABM de festividades litúrgicas (DEPRECADO — fusionado en CU-21)
 
-> **Nota:** la migración 0018 eliminó la tabla `liturgical_events`. Las festividades litúrgicas ahora son **anuncios** con `kind in ('solemnidad','fiesta','memoria','tiempo','otro')` (ver CU-21). El ABM se hace desde `/admin/anuncios`. La sección que sigue queda como referencia histórica.
+> **Nota:** la migración 0018 eliminó la tabla `liturgical_events`. Las festividades litúrgicas ahora son **anuncios** con `kind in ('solemnidad','fiesta','memoria','tiempo')` (ver CU-21; `'otro'` se removió en migración 0019). El ABM se hace desde `/admin/anuncios`. La sección que sigue queda como referencia histórica.
 
 - **RF:** RF23
 - **Actor primario:** Administrador.

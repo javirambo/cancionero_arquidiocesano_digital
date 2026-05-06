@@ -11,8 +11,7 @@ export type AnnouncementKind =
   | "solemnidad"
   | "fiesta"
   | "memoria"
-  | "tiempo"
-  | "otro";
+  | "tiempo";
 
 export type AnnouncementFormData = {
   id?: string;
@@ -332,7 +331,6 @@ export function AnuncioForm({
             <option value="fiesta">Fiesta</option>
             <option value="memoria">Memoria</option>
             <option value="tiempo">Tiempo litúrgico</option>
-            <option value="otro">Otro</option>
           </select>
         </Field>
       </div>

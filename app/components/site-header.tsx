@@ -201,6 +201,13 @@ const ModoCoroIcon = () => (
   </svg>
 );
 
+const NovedadesIcon = () => (
+  <svg {...iconProps}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5L6 16Z" />
+    <path d="M10 19a2 2 0 0 0 4 0" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
@@ -388,6 +395,14 @@ export function SiteHeader() {
                       href="/parroquias"
                       icon={<ParroquiasIcon />}
                       label="Parroquias"
+                      onSelect={closeMenu}
+                    />
+                  </li>
+                  <li>
+                    <MenuItem
+                      href="/novedades"
+                      icon={<NovedadesIcon />}
+                      label="Novedades"
                       onSelect={closeMenu}
                     />
                   </li>

@@ -153,6 +153,42 @@ export async function listSongsWithCapabilities(
   });
 }
 
+export async function listSongsPaged(
+  page: number,
+  pageSize: number
+): Promise<{ items: (SongSummary & SongCapabilities)[]; total: number }> {
+  const supabase = await createClient();
+  const safePage = Math.max(1, Math.floor(page));
+  const from = (safePage - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
+    .from("songs")
+    .select(
+      "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id)",
+      { count: "exact" }
+    )
+    .eq("status", "published")
+    .order("number", { ascending: true, nullsFirst: false })
+    .range(from, to);
+  if (error) throw error;
+  const items = (data ?? []).map((row) => {
+    const body = (row.body as string | null) ?? "";
+    const files = (row.song_files as { id: string }[] | null) ?? [];
+    return {
+      id: row.id as string,
+      number: row.number as number | null,
+      title: row.title as string,
+      slug: row.slug as string,
+      category: firstName(row.categories as Named),
+      author: firstName(row.authors as Named),
+      hasChords: /\[[^\]]+\]/.test(body),
+      hasYoutube: Boolean(row.youtube_url),
+      hasFiles: files.length > 0,
+    };
+  });
+  return { items, total: count ?? 0 };
+}
+
 export async function searchSongs(q: string, limit = 50): Promise<SongSummary[]> {
   const supabase = await createClient();
   const term = q.trim();
@@ -322,6 +358,7 @@ export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
 export type Featured = {
   title: string;
   body: string | null;
+  kind: string | null;
   target_kind: string;
   target_id: string | null;
   target_url: string | null;
@@ -330,35 +367,30 @@ export type Featured = {
   href: string | null;
 };
 
-export async function listActiveFeatured(): Promise<Featured[]> {
-  // Lee de `announcements` (CU-07, CU-21). La RLS aplica la regla de
-  // visibilidad: anónimo solo globales; autenticado globales + los de
-  // sus parroquias asociadas (vía parish_members). La vigencia temporal
-  // se evalúa con entity_schedules (ver lib/schedule.ts). Solo anuncios
-  // comunes (kind is null); las festividades viven aparte (getEventForToday).
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("announcements")
-    .select("id, title, body, target_kind, target_id, target_url, priority")
-    .is("kind", null)
-    .order("priority", { ascending: false });
-  if (error) throw error;
-  const all = data ?? [];
-  const ids = all.map((r) => r.id as string);
-  const sched = await loadSchedules("announcement", ids);
-  const rows = all.filter((r) => isVisibleNow(sched.get(r.id as string))).slice(0, 5);
+type AnnouncementRow = {
+  id: string;
+  title: string;
+  body: string | null;
+  kind: string | null;
+  target_kind: string;
+  target_id: string | null;
+  target_url: string | null;
+  priority: number;
+  created_at: string;
+};
 
-  // Resolver slugs en lote para canciones y parroquias (las playlists
-  // usan UUID en URL; las externas ya traen target_url).
+async function resolveAnnouncementHrefs(
+  rows: AnnouncementRow[]
+): Promise<Featured[]> {
+  if (rows.length === 0) return [];
+  const supabase = await createClient();
   const songIds: string[] = [];
   const parishIds: string[] = [];
   for (const r of rows) {
-    const id = r.target_id as string | null;
-    if (!id) continue;
-    if (r.target_kind === "song") songIds.push(id);
-    else if (r.target_kind === "parish") parishIds.push(id);
+    if (!r.target_id) continue;
+    if (r.target_kind === "song") songIds.push(r.target_id);
+    else if (r.target_kind === "parish") parishIds.push(r.target_id);
   }
-
   const [songSlugs, parishSlugs] = await Promise.all([
     songIds.length > 0
       ? supabase.from("songs").select("id, slug").in("id", songIds)
@@ -367,39 +399,74 @@ export async function listActiveFeatured(): Promise<Featured[]> {
       ? supabase.from("parishes").select("id, slug").in("id", parishIds)
       : Promise.resolve({ data: [] as { id: string; slug: string }[] }),
   ]);
-
   const songSlugById = new Map(
     (songSlugs.data ?? []).map((s) => [s.id as string, s.slug as string])
   );
   const parishSlugById = new Map(
     (parishSlugs.data ?? []).map((p) => [p.id as string, p.slug as string])
   );
-
   return rows.map((r) => {
-    const kind = r.target_kind as string;
-    const id = (r.target_id as string | null) ?? null;
-    const url = (r.target_url as string | null) ?? null;
     let href: string | null = null;
-    if (kind === "song" && id) {
-      const slug = songSlugById.get(id);
+    if (r.target_kind === "song" && r.target_id) {
+      const slug = songSlugById.get(r.target_id);
       if (slug) href = `/canciones/${slug}`;
-    } else if (kind === "playlist" && id) {
-      href = `/playlists/${id}`;
-    } else if (kind === "parish" && id) {
-      const slug = parishSlugById.get(id);
+    } else if (r.target_kind === "playlist" && r.target_id) {
+      href = `/playlists/${r.target_id}`;
+    } else if (r.target_kind === "parish" && r.target_id) {
+      const slug = parishSlugById.get(r.target_id);
       if (slug) href = `/parroquias/${slug}`;
-    } else if (kind === "external" && url) {
-      href = url;
+    } else if (r.target_kind === "external" && r.target_url) {
+      href = r.target_url;
     }
     return {
-      title: r.title as string,
-      body: (r.body as string | null) ?? null,
-      target_kind: kind,
-      target_id: id,
-      target_url: url,
+      title: r.title,
+      body: r.body,
+      kind: r.kind,
+      target_kind: r.target_kind,
+      target_id: r.target_id,
+      target_url: r.target_url,
       href,
     };
   });
+}
+
+async function listAnnouncementsByKindFilter(
+  kindFilter: "null" | "not-null",
+  limit?: number
+): Promise<{ items: Featured[]; total: number }> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("announcements")
+    .select("id, title, body, kind, target_kind, target_id, target_url, priority, created_at")
+    .order("created_at", { ascending: false });
+  if (kindFilter === "null") query = query.is("kind", null);
+  else query = query.not("kind", "is", null);
+  const { data, error } = await query;
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  const sched = await loadSchedules("announcement", all.map((r) => r.id));
+  const visibles = all.filter((r) => isVisibleNow(sched.get(r.id)));
+  const rows = limit ? visibles.slice(0, limit) : visibles;
+  const items = await resolveAnnouncementHrefs(rows);
+  return { items, total: visibles.length };
+}
+
+export async function listCommonAnnouncements(
+  limit?: number
+): Promise<{ items: Featured[]; total: number }> {
+  return listAnnouncementsByKindFilter("null", limit);
+}
+
+export async function listLiturgicalAnnouncements(
+  limit?: number
+): Promise<{ items: Featured[]; total: number }> {
+  return listAnnouncementsByKindFilter("not-null", limit);
+}
+
+// Compat: la home anterior llamaba listActiveFeatured (5 items, kind null).
+export async function listActiveFeatured(): Promise<Featured[]> {
+  const { items } = await listCommonAnnouncements(5);
+  return items;
 }
 
 export function youtubeEmbedUrl(url: string | null): string | null {
