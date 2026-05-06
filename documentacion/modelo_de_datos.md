@@ -407,7 +407,7 @@ Anuncios + festividades litúrgicas que aparecen en la home (CU-07, CU-21). Pued
 | `id`           | uuid        | PK                                                                                            |
 | `title`        | text        | NOT NULL                                                                                      |
 | `body`         | text        | NULL permitido                                                                                |
-| `kind`         | text        | NULL = anuncio común. Si tiene valor in ('solemnidad','fiesta','memoria','tiempo','otro') → festividad litúrgica |
+| `kind`         | text        | NULL = anuncio común. Si tiene valor in ('solemnidad','fiesta','memoria','tiempo') → festividad litúrgica |
 | `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none'); default 'none'                       |
 | `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`                                    |
 | `target_url`   | text        | requerido si `target_kind='external'`                                                         |

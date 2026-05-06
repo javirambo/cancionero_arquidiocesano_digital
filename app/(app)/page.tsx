@@ -68,14 +68,25 @@ export default async function Home() {
   // Datos a mostrar: la festividad cargada en DB tiene prioridad porque
   // suele venir con playlist asociada. Si no hay, caemos al calendario
   // litúrgico calculado por romcal.
-  const headline = event
-    ? { kicker: "Festividad de hoy", title: event.name, description: event.description, season: null as string | null }
+  const headline: {
+    kicker: string;
+    title: string;
+    description: string | null;
+    season: string | null;
+    href: string | null;
+  } = event
+    ? {
+        kicker: "Festividad de hoy",
+        title: event.name,
+        description: event.description,
+        season: null,
+        href: event.href,
+      }
     : litDay
     ? {
         kicker: today,
-        // Si es feria mostramos el tiempo litúrgico como título.
         title:
-          litDay.rank <= 4 // solemnidad / domingo / fiesta / memoria
+          litDay.rank <= 4
             ? litDay.name
             : litDay.seasonName,
         description:
@@ -83,8 +94,9 @@ export default async function Home() {
             ? `${litDay.seasonName} · ${litDay.date}`
             : "Hoy no hay festividad destacada.",
         season: litDay.seasonName,
+        href: null,
       }
-    : { kicker: today, title: "Tiempo Ordinario", description: null, season: null };
+    : { kicker: today, title: "Tiempo Ordinario", description: null, season: null, href: null };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -108,20 +120,18 @@ export default async function Home() {
           </p>
         </section>
 
-        <section
-          aria-labelledby="festividad-heading"
-          className="rounded-2xl border border-border bg-sidebar p-8"
-        >
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            {headline.kicker}
-          </p>
-          <h2 id="festividad-heading" className="mt-2 text-2xl">
-            {headline.title}
-          </h2>
-          {headline.description && (
-            <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
-              {headline.description}
-            </p>
+        <section aria-labelledby="festividad-heading">
+          {headline.href ? (
+            <Link
+              href={headline.href}
+              className="block rounded-2xl border border-border bg-sidebar p-8 transition-colors hover:border-primary"
+            >
+              <FestividadContent headline={headline} />
+            </Link>
+          ) : (
+            <div className="rounded-2xl border border-border bg-sidebar p-8">
+              <FestividadContent headline={headline} />
+            </div>
           )}
         </section>
 
@@ -155,7 +165,7 @@ export default async function Home() {
                   <>
                     <p className="text-base text-primary">{f.title}</p>
                     {f.body && (
-                      <p className="mt-1 text-sm normal-case leading-6 text-muted-foreground">
+                      <p className="mt-1 whitespace-pre-line text-sm normal-case leading-6 text-muted-foreground">
                         {f.body}
                       </p>
                     )}
@@ -220,5 +230,27 @@ export default async function Home() {
         </section>
       </main>
     </div>
+  );
+}
+
+function FestividadContent({
+  headline,
+}: {
+  headline: { kicker: string; title: string; description: string | null };
+}) {
+  return (
+    <>
+      <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+        {headline.kicker}
+      </p>
+      <h2 id="festividad-heading" className="mt-2 text-2xl">
+        {headline.title}
+      </h2>
+      {headline.description && (
+        <p className="mt-3 max-w-2xl whitespace-pre-line text-base leading-7 text-muted-foreground normal-case">
+          {headline.description}
+        </p>
+      )}
+    </>
   );
 }

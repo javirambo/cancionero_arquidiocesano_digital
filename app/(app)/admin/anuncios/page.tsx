@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { isVisibleNow } from "@/lib/schedule";
+import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { loadSchedules } from "@/lib/schedule.server";
 import { getAdminAccess } from "../access";
 
@@ -90,11 +90,12 @@ export default async function AdminAnunciosPage() {
         </p>
       ) : (
         <>
-          <Group title="Vigentes ahora" rows={vigentes} dest={destByAnnouncement} />
+          <Group title="Vigentes ahora" rows={vigentes} dest={destByAnnouncement} sched={sched} />
           <Group
             title="No vigentes ahora"
             rows={noVigentes}
             dest={destByAnnouncement}
+            sched={sched}
             muted
           />
         </>
@@ -107,11 +108,13 @@ function Group({
   title,
   rows,
   dest,
+  sched,
   muted,
 }: {
   title: string;
   rows: AnnouncementRow[];
   dest: Map<string, ParishRow[]>;
+  sched: Map<string, Parameters<typeof describeSchedule>[0][]>;
   muted?: boolean;
 }) {
   if (rows.length === 0) return null;
@@ -123,6 +126,11 @@ function Group({
       <ul className="divide-y divide-border rounded-xl border border-border">
         {rows.map((a) => {
           const destinatarios = dest.get(a.id) ?? [];
+          const reglas = sched.get(a.id) ?? [];
+          const destText =
+            destinatarios.length === 0
+              ? "Todas las parroquias"
+              : destinatarios.map((p) => p.name).join(", ");
           const meta: string[] = [];
           if (a.kind) meta.push(a.kind);
           if (a.priority !== 0) meta.push(`prioridad ${a.priority}`);
@@ -130,26 +138,40 @@ function Group({
           return (
             <li
               key={a.id}
-              className={`flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar ${
+              className={`px-5 py-3 transition-colors hover:bg-sidebar ${
                 muted ? "opacity-60" : ""
               }`}
             >
               <Link
                 href={`/admin/anuncios/${a.id}/editar`}
-                className="flex flex-1 flex-col gap-0.5"
+                className="flex flex-col gap-0.5"
               >
                 <span className="text-base text-primary">{a.title}</span>
+                {reglas.length > 0 ? (
+                  <ul className="flex flex-col gap-0.5">
+                    {reglas.map((r, i) => (
+                      <li
+                        key={i}
+                        className="text-xs normal-case text-muted-foreground"
+                      >
+                        {describeSchedule(r)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-xs normal-case text-muted-foreground">
+                    Siempre vigente
+                  </span>
+                )}
+                <span className="text-xs normal-case text-muted-foreground">
+                  {destText}
+                </span>
                 {meta.length > 0 && (
                   <span className="text-xs normal-case text-muted-foreground">
                     {meta.join(" · ")}
                   </span>
                 )}
               </Link>
-              <span className="hidden sm:inline-block text-xs normal-case text-muted-foreground">
-                {destinatarios.length === 0
-                  ? "Todas las parroquias"
-                  : destinatarios.map((p) => p.slug).join(", ")}
-              </span>
             </li>
           );
         })}
