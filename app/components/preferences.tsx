@@ -9,17 +9,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useSession } from "./session";
 
 type Preferences = {
-  // Mostrar el toggle de acordes y la transposición en la vista de canción.
-  // Default: false (los acordes son para músicos, no para la asamblea).
-  suggestChords: boolean;
+  // Mantener la pantalla encendida (Screen Wake Lock).
+  // Sólo aplica a usuarios autenticados; al recargar requiere un gesto del
+  // usuario para reactivarse (limitación de la Web API).
+  keepScreenOn: boolean;
 };
 
 const DEFAULTS: Preferences = {
-  suggestChords: false,
+  keepScreenOn: false,
 };
 
 type Ctx = Preferences & {
@@ -45,28 +46,16 @@ async function loadFromDb(userId: string): Promise<Preferences> {
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
+  const { user } = useSession();
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      if (!data.user) setLoading(false);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        setPrefs(DEFAULTS);
-        setLoading(false);
-      }
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setPrefs(DEFAULTS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     loadFromDb(user.id).then((p) => {
       setPrefs(p);

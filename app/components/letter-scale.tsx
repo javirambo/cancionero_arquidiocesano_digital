@@ -28,9 +28,12 @@ export function useLetterScale(): {
   setScale: (n: number) => void;
   adjust: (delta: number) => void;
 } {
-  const [scale, setScaleState] = useState<number>(() => read());
+  // Arrancamos con el default 1 para no romper hidratación (SSR no tiene
+  // localStorage). Después de montar, leemos el valor real.
+  const [scale, setScaleState] = useState<number>(1);
 
   useEffect(() => {
+    setScaleState(read());
     subscribers.add(setScaleState);
     const onStorage = (e: StorageEvent) => {
       if (e.key === LETTER_SCALE_KEY) setScaleState(read());

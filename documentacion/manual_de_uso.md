@@ -90,7 +90,8 @@ A la derecha, tres botones circulares con tooltip al pasar el cursor:
 | Selector de tono ( **−** … **+** )           | "Bajar un semitono" / "Subir un semitono"                     | Transpone los acordes en tiempo real.                                    |
 | "Restablecer"                                | (label visible)                                               | Vuelve al tono original. Aparece solo si transpusiste.                   |
 | Modo coro                                    | "Mantiene la pantalla encendida durante la celebración"       | Solicita Wake Lock para que el dispositivo no se apague.                |
-| "Reproducir" / "Ocultar video"               | (label visible)                                               | Embebe el reproductor de YouTube. Solo visible si la canción tiene URL. |
+| "Reproducir"                                 | (label visible)                                               | Reproduce YouTube o un audio (mp3/ogg). Si hay solo una opción la inicia directo; si hay varias abre un menú para elegir. Solo aparece si la canción tiene al menos una. |
+| "Descargar archivos"                          | (label visible)                                               | Lista partituras y otros adjuntos descargables, e incluye "Imprimir con acordes #" / "Imprimir sin acordes" (CU-10). La opción "con acordes" solo aparece si la canción tiene acordes y estás autenticado. La impresión respeta la transposición y el sistema de cifrado actuales. |
 
 - **Letra**: se muestra centrada con tipografía Cardo. Si los acordes están activados, aparecen alineados sobre la palabra correspondiente.
 - **Persistencia del tono**: el tono elegido se guarda por canción en el navegador (anónimo). Cuando entre el login, las preferencias se sincronizarán con la cuenta.

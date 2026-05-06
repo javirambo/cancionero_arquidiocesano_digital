@@ -8,8 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useSession } from "./session";
 
 export type RoleName = "admin" | "editor" | "coordinator" | "member";
 
@@ -40,31 +40,16 @@ async function loadRoles(userId: string): Promise<RoleName[]> {
 }
 
 export function UserRolesProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useSession();
   const [roles, setRoles] = useState<RoleName[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      if (!data.user) {
-        setRoles([]);
-        setLoading(false);
-      }
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        setRoles([]);
-        setLoading(false);
-      }
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setRoles([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     loadRoles(user.id).then((r) => {
       setRoles(r);

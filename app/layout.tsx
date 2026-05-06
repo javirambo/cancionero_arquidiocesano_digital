@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Cardo } from "next/font/google";
 import Script from "next/script";
-import { SiteHeader } from "./components/site-header";
 import { ThemeProvider, themeInitScript } from "./components/theme";
+import { SessionProvider } from "./components/session";
 import { FavoritesProvider } from "./components/favorites";
-import { MergeFavoritesDialog } from "./components/merge-favorites-dialog";
 import { PreferencesProvider } from "./components/preferences";
 import { UserRolesProvider } from "./components/user-roles";
 import { ToastProvider } from "./components/toast";
@@ -55,19 +54,17 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
         <ThemeProvider>
-          <UserRolesProvider>
-            <PreferencesProvider>
-              <FavoritesProvider>
-                <ToastProvider>
-                  <WakeLockProvider>
-                    <SiteHeader />
-                    {children}
-                    <MergeFavoritesDialog />
-                  </WakeLockProvider>
-                </ToastProvider>
-              </FavoritesProvider>
-            </PreferencesProvider>
-          </UserRolesProvider>
+          <SessionProvider>
+            <UserRolesProvider>
+              <PreferencesProvider>
+                <FavoritesProvider>
+                  <ToastProvider>
+                    <WakeLockProvider>{children}</WakeLockProvider>
+                  </ToastProvider>
+                </FavoritesProvider>
+              </PreferencesProvider>
+            </UserRolesProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PlaylistForm, type ParishOption } from "@/app/playlists/playlist-form";
+import { PlaylistForm, type ParishOption } from "@/app/(app)/playlists/playlist-form";
 
 export default async function NuevaPlaylistPage() {
   const supabase = await createClient();

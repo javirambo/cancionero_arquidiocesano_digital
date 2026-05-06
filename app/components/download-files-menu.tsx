@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { DownloadIcon, FilesIcon, MusicIcon } from "./icons";
+import { DownloadIcon, FilesIcon, MusicIcon, PrinterIcon } from "./icons";
 
 export type DownloadableFile = {
   id: string;
@@ -12,12 +12,20 @@ export type DownloadableFile = {
   label: string | null;
 };
 
+type PrintInfo = {
+  slug: string;
+  canPrintWithChords: boolean;
+  semitones: number;
+  system: "auto" | "latin" | "english";
+};
+
 type Props = {
   songId: string;
   songTitle: string;
+  print: PrintInfo;
 };
 
-export function DownloadFilesMenu({ songId, songTitle }: Props) {
+export function DownloadFilesMenu({ songId, songTitle, print }: Props) {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<DownloadableFile[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,6 +59,7 @@ export function DownloadFilesMenu({ songId, songTitle }: Props) {
         .from("song_files")
         .select("id, kind, bucket, path, label")
         .eq("song_id", songId)
+        .not("kind", "in", "(audio_mp3,audio_ogg)")
         .order("kind", { ascending: true })
         .order("created_at", { ascending: false });
       if (cancelled) return;
@@ -104,10 +113,20 @@ export function DownloadFilesMenu({ songId, songTitle }: Props) {
           loading={loading}
           error={error}
           onPick={handleDownload}
+          print={print}
+          onPrint={() => setOpen(false)}
         />
       )}
     </div>
   );
+}
+
+function buildPrintHref(print: PrintInfo, withChords: boolean): string {
+  const params = new URLSearchParams();
+  params.set("chords", withChords ? "1" : "0");
+  if (print.semitones !== 0) params.set("semitones", String(print.semitones));
+  if (print.system !== "auto") params.set("system", print.system);
+  return `/canciones/${print.slug}/imprimir?${params.toString()}`;
 }
 
 function FilesDropdown({
@@ -115,11 +134,15 @@ function FilesDropdown({
   loading,
   error,
   onPick,
+  print,
+  onPrint,
 }: {
   files: DownloadableFile[] | null;
   loading: boolean;
   error: string | null;
   onPick: (f: DownloadableFile) => void;
+  print: PrintInfo;
+  onPrint: () => void;
 }) {
   return (
     <div
@@ -132,14 +155,9 @@ function FilesDropdown({
       {!loading && error && (
         <p className="px-4 py-3 text-sm text-destructive">{error}</p>
       )}
-      {!loading && !error && files !== null && files.length === 0 && (
-        <p className="px-4 py-3 text-sm text-muted-foreground">
-          No hay archivos disponibles.
-        </p>
-      )}
-      {!loading && !error && files !== null && files.length > 0 && (
+      {!loading && !error && (
         <ul className="py-1 text-sm">
-          {files.map((f) => (
+          {files?.map((f) => (
             <li key={f.id}>
               <button
                 type="button"
@@ -161,6 +179,38 @@ function FilesDropdown({
               </button>
             </li>
           ))}
+          {print.canPrintWithChords && (
+            <li>
+              <a
+                href={buildPrintHref(print, true)}
+                role="menuitem"
+                onClick={onPrint}
+                className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+              >
+                <span className="shrink-0 text-primary" aria-hidden="true">
+                  <PrinterIcon />
+                </span>
+                <span className="truncate text-base text-primary">
+                  Imprimir con acordes <em>#</em>
+                </span>
+              </a>
+            </li>
+          )}
+          <li>
+            <a
+              href={buildPrintHref(print, false)}
+              role="menuitem"
+              onClick={onPrint}
+              className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+            >
+              <span className="shrink-0 text-primary" aria-hidden="true">
+                <PrinterIcon />
+              </span>
+              <span className="truncate text-base text-primary">
+                {print.canPrintWithChords ? "Imprimir sin acordes" : "Imprimir"}
+              </span>
+            </a>
+          </li>
         </ul>
       )}
     </div>
@@ -196,10 +246,12 @@ function filenameFor(f: DownloadableFile, songTitle: string): string {
 export function DownloadFilesPanel({
   songId,
   songTitle,
+  print,
   onAfter,
 }: {
   songId: string;
   songTitle: string;
+  print: { slug: string; canPrintWithChords: boolean };
   onAfter?: () => void;
 }) {
   const [files, setFiles] = useState<DownloadableFile[] | null>(null);
@@ -214,6 +266,7 @@ export function DownloadFilesPanel({
         .from("song_files")
         .select("id, kind, bucket, path, label")
         .eq("song_id", songId)
+        .not("kind", "in", "(audio_mp3,audio_ogg)")
         .order("kind", { ascending: true })
         .order("created_at", { ascending: false });
       if (cancelled) return;
@@ -250,16 +303,9 @@ export function DownloadFilesPanel({
   if (error) {
     return <p className="px-4 py-3 text-sm text-destructive">{error}</p>;
   }
-  if (files === null || files.length === 0) {
-    return (
-      <p className="px-4 py-3 text-sm text-muted-foreground">
-        No hay archivos disponibles.
-      </p>
-    );
-  }
   return (
     <ul className="py-1 text-sm">
-      {files.map((f) => (
+      {files?.map((f) => (
         <li key={f.id}>
           <button
             type="button"
@@ -281,6 +327,44 @@ export function DownloadFilesPanel({
           </button>
         </li>
       ))}
+      {print.canPrintWithChords && (
+        <li>
+          <a
+            href={buildPrintHref(
+              { ...print, semitones: 0, system: "auto" },
+              true
+            )}
+            role="menuitem"
+            onClick={() => onAfter?.()}
+            className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+          >
+            <span className="shrink-0 text-primary" aria-hidden="true">
+              <PrinterIcon />
+            </span>
+            <span className="truncate text-base text-primary">
+              Imprimir con acordes <em>#</em>
+            </span>
+          </a>
+        </li>
+      )}
+      <li>
+        <a
+          href={buildPrintHref(
+            { ...print, semitones: 0, system: "auto" },
+            false
+          )}
+          role="menuitem"
+          onClick={() => onAfter?.()}
+          className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+        >
+          <span className="shrink-0 text-primary" aria-hidden="true">
+            <PrinterIcon />
+          </span>
+          <span className="truncate text-base text-primary">
+            {print.canPrintWithChords ? "Imprimir sin acordes" : "Imprimir"}
+          </span>
+        </a>
+      </li>
     </ul>
   );
 }

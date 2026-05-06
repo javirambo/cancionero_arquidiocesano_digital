@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getParishBySlug } from "@/lib/songs";
 import { createClient } from "@/lib/supabase/server";
-import { PlaylistForm } from "@/app/playlists/playlist-form";
+import { PlaylistForm } from "@/app/(app)/playlists/playlist-form";
 
 export default async function NuevaPlaylistPage({
   params,

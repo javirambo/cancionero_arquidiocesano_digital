@@ -162,6 +162,20 @@ Usamos formato ChordPro:
 
 - ver [ChordPro](https://www.chordpro.org/chordpro/chordpro-introduction/)
 
+### 6.2 Estructura de rutas (App Router)
+
+Dos route groups en `app/`:
+
+- `(app)/` — todas las rutas con header, footer y diálogos globales. Contiene `canciones/`, `playlists/`, `parroquias/`, `perfil/`, `admin/`, etc. Su layout monta `SiteHeader`, `SiteFooter` y `MergeFavoritesDialog`.
+- `(print)/` — vistas standalone sin chrome del sitio. Hoy solo `canciones/[slug]/imprimir`. Su layout sólo renderiza `{children}`. Útil para CU-10 (canción imprimible) y a futuro CU-11 (cancionero de playlist).
+
+El `app/layout.tsx` raíz contiene únicamente los providers globales (theme, sesión, roles, preferencias, favoritos, toast, wake-lock). No agrega UI visible: cada route group decide qué chrome mostrar.
+
+### 6.3 Sesión y cliente Supabase del browser
+
+- **Cliente singleton**: `lib/supabase/client.ts` cachea una sola instancia de `createBrowserClient`. Crear múltiples instancias provoca contención del lock interno de `gotrue-js` (varias instancias compitiendo por el mismo lock con nombre fijo en `localStorage` → `AbortError: Lock broken` y estado de auth corrupto).
+- **`SessionProvider`** (en `app/components/session.tsx`) es la única fuente de la sesión: llama a `supabase.auth.getUser()` y `onAuthStateChange` una sola vez y expone `{ user, loading }` por contexto. Los demás providers (`UserRolesProvider`, `PreferencesProvider`, `FavoritesProvider`) consumen `useSession()` en lugar de hablar con Supabase directamente, para evitar llamadas concurrentes a `auth`.
+
 
 
 ## 7. Stack Tecnológico

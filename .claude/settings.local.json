@@ -18,7 +18,8 @@
       "Bash(curl -sS -H \"Accept: application/json\" \"https://litcal.johnromanodorazio.com/api/v5/calendar?year=2026&locale=es_AR\" -o /tmp/litcal.json -w \"HTTP %{http_code}\\\\nbytes=%{size_download}\\\\ncontent-type=%{content_type}\\\\n\")",
       "Bash(git log *)",
       "Bash(gh run *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(xargs sed *)"
     ]
   }
 }

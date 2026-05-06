@@ -19,7 +19,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-07   | Visualizar novedades / festividad del día            | —         | ✅     |
 | CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | ✅     |
 | CU-09   | Descargar archivos de la canción                     | RF7       | ✅     |
-| CU-10   | Descargar canción para imprimir                      | RF14      | ⏳ Render imprimible de letra/acordes con preview. Colocar un botón de descarga cuando se está visualizando la canción. |
+| CU-10   | Descargar canción para imprimir                      | RF14      | ✅ Vista `/imprimir` con CSS print + auto-shrink en una hoja A4 (mínimo 9pt). |
 | CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. |
 | CU-12   | Descargar QR de la página actual                     | RF13      | ✅     |
 | CU-13   | Login con Google                                     | RF16      | ✅     |
@@ -323,13 +323,16 @@ Rol global con permisos plenos.
 - **RF:** RF14
 - **Actor primario:** Músico
 - **Precondiciones:** Estar en la vista de canción.
-- **Disparador:** El usuario elige "Descargar para imprimir" y selecciona "con acordes" / "sin acordes".
+- **Disparador:** Desde el menú "Descargar" elige "Imprimir con acordes #" o "Imprimir sin acordes". La opción "con acordes" sólo aparece si la canción tiene acordes y el usuario está autenticado (CU-03).
 - **Flujo principal:**
-  1. El sistema genera un PDF (server-side) con el formato impreso (A4, tipografía Cardo, títulos en mayúscula rojo).
-  2. El navegador descarga el archivo.
+  1. Navega a `/canciones/[slug]/imprimir?chords=…&semitones=…&system=…` (vista de impresión dedicada, sin header ni footer del sitio).
+  2. La vista renderiza la canción en formato A4 (margen 1.5cm, tipografía Cardo, título en mayúscula rojo) usando los semitonos/sistema actuales del usuario en pantalla (es decir, imprime lo transpuesto, no el original).
+  3. Auto-shrink JS: empieza en 11pt y baja en pasos de 0.5pt hasta que el contenido entra en una hoja, con piso en 9pt. Si al mínimo aún no entra, fluye a 2+ páginas (paginado natural del navegador).
+  4. Llama automáticamente a `window.print()`. El usuario decide en el diálogo del navegador si imprime físicamente o guarda como PDF.
 - **Flujos alternativos:**
-  - 1a. Falla la generación: se muestra mensaje de error.
+  - 4a. El usuario cancela el diálogo de impresión: queda en la vista, con un botón "Imprimir" para reintentar y "← Volver" para ir a la canción.
 - **Postcondiciones:** Ninguna persistente.
+- **Notas técnicas:** No se genera PDF server-side; se usa CSS print + `window.print()` del navegador. La vista vive en el route group `(print)` para no heredar el chrome del sitio (header/footer/toolbar).
 
 ---
 

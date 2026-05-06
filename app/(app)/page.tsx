@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { version } from "@/package.json";
 import { getEventForToday, listActiveFeatured } from "@/lib/songs";
 import { getLiturgicalDay } from "@/lib/liturgical";
 import { createClient } from "@/lib/supabase/server";
 import { formatearFecha, hoyEnCordoba } from "@/lib/dates";
-import { GoogleSignInButton } from "@/app/perfil/google-sign-in-button";
+import { GoogleSignInButton } from "@/app/(app)/perfil/google-sign-in-button";
 
 type AccesoRapido = {
   href: string;
@@ -220,19 +219,6 @@ export default async function Home() {
           </ul>
         </section>
       </main>
-
-      <footer className="border-t border-border bg-sidebar">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-1 px-6 py-6 text-center text-xs normal-case text-muted-foreground sm:flex-row sm:justify-between sm:text-left">
-          <span>Arquidiócesis de Rosario · Comisión Litúrgico-Musical</span>
-          <span className="flex items-center gap-3">
-            <Link href="/privacidad" className="hover:text-primary">
-              Privacidad
-            </Link>
-            <span aria-hidden="true">·</span>
-            <span>Versión {version}</span>
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

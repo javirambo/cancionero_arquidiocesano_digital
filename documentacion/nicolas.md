@@ -20,17 +20,23 @@ Que sea más predecible la búsqueda de las sugerencias de acordes, los tuve que
     - tambien audios o cualquier otro archivo.
     - (basta con colocar el PDF y un nombre o descripcion)
 
-Administrador parroquial:
-Una texto o algo donde diga con quién contactarse para ser administrador parroquial y/o que aparezca su parroquia.
+- Administrador parroquial:
+- Una texto o algo donde diga con quién contactarse para ser administrador parroquial y/o que aparezca su parroquia.
+    - en creditos, listo
 
-Posibilidad de cambiar el orden de los cantos de las playlist.
+- Posibilidad de cambiar el orden de los cantos de las playlist.
+    - listo
 
-Crear varias playlist para su parroquia
+- Crear varias playlist para su parroquia
+    - esta
 
 Editor:
 
 Existen algunos cantos que tiene más de una función (Ej algunos sirven tanto de Entrada como de Comunión). ¿Podría haber más de una etiqueta?
 
 
-IDEAS:
-Créditos y fuentes? Un lugar donde diga que estos cantos han sido aprobados por la Comisión de Música Liturgica de la ciudad de Rosario y tomados del cantoral oficial de la diócesis de Argentina y otros países.
+- IDEAS:
+    Créditos y fuentes? Un lugar donde diga que estos cantos han sido aprobados por la Comisión de Música Liturgica de la ciudad de Rosario y tomados del cantoral oficial de la diócesis de Argentina y otros países.
+    - Listo, pero falta que me digan el texto exacto que quieren colocar ...
+
+    - FALTA PONER CON QUIEN CONTACTARSE

@@ -9,10 +9,10 @@ import {
   type ChordLine,
   type ChordSystem,
 } from "@/lib/chordpro";
-import { usePreferences } from "@/app/components/preferences";
 import { useFavorites } from "@/app/components/favorites";
-import { YoutubeIcon } from "@/app/components/icons";
 import { DownloadFilesMenu } from "@/app/components/download-files-menu";
+import { PlayMenu } from "@/app/components/play-menu";
+import { groupChorus, LineView } from "@/app/components/song-render";
 import {
   useLetterScale,
   LETTER_SCALE_MIN,
@@ -22,6 +22,7 @@ import {
 
 type Props = {
   songId: string;
+  songSlug: string;
   songTitle: string;
   body: string;
   originalKey: string | null;
@@ -33,6 +34,7 @@ const STORAGE_KEY_PREFIX = "song:transpose:";
 
 export function SongView({
   songId,
+  songSlug,
   songTitle,
   body,
   originalKey,
@@ -41,14 +43,17 @@ export function SongView({
 }: Props) {
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
-  const { suggestChords } = usePreferences();
   const { isAuthenticated } = useFavorites();
-  // CU-03: los acordes y la transposición sólo se exponen a usuarios con
-  // sesión que además activaron "Sugerir acordes" en su perfil.
-  const chordsAvailable = chordsExist && suggestChords && isAuthenticated;
+  // CU-03: los acordes y la transposición sólo se exponen a usuarios con sesión.
+  const chordsAvailable = chordsExist && isAuthenticated;
+
 
   const [showChords, setShowChords] = useState(true);
-  const [showVideo, setShowVideo] = useState(false);
+  const [media, setMedia] = useState<
+    | { type: "youtube" }
+    | { type: "audio"; src: string; label: string }
+    | null
+  >(null);
   const [semitones, setSemitones] = useState(0);
   const { scale: letterScale, adjust: adjustLetterScale } = useLetterScale();
   const detected = useMemo<"latin" | "english">(
@@ -87,10 +92,10 @@ export function SongView({
       <div
         role="toolbar"
         aria-label="Controles de la canción"
-        className="flex flex-wrap items-center justify-end gap-2 rounded-xl border border-border bg-sidebar px-2 py-3 sm:gap-3 sm:px-4"
+        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-sidebar px-2 py-3 sm:justify-end sm:gap-3 sm:px-4"
       >
         {chordsAvailable && (
-          <>
+          <div className="flex items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => setShowChords((v) => !v)}
@@ -168,7 +173,7 @@ export function SongView({
             <span className="text-base font-semibold leading-none">♪+</span>
           </button>
         </div>
-          </>
+          </div>
         )}
 
         <div className="flex w-full basis-full items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:basis-auto sm:gap-3">
@@ -192,25 +197,28 @@ export function SongView({
           >
             <span className="text-base font-semibold leading-none">A+</span>
           </button>
-          {youtubeEmbed && (
-            <button
-              type="button"
-              onClick={() => setShowVideo((v) => !v)}
-              aria-pressed={showVideo}
-              aria-label={showVideo ? "Ocultar video" : "Reproducir"}
-              title={showVideo ? "Ocultar video" : "Reproducir"}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white [&_svg]:h-6 [&_svg]:w-6"
-            >
-              <YoutubeIcon />
-            </button>
-          )}
-          {hasFiles && (
-            <DownloadFilesMenu songId={songId} songTitle={songTitle} />
-          )}
+          <PlayMenu
+            songId={songId}
+            songTitle={songTitle}
+            youtubeEmbed={youtubeEmbed}
+            hasFiles={hasFiles}
+            selection={media}
+            onSelect={setMedia}
+          />
+          <DownloadFilesMenu
+            songId={songId}
+            songTitle={songTitle}
+            print={{
+              slug: songSlug,
+              canPrintWithChords: chordsAvailable,
+              semitones,
+              system,
+            }}
+          />
         </div>
       </div>
 
-      {showVideo && youtubeEmbed && (
+      {media?.type === "youtube" && youtubeEmbed && (
         <div className="aspect-video w-full overflow-hidden rounded-xl border border-border">
           <iframe
             src={youtubeEmbed}
@@ -218,6 +226,21 @@ export function SongView({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="h-full w-full"
+          />
+        </div>
+      )}
+
+      {media?.type === "audio" && (
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-sidebar px-4 py-3">
+          <span className="truncate text-sm text-muted-foreground">
+            {media.label}
+          </span>
+          <audio
+            controls
+            autoPlay
+            src={media.src}
+            className="w-full"
+            aria-label="Reproductor de audio"
           />
         </div>
       )}
@@ -253,66 +276,6 @@ export function SongView({
           )
         )}
       </div>
-    </div>
-  );
-}
-
-type LineBlock = { inChorus: boolean; lines: ChordLine[] };
-
-function groupChorus(lines: ChordLine[]): LineBlock[] {
-  const blocks: LineBlock[] = [];
-  for (const line of lines) {
-    const inChorus = line.inChorus === true;
-    const last = blocks[blocks.length - 1];
-    if (last && last.inChorus === inChorus) {
-      last.lines.push(line);
-    } else {
-      blocks.push({ inChorus, lines: [line] });
-    }
-  }
-  return blocks;
-}
-
-function LineView({ line, showChords }: { line: ChordLine; showChords: boolean }) {
-  if (line.lyrics === "" && line.chords.length === 0) {
-    return <div className="h-4" />;
-  }
-
-  if (!showChords || line.chords.length === 0) {
-    return <div>{line.lyrics || " "}</div>;
-  }
-
-  // Render con acordes alineados sobre las sílabas: cortamos la letra en
-  // los índices donde caen los acordes y producimos columnas con el
-  // acorde arriba y el fragmento de letra debajo.
-  const segments: { chord: string | null; text: string }[] = [];
-  const sortedChords = [...line.chords].sort((a, b) => a.index - b.index);
-  let cursor = 0;
-  if (sortedChords.length > 0 && sortedChords[0].index > 0) {
-    segments.push({ chord: null, text: line.lyrics.slice(0, sortedChords[0].index) });
-    cursor = sortedChords[0].index;
-  }
-  for (let i = 0; i < sortedChords.length; i++) {
-    const here = sortedChords[i];
-    const nextIdx = sortedChords[i + 1]?.index ?? line.lyrics.length;
-    const text = line.lyrics.slice(here.index, nextIdx);
-    segments.push({ chord: here.chord, text });
-    cursor = nextIdx;
-  }
-  if (cursor < line.lyrics.length) {
-    segments.push({ chord: null, text: line.lyrics.slice(cursor) });
-  }
-
-  return (
-    <div className="mt-5 flex flex-wrap items-end leading-tight">
-      {segments.map((seg, i) => (
-        <span key={i} className="inline-flex flex-col">
-          <span className="-mb-0.5 text-[0.875em] font-bold leading-none text-primary">
-            {seg.chord ?? " "}
-          </span>
-          <span className="whitespace-pre">{seg.text || " "}</span>
-        </span>
-      ))}
     </div>
   );
 }
