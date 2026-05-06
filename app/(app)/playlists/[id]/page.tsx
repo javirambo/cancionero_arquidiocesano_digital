@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPlaylistById } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
+import { loadSchedulesForEntity } from "@/lib/schedule.server";
+import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { PlaylistView } from "./playlist-view";
 
 export default async function PlaylistPage({
@@ -12,6 +14,9 @@ export default async function PlaylistPage({
   const { id } = await params;
   const pl = await getPlaylistById(id);
   if (!pl) notFound();
+
+  const schedules = await loadSchedulesForEntity("playlist", pl.id);
+  const outOfWindow = schedules.length > 0 && !isVisibleNow(schedules);
 
   // ¿El usuario actual puede editar esta playlist?
   // Editores: admin (cualquier playlist) o coordinator de la parroquia dueña.
@@ -69,6 +74,25 @@ export default async function PlaylistPage({
             <p className="max-w-2xl text-base normal-case text-muted-foreground">
               {pl.description}
             </p>
+          )}
+          {schedules.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <ul className="flex flex-col gap-0.5">
+                {schedules.map((s) => (
+                  <li
+                    key={s.id}
+                    className="text-xs normal-case text-muted-foreground"
+                  >
+                    {describeSchedule(s)}
+                  </li>
+                ))}
+              </ul>
+              {outOfWindow && (
+                <span className="inline-flex w-fit items-center rounded-full border border-warning px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-warning">
+                  Fuera de horario actual
+                </span>
+              )}
+            </div>
           )}
         </div>
         <div className="flex flex-col items-end gap-2">
