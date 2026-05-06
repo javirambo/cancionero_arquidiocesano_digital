@@ -98,6 +98,14 @@ export function ChevronRightIcon(): ReactElement {
   );
 }
 
+export function ChevronLeftIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  );
+}
+
 export function EditIcon(): ReactElement {
   // Lápiz (edición).
   return (
@@ -243,6 +251,15 @@ export function PlusIcon(): ReactElement {
     <svg {...baseProps} aria-hidden="true">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 8v8M8 12h8" />
+    </svg>
+  );
+}
+
+export function BellIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5L6 16Z" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
     </svg>
   );
 }

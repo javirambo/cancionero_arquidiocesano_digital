@@ -107,6 +107,7 @@ export type MyPlaylistsSections = {
 // Listado de playlists arquidiocesanas (para invitados en /playlists).
 export async function listArchdiocesanPlaylists(options?: {
   includeOutOfWindow?: boolean;
+  limit?: number;
 }): Promise<PlaylistSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -118,7 +119,8 @@ export async function listArchdiocesanPlaylists(options?: {
   const all = (data ?? []).map((r) =>
     rowToSummary(r as unknown as Parameters<typeof rowToSummary>[0])
   );
-  return options?.includeOutOfWindow ? all : await filterByScheduleVisibility(all);
+  const filtered = options?.includeOutOfWindow ? all : await filterByScheduleVisibility(all);
+  return options?.limit ? filtered.slice(0, options.limit) : filtered;
 }
 
 export async function listMyPlaylistsSections(
@@ -254,16 +256,21 @@ export async function listMyPlaylistsSections(
 export async function listPlaylistsForParish(parishId: string, options?: {
   parishSlug?: string;
   includeOutOfWindow?: boolean;
+  excludeArchdiocesan?: boolean;
+  limit?: number;
 }): Promise<ParishPlaylistItem[]> {
   const supabase = await createClient();
   const isArchdiocesisItself = options?.parishSlug === "arquidiocesis";
 
-  // 1. Propias.
-  const ownReq = supabase
+  // 1. Propias. Si excludeArchdiocesan está activo, también filtramos las
+  // archidiocesanas de la propia parroquia (van a su sección global).
+  const ownBase = supabase
     .from("playlists")
     .select(PLAYLIST_SELECT)
-    .eq("parish_id", parishId)
-    .order("created_at", { ascending: false });
+    .eq("parish_id", parishId);
+  const ownReq = (
+    options?.excludeArchdiocesan ? ownBase.eq("is_archdiocesan", false) : ownBase
+  ).order("created_at", { ascending: false });
 
   // 2. Suscriptas (excluye las propias por seguridad).
   const subsReq = supabase
@@ -272,7 +279,7 @@ export async function listPlaylistsForParish(parishId: string, options?: {
     .eq("parish_id", parishId);
 
   // 3. Archidiocesanas (solo si no somos la propia Arquidiócesis).
-  const archReq = isArchdiocesisItself
+  const archReq = isArchdiocesisItself || options?.excludeArchdiocesan
     ? Promise.resolve({ data: [], error: null })
     : supabase
         .from("playlists")
@@ -300,8 +307,10 @@ export async function listPlaylistsForParish(parishId: string, options?: {
     .map((s) => {
       const pl = Array.isArray(s.playlists) ? s.playlists[0] : s.playlists;
       if (!pl) return null;
+      const summary = rowToSummary(pl);
+      if (options?.excludeArchdiocesan && summary.is_archdiocesan) return null;
       return {
-        ...rowToSummary(pl),
+        ...summary,
         relation: "subscribed" as ParishPlaylistRelation,
       };
     })
@@ -320,7 +329,8 @@ export async function listPlaylistsForParish(parishId: string, options?: {
     seen.add(item.id);
     out.push(item);
   }
-  return options?.includeOutOfWindow ? out : await filterByScheduleVisibility(out);
+  const filtered = options?.includeOutOfWindow ? out : await filterByScheduleVisibility(out);
+  return options?.limit ? filtered.slice(0, options.limit) : filtered;
 }
 
 // Devuelve una playlist por id con sus canciones ordenadas por position.
