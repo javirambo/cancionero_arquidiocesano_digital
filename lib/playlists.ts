@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SongSummary, SongCapabilities } from "@/lib/songs";
+import { isVisibleNow } from "@/lib/schedule";
+import { loadSchedules } from "@/lib/schedule.server";
 
 export type PlaylistSummary = {
   id: string;
   name: string;
   description: string | null;
-  event_date: string | null;
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
   parish: { id: string; name: string; slug: string } | null;
@@ -35,13 +36,12 @@ function firstParish(
 }
 
 const PLAYLIST_SELECT =
-  "id, name, description, event_date, visibility, is_archdiocesan, parishes!playlists_parish_id_fkey(id, name, slug)";
+  "id, name, description, visibility, is_archdiocesan, parishes!playlists_parish_id_fkey(id, name, slug)";
 
 function rowToSummary(row: {
   id: string;
   name: string;
   description: string | null;
-  event_date: string | null;
   visibility: string;
   is_archdiocesan: boolean;
   parishes: ParishRel;
@@ -50,11 +50,20 @@ function rowToSummary(row: {
     id: row.id,
     name: row.name,
     description: row.description,
-    event_date: row.event_date,
     visibility: row.visibility as PlaylistSummary["visibility"],
     is_archdiocesan: row.is_archdiocesan,
     parish: firstParish(row.parishes),
   };
+}
+
+// Filtra una lista de playlists por vigencia temporal (CU-17). Las
+// playlists sin schedules quedan visibles siempre.
+async function filterByScheduleVisibility<T extends { id: string }>(
+  items: T[]
+): Promise<T[]> {
+  if (items.length === 0) return items;
+  const sched = await loadSchedules("playlist", items.map((i) => i.id));
+  return items.filter((i) => isVisibleNow(sched.get(i.id)));
 }
 
 // Devuelve las playlists asociadas a una parroquia: propias + suscriptas +
@@ -67,17 +76,20 @@ export type ParishPlaylistItem = PlaylistSummary & {
 
 // Listado global de playlists públicas (incluye archidiocesanas y de cada
 // parroquia). No incluye `unlisted`/`private`.
-export async function listAllPublicPlaylists(): Promise<PlaylistSummary[]> {
+export async function listAllPublicPlaylists(options?: {
+  includeOutOfWindow?: boolean;
+}): Promise<PlaylistSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("visibility", "public")
-    .order("event_date", { ascending: false, nullsFirst: false });
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((r) =>
+  const all = (data ?? []).map((r) =>
     rowToSummary(r as unknown as Parameters<typeof rowToSummary>[0])
   );
+  return options?.includeOutOfWindow ? all : await filterByScheduleVisibility(all);
 }
 
 // Secciones para `/playlists` (CU-17): personales privadas del usuario,
@@ -93,21 +105,25 @@ export type MyPlaylistsSections = {
 };
 
 // Listado de playlists arquidiocesanas (para invitados en /playlists).
-export async function listArchdiocesanPlaylists(): Promise<PlaylistSummary[]> {
+export async function listArchdiocesanPlaylists(options?: {
+  includeOutOfWindow?: boolean;
+}): Promise<PlaylistSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("is_archdiocesan", true)
-    .order("event_date", { ascending: false, nullsFirst: false });
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((r) =>
+  const all = (data ?? []).map((r) =>
     rowToSummary(r as unknown as Parameters<typeof rowToSummary>[0])
   );
+  return options?.includeOutOfWindow ? all : await filterByScheduleVisibility(all);
 }
 
 export async function listMyPlaylistsSections(
-  userId: string
+  userId: string,
+  options?: { includeOutOfWindow?: boolean }
 ): Promise<MyPlaylistsSections> {
   const supabase = await createClient();
 
@@ -117,7 +133,7 @@ export async function listMyPlaylistsSections(
     .select(PLAYLIST_SELECT)
     .is("parish_id", null)
     .eq("created_by", userId)
-    .order("event_date", { ascending: false, nullsFirst: false });
+    .order("created_at", { ascending: false });
 
   // 2. Parroquias donde el usuario es miembro.
   const membersReq = supabase
@@ -154,7 +170,7 @@ export async function listMyPlaylistsSections(
       .from("playlists")
       .select(PLAYLIST_SELECT)
       .eq("parish_id", par.id)
-      .order("event_date", { ascending: false, nullsFirst: false });
+      .order("created_at", { ascending: false });
 
     const subsReq = supabase
       .from("playlist_parish_subscriptions")
@@ -204,7 +220,7 @@ export async function listMyPlaylistsSections(
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("is_archdiocesan", true)
-    .order("event_date", { ascending: false, nullsFirst: false });
+    .order("created_at", { ascending: false });
   if (archErr) throw archErr;
 
   const archdiocesan = (archRows ?? [])
@@ -215,11 +231,29 @@ export async function listMyPlaylistsSections(
       return true;
     });
 
-  return { personal, byParish, archdiocesan };
+  if (options?.includeOutOfWindow) {
+    return { personal, byParish, archdiocesan };
+  }
+  // Filtro de vigencia: una sola consulta batch para todos los ids.
+  const allIds = [
+    ...personal.map((p) => p.id),
+    ...byParish.flatMap((g) => g.items.map((i) => i.id)),
+    ...archdiocesan.map((a) => a.id),
+  ];
+  const sched = await loadSchedules("playlist", allIds);
+  const visible = (id: string) => isVisibleNow(sched.get(id));
+  return {
+    personal: personal.filter((p) => visible(p.id)),
+    byParish: byParish
+      .map((g) => ({ ...g, items: g.items.filter((i) => visible(i.id)) }))
+      .filter((g) => g.items.length > 0),
+    archdiocesan: archdiocesan.filter((a) => visible(a.id)),
+  };
 }
 
 export async function listPlaylistsForParish(parishId: string, options?: {
   parishSlug?: string;
+  includeOutOfWindow?: boolean;
 }): Promise<ParishPlaylistItem[]> {
   const supabase = await createClient();
   const isArchdiocesisItself = options?.parishSlug === "arquidiocesis";
@@ -229,7 +263,7 @@ export async function listPlaylistsForParish(parishId: string, options?: {
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("parish_id", parishId)
-    .order("event_date", { ascending: false, nullsFirst: false });
+    .order("created_at", { ascending: false });
 
   // 2. Suscriptas (excluye las propias por seguridad).
   const subsReq = supabase
@@ -245,7 +279,7 @@ export async function listPlaylistsForParish(parishId: string, options?: {
         .select(PLAYLIST_SELECT)
         .eq("is_archdiocesan", true)
         .neq("parish_id", parishId)
-        .order("event_date", { ascending: false, nullsFirst: false });
+        .order("created_at", { ascending: false });
 
   const [ownRes, subsRes, archRes] = await Promise.all([ownReq, subsReq, archReq]);
   if (ownRes.error) throw ownRes.error;
@@ -286,7 +320,7 @@ export async function listPlaylistsForParish(parishId: string, options?: {
     seen.add(item.id);
     out.push(item);
   }
-  return out;
+  return options?.includeOutOfWindow ? out : await filterByScheduleVisibility(out);
 }
 
 // Devuelve una playlist por id con sus canciones ordenadas por position.

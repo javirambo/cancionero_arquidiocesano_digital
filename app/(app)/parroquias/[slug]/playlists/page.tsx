@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getParishBySlug } from "@/lib/songs";
 import { listPlaylistsForParish, type ParishPlaylistItem } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
-import { formatearFecha } from "@/lib/dates";
 
 export default async function ParroquiaPlaylistsPage({
   params,
@@ -95,11 +94,6 @@ export default async function ParroquiaPlaylistsPage({
                       {p.relation !== "own" && p.parish && (
                         <span className="text-xs normal-case text-muted-foreground">
                           {p.parish.name}
-                        </span>
-                      )}
-                      {p.event_date && (
-                        <span className="text-xs normal-case text-muted-foreground">
-                          {formatearFecha(p.event_date)}
                         </span>
                       )}
                     </Link>

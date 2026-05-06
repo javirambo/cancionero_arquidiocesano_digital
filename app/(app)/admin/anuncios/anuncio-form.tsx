@@ -3,20 +3,30 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ScheduleEditor } from "@/app/components/schedule-editor";
+import { replaceSchedulesWith, type ScheduleInput } from "@/lib/schedule";
+
+export type AnnouncementKind =
+  | null
+  | "solemnidad"
+  | "fiesta"
+  | "memoria"
+  | "tiempo"
+  | "otro";
 
 export type AnnouncementFormData = {
   id?: string;
   title: string;
   body: string;
-  starts_at: string;
-  ends_at: string;
   priority: number;
+  kind: AnnouncementKind;
   target_kind: "none" | "song" | "playlist" | "parish" | "external";
   target_id: string | null;
   target_url: string;
   target_label: string;
   scope: "all" | "selected";
   parish_ids: string[];
+  schedules: ScheduleInput[];
 };
 
 export type ParishOption = { id: string; slug: string; name: string };
@@ -24,15 +34,15 @@ export type ParishOption = { id: string; slug: string; name: string };
 const empty: AnnouncementFormData = {
   title: "",
   body: "",
-  starts_at: "",
-  ends_at: "",
   priority: 0,
+  kind: null,
   target_kind: "none",
   target_id: null,
   target_url: "",
   target_label: "",
   scope: "all",
   parish_ids: [],
+  schedules: [],
 };
 
 type SearchHit = {
@@ -149,10 +159,6 @@ export function AnuncioForm({
 
   function validate(): string | null {
     if (!form.title.trim()) return "El título es obligatorio.";
-    if (!form.starts_at || !form.ends_at) return "Las fechas son obligatorias.";
-    if (new Date(form.ends_at) <= new Date(form.starts_at)) {
-      return "La fecha de fin debe ser posterior a la de inicio.";
-    }
     if (form.scope === "selected" && form.parish_ids.length === 0) {
       return "Elegí al menos una parroquia destinataria.";
     }
@@ -188,9 +194,8 @@ export function AnuncioForm({
     const payload = {
       title: form.title.trim(),
       body: form.body.trim() || null,
-      starts_at: new Date(form.starts_at).toISOString(),
-      ends_at: new Date(form.ends_at).toISOString(),
       priority: form.priority,
+      kind: form.kind,
       target_kind: form.target_kind,
       target_id:
         form.target_kind === "song" ||
@@ -252,6 +257,16 @@ export function AnuncioForm({
       }
     }
 
+    if (announcementId) {
+      try {
+        await replaceSchedulesWith(supabase, "announcement", announcementId, form.schedules);
+      } catch (err) {
+        setError((err as Error).message);
+        setSaving(false);
+        return;
+      }
+    }
+
     router.push("/admin/anuncios");
     router.refresh();
   }
@@ -298,24 +313,6 @@ export function AnuncioForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Inicio *">
-          <input
-            type="datetime-local"
-            required
-            value={form.starts_at}
-            onChange={(e) => update("starts_at", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Fin *">
-          <input
-            type="datetime-local"
-            required
-            value={form.ends_at}
-            onChange={(e) => update("ends_at", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
         <Field label="Prioridad" hint="Mayor número aparece primero">
           <input
             type="number"
@@ -324,7 +321,36 @@ export function AnuncioForm({
             className={inputClass}
           />
         </Field>
+        <Field label="Tipo" hint="Festividad litúrgica (opcional). Si no aplica, dejá 'Anuncio'.">
+          <select
+            value={form.kind ?? ""}
+            onChange={(e) => update("kind", (e.target.value || null) as AnnouncementKind)}
+            className={inputClass}
+          >
+            <option value="">Anuncio</option>
+            <option value="solemnidad">Solemnidad</option>
+            <option value="fiesta">Fiesta</option>
+            <option value="memoria">Memoria</option>
+            <option value="tiempo">Tiempo litúrgico</option>
+            <option value="otro">Otro</option>
+          </select>
+        </Field>
       </div>
+
+      <section className="rounded-2xl border border-border bg-sidebar p-5">
+        <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
+          Vigencia
+        </h2>
+        <p className="mt-1 text-xs normal-case text-muted-foreground">
+          Si no agregás reglas, el anuncio se muestra siempre. Las reglas se evalúan en hora de Argentina.
+        </p>
+        <div className="mt-3">
+          <ScheduleEditor
+            value={form.schedules}
+            onChange={(schedules) => update("schedules", schedules)}
+          />
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-border bg-sidebar p-5">
         <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">

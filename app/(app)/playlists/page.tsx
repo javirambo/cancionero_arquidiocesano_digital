@@ -44,7 +44,6 @@ export default async function PlaylistsPage() {
                     id: p.id,
                     name: p.name,
                     description: p.description,
-                    event_date: p.event_date,
                     parish: p.parish,
                   }}
                   badge="De la Arquidiócesis"
@@ -117,7 +116,6 @@ export default async function PlaylistsPage() {
                   id: p.id,
                   name: p.name,
                   description: p.description,
-                  event_date: p.event_date,
                   parish: p.parish,
                 }}
                 badge="Personal"
@@ -140,7 +138,6 @@ export default async function PlaylistsPage() {
                   id: p.id,
                   name: p.name,
                   description: p.description,
-                  event_date: p.event_date,
                   parish: p.parish,
                 }}
                 badge={
@@ -167,7 +164,6 @@ export default async function PlaylistsPage() {
                   id: p.id,
                   name: p.name,
                   description: p.description,
-                  event_date: p.event_date,
                   parish: p.parish,
                 }}
                 badge="De la Arquidiócesis"

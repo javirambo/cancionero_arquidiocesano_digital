@@ -31,7 +31,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `playlists`            | Listas de canciones por parroquia                          | 1    | CU-05, CU-11, CU-17           |
 | `playlist_songs`       | Relación playlist ↔ canción (ordenada)                     | 1    | CU-05, CU-17                  |
 | `playlist_parish_subscriptions` | Suscripción de una parroquia a una playlist ajena | 1    | CU-17                         |
-| `liturgical_events`    | Festividades del calendario litúrgico                      | 1    | CU-07                         |
+| `entity_schedules`     | Vigencia temporal genérica (calendario + horario, AR)      | 1    | CU-05, CU-07, CU-17, CU-21    |
 | `users`                | Perfil de usuario (extiende `auth.users` de Supabase)      | 2    | CU-13, CU-14, CU-18           |
 | `roles`                | Roles del sistema                                          | 2    | CU-20                         |
 | `user_roles`           | Asignación de roles a usuarios                             | 2    | CU-18, CU-20                  |
@@ -40,7 +40,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `parish_members`       | Vínculo usuario ↔ parroquia (con rol contextual)           | 2    | CU-14, CU-17                  |
 | `favorites`            | Likes del usuario sobre canciones / playlists / parroquias | 2    | CU-15, CU-22                  |
 | `user_song_keys`       | Tono preferido del usuario por canción (transposición)     | 2    | CU-03                         |
-| `announcements`        | Anuncios / novedades destacadas en la home                 | 2    | CU-07, CU-21                  |
+| `announcements`        | Anuncios + festividades litúrgicas de la home              | 2    | CU-07, CU-21                  |
 | `announcement_parishes`| Destino multi-parroquia de un anuncio (N–N)                | 2    | CU-21                         |
 | `settings`             | Configuraciones clave/valor                                | 1    | global                        |
 
@@ -195,14 +195,15 @@ Lista de canciones de una parroquia para una celebración o uso general. La URL 
 | `parish_id`       | uuid        | FK → `parishes.id` ON DELETE CASCADE — parroquia dueña    |
 | `name`            | text        | NOT NULL                                                  |
 | `description`     | text        |                                                           |
-| `event_date`      | date        | fecha de la celebración (opcional)                        |
 | `visibility`      | text        | CHECK in ('public','unlisted','private'); default 'public'|
 | `is_archdiocesan` | boolean     | default false. Cuando true (solo si `parish_id` corresponde a la parroquia virtual `arquidiocesis`), la playlist se ve por defecto en todas las parroquias |
 | `created_by`      | uuid        | FK → `users.id`                                           |
 | `created_at`      | timestamptz | default now()                                             |
 | `updated_at`      | timestamptz | default now()                                             |
 
-**Índices:** `parish_id`, `event_date`, `is_archdiocesan` (parcial donde true), `name` (GIN unaccent+trgm para búsqueda).
+**Índices:** `parish_id`, `is_archdiocesan` (parcial donde true), `name` (GIN unaccent+trgm para búsqueda).
+
+**Vigencia temporal:** la fecha/franja en que la playlist se muestra en listados públicos se modela con filas en `entity_schedules` (entity_type='playlist'). Sin filas → siempre visible (default). Las pantallas de admin/configuración omiten este filtro.
 
 ---
 
@@ -238,21 +239,30 @@ Permite que una parroquia "adopte" una playlist creada por otra (ver CU-17, mode
 
 ---
 
-### `liturgical_events`
-Festividades fijas/movibles del calendario litúrgico para CU-07. **Carga manual** año a año por el Administrador (a futuro, se evaluará un servicio externo que entregue el calendario litúrgico automáticamente).
+### `entity_schedules`
+Vigencia temporal genérica para playlists y anuncios (CU-05, CU-07, CU-17, CU-21). Cada fila representa una **regla**; una entidad puede tener varias y se evalúan con OR (basta con que una se cumpla). Sin filas para una entidad → visible siempre. Todo se evalúa en zona horaria **America/Argentina/Buenos_Aires**.
 
-| Columna        | Tipo        | Notas                                                                     |
-| -------------- | ----------- | ------------------------------------------------------------------------- |
-| `id`           | uuid        | PK                                                                        |
-| `name`         | text        | NOT NULL                                                                  |
-| `slug`         | text        | NOT NULL, UNIQUE                                                          |
-| `event_date`   | date        | NOT NULL — fecha concreta (se cargan año por año)                         |
-| `kind`         | text        | CHECK in ('solemnidad','fiesta','memoria','tiempo','otro')                |
-| `playlist_id`  | uuid        | FK → `playlists.id` opcional, sugerida para esa festividad                |
-| `description`  | text        |                                                                           |
-| `created_by`   | uuid        | FK → `users.id` — admin que cargó el evento                               |
+| Columna       | Tipo         | Notas                                                                                              |
+| ------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| `id`          | uuid         | PK                                                                                                 |
+| `entity_type` | text         | CHECK in ('playlist','announcement') — polimórfico sin FK                                          |
+| `entity_id`   | uuid         | id de la playlist o anuncio                                                                        |
+| `date_mode`   | text         | CHECK in ('always','weekdays','date_range'); default 'always'                                      |
+| `weekdays`    | smallint[]   | si `date_mode='weekdays'`: 0=domingo … 6=sábado (compatible con `extract(dow)`)                    |
+| `start_date`  | date         | si `date_mode='date_range'`                                                                        |
+| `end_date`    | date         | si `date_mode='date_range'`. Nullable = nunca termina                                              |
+| `time_mode`   | text         | CHECK in ('all_day','range'); default 'all_day'                                                    |
+| `start_time`  | time         | si `time_mode='range'`                                                                             |
+| `end_time`    | time         | si `time_mode='range'`. Si `end_time < start_time`, la franja **cruza la medianoche**              |
+| `created_by`  | uuid         | FK → `users.id` ON DELETE SET NULL                                                                 |
+| `created_at`  | timestamptz  | default now()                                                                                      |
+| `updated_at`  | timestamptz  | default now()                                                                                      |
 
-**Índices:** `event_date`, `slug` UNIQUE.
+**Índices:** `(entity_type, entity_id)`.
+
+**RLS:** SELECT público. INSERT/UPDATE/DELETE: `editor`/`admin` siempre; `coordinator` solo si el target es una playlist suya o un anuncio donde es coordinator (helper `is_coordinator_of_schedule_target`).
+
+> **Nota:** la integridad referencial al target es **lógica**, no por FK. Si se borra la playlist o el anuncio, sus schedules quedan huérfanos. La limpieza se hace por código en el handler de delete.
 
 ---
 
@@ -390,24 +400,21 @@ Tono preferido por el usuario para una canción dada (CU-03). Cuando un usuario 
 ---
 
 ### `announcements`
-Anuncios / novedades destacadas en la home (CU-07, CU-21). Solo el Administrador los gestiona. Vencen automáticamente al pasar `ends_at` (no hay cierre manual ni dismissals). Pueden incluir un **atajo opcional** a un recurso (canción, playlist, parroquia o URL externa) para que el banner sea clickeable.
+Anuncios + festividades litúrgicas que aparecen en la home (CU-07, CU-21). Pueden incluir un **atajo opcional** a un recurso (canción, playlist, parroquia o URL externa) para que el banner sea clickeable. La vigencia temporal vive en `entity_schedules` (entity_type='announcement'); sin filas → siempre vigente.
 
-| Columna        | Tipo        | Notas                                                                   |
-| -------------- | ----------- | ----------------------------------------------------------------------- |
-| `id`           | uuid        | PK                                                                      |
-| `title`        | text        | NOT NULL                                                                |
-| `body`         | text        | NULL permitido                                                          |
-| `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none'); default 'none' |
-| `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`              |
-| `target_url`   | text        | requerido si `target_kind='external'`                                   |
-| `priority`     | int         | default 0                                                               |
-| `starts_at`    | timestamptz | NOT NULL                                                                |
-| `ends_at`      | timestamptz | NOT NULL — CHECK `ends_at > starts_at`                                  |
-| `created_by`   | uuid        | FK → `users.id` ON DELETE SET NULL                                      |
-| `created_at`   | timestamptz | default now()                                                           |
-| `updated_at`   | timestamptz | default now()                                                           |
-
-**Índices:** `(starts_at, ends_at)`.
+| Columna        | Tipo        | Notas                                                                                         |
+| -------------- | ----------- | --------------------------------------------------------------------------------------------- |
+| `id`           | uuid        | PK                                                                                            |
+| `title`        | text        | NOT NULL                                                                                      |
+| `body`         | text        | NULL permitido                                                                                |
+| `kind`         | text        | NULL = anuncio común. Si tiene valor in ('solemnidad','fiesta','memoria','tiempo','otro') → festividad litúrgica |
+| `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none'); default 'none'                       |
+| `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`                                    |
+| `target_url`   | text        | requerido si `target_kind='external'`                                                         |
+| `priority`     | int         | default 0                                                                                     |
+| `created_by`   | uuid        | FK → `users.id` ON DELETE SET NULL                                                            |
+| `created_at`   | timestamptz | default now()                                                                                 |
+| `updated_at`   | timestamptz | default now()                                                                                 |
 
 > **Alcance de visibilidad:** un anuncio es **global** si no tiene filas en `announcement_parishes`; en ese caso lo ven todos (anónimos y autenticados). Si tiene filas, es de **parroquias específicas** y lo ven únicamente los usuarios autenticados asociados (vía `parish_members`) a alguna de esas parroquias. Los anónimos solo ven los globales.
 
@@ -448,10 +455,10 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 | CU-02   | `songs`, `authors`, `categories`, `song_versions` (lectura)                        |
 | CU-03   | `songs`, `user_song_keys` (autenticado), `playlist_songs.key_override` (contexto playlist), `localStorage` (anónimo) |
 | CU-04   | `songs.youtube_url`                                                                |
-| CU-05   | `playlists`, `playlist_songs`, `songs`, `parishes`                                 |
+| CU-05   | `playlists`, `playlist_songs`, `songs`, `parishes`, `entity_schedules`             |
 | CU-06.1 | `parishes`                                                                         |
 | CU-06.2 | `parishes`, `playlists`                                                            |
-| CU-07   | `liturgical_events`, `announcements`, `announcement_parishes`, `playlists`         |
+| CU-07   | `announcements`, `announcement_parishes`, `entity_schedules`, `playlists`          |
 | CU-08   | — (cliente)                                                                        |
 | CU-09   | `song_files`, bucket `partituras`                                                  |
 | CU-10   | `songs`                                                                            |
@@ -461,9 +468,9 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 | CU-14   | `users`, `parish_members`, `parishes`                                              |
 | CU-15   | `favorites`                                                                        |
 | CU-16   | `songs`, `song_versions`, `song_files`, `authors`, `categories` (flujo `draft → review → published`) |
-| CU-17   | `playlists`, `playlist_songs`, `parish_members`                                    |
+| CU-17   | `playlists`, `playlist_songs`, `parish_members`, `entity_schedules`                |
 | CU-18   | `users`, `user_roles`                                                              |
 | CU-19   | `parishes`                                                                         |
 | CU-20   | `roles`, `permissions`, `role_permissions`, `user_roles`                           |
-| CU-21   | `announcements`, `announcement_parishes`, `parish_members`                         |
+| CU-21   | `announcements`, `announcement_parishes`, `entity_schedules`, `parish_members`     |
 | CU-22   | `favorites`                                                                        |

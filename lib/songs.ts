@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { hoyEnCordoba } from "@/lib/dates";
+import { isVisibleNow } from "@/lib/schedule";
+import { loadSchedules } from "@/lib/schedule.server";
 
 export type SongSummary = {
   id: string;
@@ -184,15 +185,22 @@ export async function searchGlobal(q: string): Promise<GlobalSearchResults> {
       id: string;
       name: string;
       description: string | null;
-      event_date: string | null;
       parish: { name: string; slug: string } | null;
     }[];
     parishes: Parish[];
   };
   const r = data as RpcResult;
+  const playlists = r.playlists ?? [];
+  // Filtrar por vigencia (CU-17 vigencia temporal). Las playlists sin
+  // schedules quedan visibles siempre.
+  const ids = playlists.map((p) => p.id);
+  const sched = await loadSchedules("playlist", ids);
+  const visiblePlaylists = playlists.filter((p) =>
+    isVisibleNow(sched.get(p.id))
+  );
   return {
     songs: r.songs ?? [],
-    playlists: r.playlists ?? [],
+    playlists: visiblePlaylists,
     parishes: r.parishes ?? [],
   };
 }
@@ -205,16 +213,8 @@ export type PlaylistSummary = {
   id: string;
   name: string;
   description: string | null;
-  event_date: string | null;
   parish: { name: string; slug: string } | null;
 };
-
-type ParishRel = { name: string; slug: string } | { name: string; slug: string }[] | null;
-function firstParish(rel: ParishRel): { name: string; slug: string } | null {
-  if (!rel) return null;
-  if (Array.isArray(rel)) return rel[0] ?? null;
-  return rel;
-}
 
 // =====================================================================
 // Parroquias
@@ -262,51 +262,60 @@ export async function getParishBySlug(slug: string): Promise<Parish | null> {
 // =====================================================================
 
 export type LiturgicalEventToday = {
+  id: string;
   name: string;
-  slug: string;
   description: string | null;
   kind: string;
-  playlist:
-    | (PlaylistSummary & { parish_slug: string | null })
-    | null;
+  href: string | null;
 };
 
+// Festividad litúrgica del día: anuncio con `kind` litúrgico y schedule
+// vigente ahora. Si hay varios, gana el de mayor priority.
 export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
   const supabase = await createClient();
-  const today = hoyEnCordoba();
   const { data, error } = await supabase
-    .from("liturgical_events")
-    .select(
-      "name, slug, description, kind, playlists(id, name, description, event_date, parishes!playlists_parish_id_fkey(name, slug))"
-    )
-    .eq("event_date", today)
-    .limit(1)
-    .maybeSingle();
+    .from("announcements")
+    .select("id, title, body, kind, target_kind, target_id, target_url, priority")
+    .not("kind", "is", null)
+    .order("priority", { ascending: false });
   if (error) throw error;
-  if (!data) return null;
+  const rows = data ?? [];
+  if (rows.length === 0) return null;
 
-  const plRel = data.playlists as
-    | { id: string; name: string; description: string | null; event_date: string | null; parishes: ParishRel }
-    | { id: string; name: string; description: string | null; event_date: string | null; parishes: ParishRel }[]
-    | null;
-  const pl = Array.isArray(plRel) ? plRel[0] : plRel;
-  const parish = pl ? firstParish(pl.parishes) : null;
+  const ids = rows.map((r) => r.id as string);
+  const sched = await loadSchedules("announcement", ids);
+  const vigente = rows.find((r) =>
+    isVisibleNow(sched.get(r.id as string))
+  );
+  if (!vigente) return null;
+
+  const kind = vigente.target_kind as string;
+  const tid = (vigente.target_id as string | null) ?? null;
+  const url = (vigente.target_url as string | null) ?? null;
+  let href: string | null = null;
+  if (kind === "playlist" && tid) href = `/playlists/${tid}`;
+  else if (kind === "song" && tid) {
+    const { data: s } = await supabase
+      .from("songs")
+      .select("slug")
+      .eq("id", tid)
+      .maybeSingle();
+    if (s?.slug) href = `/canciones/${s.slug}`;
+  } else if (kind === "parish" && tid) {
+    const { data: p } = await supabase
+      .from("parishes")
+      .select("slug")
+      .eq("id", tid)
+      .maybeSingle();
+    if (p?.slug) href = `/parroquias/${p.slug}`;
+  } else if (kind === "external" && url) href = url;
 
   return {
-    name: data.name as string,
-    slug: data.slug as string,
-    description: (data.description as string | null) ?? null,
-    kind: data.kind as string,
-    playlist: pl
-      ? {
-          id: pl.id,
-          name: pl.name,
-          description: pl.description,
-          event_date: pl.event_date,
-          parish: parish,
-          parish_slug: parish?.slug ?? null,
-        }
-      : null,
+    id: vigente.id as string,
+    name: vigente.title as string,
+    description: (vigente.body as string | null) ?? null,
+    kind: vigente.kind as string,
+    href,
   };
 }
 
@@ -324,19 +333,20 @@ export type Featured = {
 export async function listActiveFeatured(): Promise<Featured[]> {
   // Lee de `announcements` (CU-07, CU-21). La RLS aplica la regla de
   // visibilidad: anónimo solo globales; autenticado globales + los de
-  // sus parroquias asociadas (vía parish_members). Cada anuncio se
-  // devuelve una sola vez (la N–N a parroquias no duplica filas).
+  // sus parroquias asociadas (vía parish_members). La vigencia temporal
+  // se evalúa con entity_schedules (ver lib/schedule.ts). Solo anuncios
+  // comunes (kind is null); las festividades viven aparte (getEventForToday).
   const supabase = await createClient();
-  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("announcements")
-    .select("title, body, target_kind, target_id, target_url, starts_at, ends_at, priority")
-    .lte("starts_at", now)
-    .gte("ends_at", now)
-    .order("priority", { ascending: false })
-    .limit(5);
+    .select("id, title, body, target_kind, target_id, target_url, priority")
+    .is("kind", null)
+    .order("priority", { ascending: false });
   if (error) throw error;
-  const rows = data ?? [];
+  const all = data ?? [];
+  const ids = all.map((r) => r.id as string);
+  const sched = await loadSchedules("announcement", ids);
+  const rows = all.filter((r) => isVisibleNow(sched.get(r.id as string))).slice(0, 5);
 
   // Resolver slugs en lote para canciones y parroquias (las playlists
   // usan UUID en URL; las externas ya traen target_url).

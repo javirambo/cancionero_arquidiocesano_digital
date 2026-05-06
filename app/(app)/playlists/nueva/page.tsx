@@ -54,7 +54,7 @@ export default async function NuevaPlaylistPage() {
             parish_id: arch.id as string,
             name: "",
             description: "",
-            event_date: "",
+            schedules: [],
             visibility: "public",
             is_archdiocesan: true,
           }}
@@ -90,7 +90,7 @@ export default async function NuevaPlaylistPage() {
             parish_id: par.id,
             name: "",
             description: "",
-            event_date: "",
+            schedules: [],
             visibility: "public",
             is_archdiocesan: false,
           }}
@@ -115,7 +115,7 @@ export default async function NuevaPlaylistPage() {
             parish_id: null,
             name: "",
             description: "",
-            event_date: "",
+            schedules: [],
             visibility: "public",
             is_archdiocesan: false,
           }}
@@ -136,7 +136,7 @@ export default async function NuevaPlaylistPage() {
           parish_id: null,
           name: "",
           description: "",
-          event_date: "",
+          schedules: [],
           visibility: "public",
           is_archdiocesan: false,
         }}

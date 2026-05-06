@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getParishBySlug } from "@/lib/songs";
 import { listPlaylistsForParish } from "@/lib/playlists";
-import { formatearFecha } from "@/lib/dates";
 
 export default async function ParroquiaPage({
   params,
@@ -72,11 +71,6 @@ export default async function ParroquiaPage({
                   {p.relation === "subscribed" && p.parish && (
                     <span className="text-xs uppercase tracking-wide text-secondary">
                       Compartida por {p.parish.name}
-                    </span>
-                  )}
-                  {p.event_date && (
-                    <span className="text-xs normal-case text-muted-foreground">
-                      {formatearFecha(p.event_date)}
                     </span>
                   )}
                   {p.description && (

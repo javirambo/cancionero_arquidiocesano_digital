@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AnuncioForm, type AnnouncementFormData } from "../../anuncio-form";
+import { loadSchedulesForEntity } from "@/lib/schedule.server";
+import { AnuncioForm, type AnnouncementFormData, type AnnouncementKind } from "../../anuncio-form";
 import { listScopedParishes } from "../../scoped-parishes";
 import { getAdminAccess } from "../../../access";
-
-function toDateTimeLocal(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 async function resolveTargetLabel(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -40,15 +35,16 @@ export default async function EditarAnuncioPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [annRes, apRes, parishes, access] = await Promise.all([
+  const [annRes, apRes, parishes, access, schedules] = await Promise.all([
     supabase
       .from("announcements")
-      .select("id, title, body, starts_at, ends_at, priority, target_kind, target_id, target_url")
+      .select("id, title, body, kind, priority, target_kind, target_id, target_url")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("announcement_parishes").select("parish_id").eq("announcement_id", id),
     listScopedParishes(),
     getAdminAccess(),
+    loadSchedulesForEntity("announcement", id),
   ]);
 
   if (!annRes.data) notFound();
@@ -65,15 +61,23 @@ export default async function EditarAnuncioPage({
     id: ann.id as string,
     title: ann.title as string,
     body: (ann.body as string | null) ?? "",
-    starts_at: toDateTimeLocal(ann.starts_at as string),
-    ends_at: toDateTimeLocal(ann.ends_at as string),
     priority: (ann.priority as number) ?? 0,
+    kind: (ann.kind as AnnouncementKind) ?? null,
     target_kind: ann.target_kind as AnnouncementFormData["target_kind"],
     target_id: (ann.target_id as string | null) ?? null,
     target_url: (ann.target_url as string | null) ?? "",
     target_label: targetLabel,
     scope: linkedParishIds.length === 0 ? "all" : "selected",
     parish_ids: linkedParishIds,
+    schedules: schedules.map((s) => ({
+      date_mode: s.date_mode,
+      weekdays: s.weekdays,
+      start_date: s.start_date,
+      end_date: s.end_date,
+      time_mode: s.time_mode,
+      start_time: s.start_time,
+      end_time: s.end_time,
+    })),
   };
 
   return (

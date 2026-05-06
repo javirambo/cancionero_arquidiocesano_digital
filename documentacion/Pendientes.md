@@ -34,3 +34,10 @@
 
 - las categorias podrian tener en descripcion un tiempo liturgico
 
+- ver si Mi perfil es una pantalla de configuracion:
+    [] Soy musico (muestra primero las playlists, etc)
+    [] Mostrar siempre acordes
+    [] No mostrar anuncios
+    [] No apagar la pantalla miestra estoy activa
+    [] etc...
+    
