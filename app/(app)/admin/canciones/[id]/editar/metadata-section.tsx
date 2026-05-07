@@ -159,19 +159,37 @@ export function MetadataSection({
           )}
         </Field>
 
-        <Field label="Categoría litúrgica">
-          <select
-            value={form.category_id}
-            onChange={(e) => update("category_id", e.target.value)}
-            className={inputClass}
-          >
-            <option value="">— Sin categoría —</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+        <Field label="Categorías litúrgicas" hint="Pueden ser varias. Tocá para seleccionar." full>
+          <div className="flex flex-wrap gap-2">
+            {categories.length === 0 && (
+              <span className="text-xs normal-case text-muted-foreground">
+                No hay categorías cargadas.
+              </span>
+            )}
+            {categories.map((c) => {
+              const selected = form.category_ids.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    const next = selected
+                      ? form.category_ids.filter((id) => id !== c.id)
+                      : [...form.category_ids, c.id];
+                    update("category_ids", next);
+                  }}
+                  aria-pressed={selected}
+                  className={
+                    selected
+                      ? "rounded-full border border-primary bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground"
+                      : "rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+                  }
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
         <Field label="Tempo (BPM)">
@@ -189,16 +207,6 @@ export function MetadataSection({
             value={form.youtube_url}
             onChange={(e) => update("youtube_url", e.target.value)}
             placeholder="https://youtube.com/watch?v=…"
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="Etiquetas" hint="Separadas por coma" full>
-          <input
-            type="text"
-            value={form.tags}
-            onChange={(e) => update("tags", e.target.value)}
-            placeholder="adoración, mariana, …"
             className={inputClass}
           />
         </Field>

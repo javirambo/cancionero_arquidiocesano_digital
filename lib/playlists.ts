@@ -349,12 +349,15 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
   const { data: items, error: iErr } = await supabase
     .from("playlist_songs")
     .select(
-      "position, created_at, songs(id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id))"
+      "position, created_at, songs(id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id))"
     )
     .eq("playlist_id", id)
     .order("position", { ascending: true });
   if (iErr) throw iErr;
 
+  type SongCategoryRow = {
+    categories: { name: string } | { name: string }[] | null;
+  };
   type SongRow = {
     id: string;
     number: number | null;
@@ -362,7 +365,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
     slug: string;
     body: string | null;
     youtube_url: string | null;
-    categories: Named;
+    song_categories: SongCategoryRow[] | null;
     authors: Named;
     song_files: { id: string }[] | null;
   };
@@ -374,12 +377,22 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
       if (!s) return null;
       const body = s.body ?? "";
       const files = s.song_files ?? [];
+      const cats: string[] = [];
+      for (const sc of s.song_categories ?? []) {
+        const cat = sc.categories;
+        if (!cat) continue;
+        if (Array.isArray(cat)) {
+          for (const c of cat) if (c?.name) cats.push(c.name);
+        } else if (cat.name) {
+          cats.push(cat.name);
+        }
+      }
       return {
         id: s.id,
         number: s.number,
         title: s.title,
         slug: s.slug,
-        category: firstName(s.categories),
+        category: cats.length > 0 ? cats.join(", ") : null,
         author: firstName(s.authors),
         hasChords: /\[[^\]]+\]/.test(body),
         hasYoutube: Boolean(s.youtube_url),

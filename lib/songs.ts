@@ -26,7 +26,30 @@ function firstName(rel: Named): string | null {
   return rel.name ?? null;
 }
 
-export type Song = SongSummary & {
+type SongCategoryRel =
+  | { categories: { name: string } | { name: string }[] | null }
+  | { categories: { name: string } | { name: string }[] | null }[]
+  | null;
+
+function categoryNames(rel: SongCategoryRel): string[] {
+  if (!rel) return [];
+  const arr = Array.isArray(rel) ? rel : [rel];
+  const names: string[] = [];
+  for (const row of arr) {
+    const cat = row.categories;
+    if (!cat) continue;
+    if (Array.isArray(cat)) {
+      for (const c of cat) if (c?.name) names.push(c.name);
+    } else if (cat.name) {
+      names.push(cat.name);
+    }
+  }
+  return names;
+}
+
+export type Song = Omit<SongSummary, "category"> & {
+  categories: string[];
+  author: string | null;
   body: string;
   original_key: string | null;
   youtube_url: string | null;
@@ -37,20 +60,22 @@ export async function listPublishedSongs(limit = 100): Promise<SongSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("songs")
-    .select("id, number, title, slug, categories(name), authors(name)")
+    .select("id, number, title, slug, song_categories(categories(name)), authors(name)")
     .eq("status", "published")
     .order("number", { ascending: true, nullsFirst: false })
     .limit(limit);
   if (error) throw error;
-  // Supabase devuelve relación como objeto único cuando la FK es 1-1.
-  return (data ?? []).map((row) => ({
-    id: row.id as string,
-    number: row.number as number | null,
-    title: row.title as string,
-    slug: row.slug as string,
-    category: firstName(row.categories as Named),
-    author: firstName(row.authors as Named),
-  }));
+  return (data ?? []).map((row) => {
+    const cats = categoryNames(row.song_categories as SongCategoryRel);
+    return {
+      id: row.id as string,
+      number: row.number as number | null,
+      title: row.title as string,
+      slug: row.slug as string,
+      category: cats.length > 0 ? cats.join(", ") : null,
+      author: firstName(row.authors as Named),
+    };
+  });
 }
 
 export async function getSongBySlug(slug: string): Promise<Song | null> {
@@ -58,7 +83,7 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, original_key, youtube_url, categories(name), authors(name), song_files(id)"
+      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), authors(name), song_files(id)"
     )
     .eq("status", "published")
     .eq("slug", slug)
@@ -74,7 +99,7 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
     body: data.body as string,
     original_key: data.original_key as string | null,
     youtube_url: data.youtube_url as string | null,
-    category: firstName(data.categories as Named),
+    categories: categoryNames(data.song_categories as SongCategoryRel),
     author: firstName(data.authors as Named),
     hasFiles: files.length > 0,
   };
@@ -100,7 +125,7 @@ export async function listSongsWithCapabilities(
     const { data: rows, error } = await supabase
       .from("songs")
       .select(
-        "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id)"
+        "id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id)"
       )
       .in("id", ids);
     if (error) throw error;
@@ -112,12 +137,13 @@ export async function listSongsWithCapabilities(
       .map((row) => {
         const body = (row.body as string | null) ?? "";
         const files = (row.song_files as { id: string }[] | null) ?? [];
+        const cats = categoryNames(row.song_categories as SongCategoryRel);
         return {
           id: row.id as string,
           number: row.number as number | null,
           title: row.title as string,
           slug: row.slug as string,
-          category: firstName(row.categories as Named),
+          category: cats.length > 0 ? cats.join(", ") : null,
           author: firstName(row.authors as Named),
           hasChords: /\[[^\]]+\]/.test(body),
           hasYoutube: Boolean(row.youtube_url),
@@ -130,7 +156,7 @@ export async function listSongsWithCapabilities(
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id)"
+      "id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id)"
     )
     .eq("status", "published")
     .order("number", { ascending: true, nullsFirst: false })
@@ -139,12 +165,13 @@ export async function listSongsWithCapabilities(
   return (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
     const files = (row.song_files as { id: string }[] | null) ?? [];
+    const cats = categoryNames(row.song_categories as SongCategoryRel);
     return {
       id: row.id as string,
       number: row.number as number | null,
       title: row.title as string,
       slug: row.slug as string,
-      category: firstName(row.categories as Named),
+      category: cats.length > 0 ? cats.join(", ") : null,
       author: firstName(row.authors as Named),
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
@@ -164,7 +191,7 @@ export async function listSongsPaged(
   const { data, error, count } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, youtube_url, categories(name), authors(name), song_files(id)",
+      "id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id)",
       { count: "exact" }
     )
     .eq("status", "published")
@@ -174,12 +201,13 @@ export async function listSongsPaged(
   const items = (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
     const files = (row.song_files as { id: string }[] | null) ?? [];
+    const cats = categoryNames(row.song_categories as SongCategoryRel);
     return {
       id: row.id as string,
       number: row.number as number | null,
       title: row.title as string,
       slug: row.slug as string,
-      category: firstName(row.categories as Named),
+      category: cats.length > 0 ? cats.join(", ") : null,
       author: firstName(row.authors as Named),
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
