@@ -186,7 +186,7 @@ export default async function PerfilPage() {
       </section>
 
       <section className="rounded-2xl border border-border bg-sidebar p-6">
-        <h2 className="text-lg">Mis playlists</h2>
+        <h2 className="text-lg">Mis listas</h2>
         <p className="mt-2 text-base normal-case">
           {playlistsCount === 0
             ? "Todavía no creaste playlists."

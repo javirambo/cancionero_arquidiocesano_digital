@@ -183,7 +183,7 @@ export function MetadataSection({
           />
         </Field>
 
-        <Field label="Link de YouTube" full>
+        <Field label="Link de YouTube / Spotify" full>
           <input
             type="url"
             value={form.youtube_url}

@@ -39,7 +39,7 @@ export default async function ParroquiaPage({
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 id="playlists-heading" className="text-xl">
-            Playlists
+            Listas
           </h2>
           {playlists.length > previewPlaylists.length && (
             <Link

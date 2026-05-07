@@ -40,6 +40,7 @@ export function PlayMenu({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const hasYoutube = Boolean(youtubeEmbed);
 
@@ -136,6 +137,7 @@ export function PlayMenu({
   return (
     <div ref={ref} className="relative">
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleClick}
         aria-pressed={isActive}
@@ -152,6 +154,7 @@ export function PlayMenu({
       </button>
       {open && (
         <PlayDropdown
+          buttonRef={buttonRef}
           hasYoutube={hasYoutube}
           audios={audios}
           loading={loading}
@@ -169,6 +172,7 @@ export function PlayMenu({
 }
 
 function PlayDropdown({
+  buttonRef,
   hasYoutube,
   audios,
   loading,
@@ -177,6 +181,7 @@ function PlayDropdown({
   onPickAudio,
   songTitle: _songTitle,
 }: {
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
   hasYoutube: boolean;
   audios: AudioFile[] | null;
   loading: boolean;
@@ -185,10 +190,35 @@ function PlayDropdown({
   onPickAudio: (f: AudioFile) => void;
   songTitle: string;
 }) {
+  const [mobile, setMobile] = useState<{ top: number } | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      if (window.innerWidth >= 640) {
+        setMobile(null);
+        return;
+      }
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (rect) setMobile({ top: rect.bottom + 8 });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [buttonRef]);
+
   return (
     <div
       role="menu"
-      className="absolute left-1/2 top-12 z-40 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-background shadow-lg sm:left-auto sm:right-0 sm:w-72 sm:translate-x-0"
+      style={mobile ? { top: mobile.top } : undefined}
+      className={
+        mobile
+          ? "fixed left-1/2 z-40 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+          : "absolute right-0 top-12 z-40 w-72 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+      }
     >
       {loading && (
         <p className="px-4 py-3 text-sm text-muted-foreground">Cargando…</p>

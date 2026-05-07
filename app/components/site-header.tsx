@@ -393,7 +393,7 @@ export function SiteHeader() {
                     <MenuItem
                       href="/canciones"
                       icon={<CancionesIcon />}
-                      label="Canciones"
+                      label="Cantos"
                       onSelect={closeMenu}
                     />
                   </li>
@@ -401,7 +401,7 @@ export function SiteHeader() {
                     <MenuItem
                       href="/playlists"
                       icon={<ListasIcon />}
-                      label="Playlists"
+                      label="Listas"
                       onSelect={closeMenu}
                     />
                   </li>

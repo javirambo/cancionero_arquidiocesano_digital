@@ -74,7 +74,7 @@ export default async function PlaylistsPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             Playlists
           </p>
-          <h1 className="text-3xl">Tus playlists</h1>
+          <h1 className="text-3xl">Tus Listas</h1>
         </header>
         <section className="rounded-2xl border border-border bg-sidebar p-6">
           <p className="text-sm normal-case text-muted-foreground">
@@ -95,7 +95,7 @@ export default async function PlaylistsPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl">Tus playlists</h1>
+        <h1 className="text-3xl">Tus Listas</h1>
         <p className="text-base normal-case text-muted-foreground">
           Tus repertorios personales, los de tus parroquias y los de la
           Arquidiócesis.

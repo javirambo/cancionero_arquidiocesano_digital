@@ -62,7 +62,7 @@ export async function GET() {
     .order("name", { ascending: true });
   if ((personalRows ?? []).length > 0) {
     groups.push({
-      label: "Mis playlists personales",
+      label: "Mis listas personales",
       items: (personalRows ?? []).map((p) => ({
         id: p.id as string,
         name: p.name as string,

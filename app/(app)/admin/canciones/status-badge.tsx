@@ -10,15 +10,15 @@ const STYLE: Record<SongStatus, { label: string; className: string }> = {
     className: "border-secondary text-secondary",
   },
   published: {
-    label: "Publicada",
+    label: "Publicado",
     className: "border-success text-success",
   },
   rejected: {
-    label: "Rechazada",
+    label: "Rechazado",
     className: "border-destructive text-destructive",
   },
   archived: {
-    label: "Archivada",
+    label: "Archivado",
     className: "border-border text-muted-foreground opacity-70",
   },
 };

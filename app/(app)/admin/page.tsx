@@ -11,13 +11,13 @@ type Seccion = {
 const secciones: Seccion[] = [
   {
     href: "/admin/canciones",
-    titulo: "Canciones",
+    titulo: "Cantos",
     descripcion: "Edición de canciones: metadatos, letra/acordes y archivos asociados (partituras, audios).",
     show: (a) => a.isAdmin || a.isEditor,
   },
   {
     href: "/admin/playlists",
-    titulo: "Playlists generales",
+    titulo: "Listas generales",
     descripcion: "Repertorio arquidiocesano: alta, edición y baja de playlists visibles en todas las parroquias.",
     show: (a) => a.isAdmin || a.isEditor,
   },
