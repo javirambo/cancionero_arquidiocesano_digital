@@ -113,7 +113,7 @@ export default async function Home() {
           if (merged.length === 0) return null;
           return (
             <PlaylistsSection
-              heading="Playlists"
+              heading="Listas"
               playlists={merged.slice(0, PLAYLIST_HOME_LIMIT)}
               seeAllHref="/playlists"
             />

@@ -17,9 +17,9 @@ const TABS: { value: EstadoTab; label: string }[] = [
   { value: "todas", label: "Todas" },
   { value: "draft", label: "Borradores" },
   { value: "review", label: "En revisión" },
-  { value: "published", label: "Publicadas" },
-  { value: "rejected", label: "Rechazadas" },
-  { value: "archived", label: "Archivadas" },
+  { value: "published", label: "Publicados" },
+  { value: "rejected", label: "Rechazados" },
+  { value: "archived", label: "Archivados" },
 ];
 
 function isEstadoTab(v: string | undefined): v is EstadoTab {
@@ -43,9 +43,9 @@ export default async function AdminCancionesPage({
     <main className="flex flex-col gap-6">
       <header className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 flex-col gap-1">
-          <h1 className="text-2xl">Canciones</h1>
+          <h1 className="text-2xl">Cantos</h1>
           <p className="text-sm normal-case text-muted-foreground">
-            Edición de metadatos, letra/acordes y archivos. Flujo editorial draft → revisión → publicada.
+            Edición de metadatos, letra/acordes y archivos. Flujo editorial draft → revisión → publicado.
           </p>
         </div>
         <Link

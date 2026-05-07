@@ -53,7 +53,7 @@ export default async function CancionPage({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            {song.number !== null ? `Nº ${song.number}` : "Canción"}
+            {song.number !== null ? `Nº ${song.number}` : "Canto"}
             {song.category && ` · ${song.category}`}
           </p>
           <h1 className="text-3xl leading-tight">

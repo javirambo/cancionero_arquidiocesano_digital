@@ -109,7 +109,7 @@ export function PrintView({
         <div ref={contentRef} style={{ fontSize: `${fontSizePt}pt` }}>
           <header className="mb-4">
             <p className="text-[0.7em] uppercase tracking-[0.2em] text-secondary">
-              {number !== null ? `Nº ${number}` : "Canción"}
+              {number !== null ? `Nº ${number}` : "Canto"}
             </p>
             <h1 className="text-[1.6em] font-bold uppercase leading-tight text-primary">
               {title}

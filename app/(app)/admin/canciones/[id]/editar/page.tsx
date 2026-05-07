@@ -39,7 +39,7 @@ export default async function EditarCancionPage({
 
       <header className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Editar canción
+          Editar canto
         </span>
         <h1 className="text-2xl">{song.title}</h1>
       </header>

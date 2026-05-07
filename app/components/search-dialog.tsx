@@ -129,7 +129,7 @@ export function SearchDialog({ open, onClose }: Props) {
           )}
 
           {results.songs.length > 0 && (
-            <Section title="Canciones">
+            <Section title="Cantos">
               {results.songs.map((s) => (
                 <ResultLink
                   key={`song-${s.id}`}
@@ -151,7 +151,7 @@ export function SearchDialog({ open, onClose }: Props) {
           )}
 
           {results.playlists.length > 0 && (
-            <Section title="Playlists">
+            <Section title="Listas">
               {results.playlists.map((p) => (
                 <ResultLink
                   key={`pl-${p.id}`}

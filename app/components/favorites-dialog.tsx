@@ -11,8 +11,8 @@ type Props = {
 };
 
 const GROUP_LABELS: Record<FavoriteKind, string> = {
-  song: "Canciones",
-  playlist: "Playlists",
+  song: "Cantos",
+  playlist: "Listas",
   parish: "Parroquias",
 };
 

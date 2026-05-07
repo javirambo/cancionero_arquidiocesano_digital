@@ -117,7 +117,7 @@ export default async function EditarPlaylistPage({
         />
       </AccordionSection>
 
-      <AccordionSection title="Canciones" defaultOpen>
+      <AccordionSection title="Cantos" defaultOpen>
         <PlaylistSongsEditor
           playlistId={pl.id}
           initialSongs={pl.songs.map((s) => ({

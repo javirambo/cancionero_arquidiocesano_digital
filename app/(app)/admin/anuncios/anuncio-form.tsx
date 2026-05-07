@@ -561,8 +561,8 @@ const TARGET_KIND_OPTIONS: {
   label: string;
 }[] = [
   { value: "none", label: "Ninguno" },
-  { value: "song", label: "Canción" },
-  { value: "playlist", label: "Playlist" },
+  { value: "song", label: "Canto" },
+  { value: "playlist", label: "Lista" },
   { value: "parish", label: "Parroquia" },
   { value: "external", label: "Link externo" },
 ];

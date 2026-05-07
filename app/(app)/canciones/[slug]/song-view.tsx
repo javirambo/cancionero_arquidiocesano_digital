@@ -222,8 +222,8 @@ export function SongView({
           {canEdit && (
             <Link
               href={`/admin/canciones/${songId}/editar`}
-              aria-label="Editar canción"
-              title="Editar canción"
+              aria-label="Editar canto"
+              title="Editar canto"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white"
             >
               <svg

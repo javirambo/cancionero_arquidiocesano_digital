@@ -228,7 +228,7 @@ function RowMenu({
                   ← Volver
                 </button>
                 <span className="text-xs uppercase tracking-[0.15em] text-secondary">
-                  Agregar a playlist
+                  Agregar a lista
                 </span>
               </div>
               <AddToPlaylistMenu
@@ -266,7 +266,7 @@ function RowMenu({
               {isAuthenticated ? (
                 <MenuButton
                   icon={<PlaylistIcon />}
-                  label="Agregar a playlist"
+                  label="Agregar a lista"
                   hasSubmenu
                   onClick={() => setView("addToPlaylist")}
                 />
@@ -308,7 +308,7 @@ function RowMenu({
               {canRemoveFromPlaylist && canManagePlaylist && (
                 <MenuButton
                   icon={<MinusIcon />}
-                  label="Quitar de esta playlist"
+                  label="Quitar de esta lista"
                   onClick={close}
                   destructive
                 />

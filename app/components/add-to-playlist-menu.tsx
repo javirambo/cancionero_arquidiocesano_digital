@@ -102,7 +102,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
         });
       if (insertErr) throw insertErr;
 
-      showToast(`Canción agregada a "${playlist.name}".`);
+      showToast(`Canto agregado a "${playlist.name}".`);
       onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error desconocido";
@@ -138,7 +138,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
         });
       if (insertErr) throw insertErr;
 
-      showToast(`Canción agregada a "${created.name}".`);
+      showToast(`Canto agregado a "${created.name}".`);
       onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error desconocido";
@@ -208,7 +208,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Buscar playlist…"
+          placeholder="Buscar lista…"
           className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm normal-case"
         />
       </div>
@@ -265,7 +265,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
           }}
           className="flex w-full items-center px-4 py-2 text-left text-sm normal-case text-primary hover:bg-sidebar"
         >
-          + Nueva playlist
+          + Nueva lista
         </button>
       </div>
     </div>

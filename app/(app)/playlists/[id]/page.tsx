@@ -101,7 +101,7 @@ export default async function PlaylistPage({
               href={`/playlists/${pl.id}/editar`}
               className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
             >
-              Editar playlist
+              Editar Lista
             </Link>
           )}
         </div>
