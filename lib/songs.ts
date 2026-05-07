@@ -473,6 +473,15 @@ export function youtubeEmbedUrl(url: string | null): string | null {
   if (!url) return null;
   try {
     const u = new URL(url);
+    if (u.hostname.includes("open.spotify.com")) {
+      const parts = u.pathname.split("/").filter(Boolean);
+      const validKinds = ["track", "episode", "album", "playlist", "show"];
+      const kindIdx = parts.findIndex((p) => validKinds.includes(p));
+      if (kindIdx >= 0 && parts[kindIdx + 1]) {
+        return `https://open.spotify.com/embed/${parts[kindIdx]}/${parts[kindIdx + 1]}`;
+      }
+      return null;
+    }
     let id: string | null = null;
     if (u.hostname.includes("youtu.be")) {
       id = u.pathname.replace(/^\//, "");

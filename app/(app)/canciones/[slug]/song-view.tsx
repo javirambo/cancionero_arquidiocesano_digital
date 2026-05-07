@@ -246,15 +246,28 @@ export function SongView({
       </div>
 
       {media?.type === "youtube" && youtubeEmbed && (
-        <div className="aspect-video w-full overflow-hidden rounded-xl border border-border">
-          <iframe
-            src={youtubeEmbed}
-            title="Reproductor de YouTube"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="h-full w-full"
-          />
-        </div>
+        youtubeEmbed.includes("open.spotify.com") ? (
+          <div className="w-full overflow-hidden rounded-xl border border-border">
+            <iframe
+              src={youtubeEmbed}
+              title="Reproductor de Spotify"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+              loading="lazy"
+              className="w-full"
+              style={{ height: 152 }}
+            />
+          </div>
+        ) : (
+          <div className="aspect-video w-full overflow-hidden rounded-xl border border-border">
+            <iframe
+              src={youtubeEmbed}
+              title="Reproductor de YouTube"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full"
+            />
+          </div>
+        )
       )}
 
       {media?.type === "audio" && (
