@@ -36,7 +36,15 @@ export default async function EditarPlaylistPage({
     .filter((n): n is string => Boolean(n));
   const isAdmin = roleNames.includes("admin");
 
-  let canEdit = isAdmin;
+  // Dueño de la lista (relevante para listas personales).
+  const { data: ownerRow } = await supabase
+    .from("playlists")
+    .select("created_by")
+    .eq("id", pl.id)
+    .maybeSingle();
+  const isOwner = ownerRow?.created_by === user.id;
+
+  let canEdit = isAdmin || isOwner;
   if (!canEdit && pl.parish) {
     const { data: member } = await supabase
       .from("parish_members")
@@ -47,6 +55,9 @@ export default async function EditarPlaylistPage({
     canEdit = member?.role === "coordinator";
   }
   if (!canEdit) redirect(`/playlists/${pl.id}`);
+
+  // Lista personal del usuario actual (sin parroquia y dueña): edición restringida.
+  const isPersonalOwner = isOwner && !pl.parish && !isAdmin;
 
   const showArchdiocesan = pl.parish?.slug === "arquidiocesis";
   const schedules = await loadSchedulesForEntity("playlist", pl.id);
@@ -97,6 +108,7 @@ export default async function EditarPlaylistPage({
           parishSlug={pl.parish?.slug ?? null}
           showArchdiocesan={showArchdiocesan}
           adminParishOptions={adminParishOptions}
+          restricted={isPersonalOwner}
           initial={{
             id: pl.id,
             parish_id: pl.parish?.id ?? null,

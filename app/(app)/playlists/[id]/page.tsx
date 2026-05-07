@@ -26,32 +26,61 @@ export default async function PlaylistPage({
   } = await supabase.auth.getUser();
   let canEdit = false;
   if (user) {
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("roles(name)")
-      .eq("user_id", user.id);
-    const roleNames = (roles ?? [])
-      .map((r) => {
-        const rel = r.roles as { name: string } | { name: string }[] | null;
-        const single = Array.isArray(rel) ? rel[0] : rel;
-        return single?.name;
-      })
-      .filter((n): n is string => Boolean(n));
-    if (roleNames.includes("admin")) {
+    // Dueño de la playlist (relevante para playlists personales sin parroquia).
+    const { data: ownerRow } = await supabase
+      .from("playlists")
+      .select("created_by")
+      .eq("id", pl.id)
+      .maybeSingle();
+    if (ownerRow?.created_by === user.id) {
       canEdit = true;
-    } else if (pl.parish) {
-      const { data: member } = await supabase
-        .from("parish_members")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("parish_id", pl.parish.id)
-        .maybeSingle();
-      if (member?.role === "coordinator") canEdit = true;
+    } else {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("roles(name)")
+        .eq("user_id", user.id);
+      const roleNames = (roles ?? [])
+        .map((r) => {
+          const rel = r.roles as { name: string } | { name: string }[] | null;
+          const single = Array.isArray(rel) ? rel[0] : rel;
+          return single?.name;
+        })
+        .filter((n): n is string => Boolean(n));
+      if (roleNames.includes("admin")) {
+        canEdit = true;
+      } else if (pl.parish) {
+        const { data: member } = await supabase
+          .from("parish_members")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("parish_id", pl.parish.id)
+          .maybeSingle();
+        if (member?.role === "coordinator") canEdit = true;
+      }
     }
   }
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
+      <Link
+        href="/playlists"
+        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Volver a las listas
+      </Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl">{pl.name}</h1>
@@ -75,25 +104,35 @@ export default async function PlaylistPage({
               {pl.description}
             </p>
           )}
-          {schedules.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <ul className="flex flex-col gap-0.5">
-                {schedules.map((s) => (
-                  <li
-                    key={s.id}
-                    className="text-xs normal-case text-muted-foreground"
-                  >
-                    {describeSchedule(s)}
-                  </li>
-                ))}
-              </ul>
-              {outOfWindow && (
-                <span className="inline-flex w-fit items-center rounded-full border border-warning px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-warning">
-                  Fuera de horario actual
-                </span>
-              )}
-            </div>
-          )}
+          {(() => {
+            const visibleSchedules = canEdit
+              ? schedules
+              : schedules.filter(
+                  (s) => !(s.time_mode === "all_day" && s.date_mode === "always")
+                );
+            if (visibleSchedules.length === 0 && !outOfWindow) return null;
+            return (
+              <div className="flex flex-col gap-1">
+                {visibleSchedules.length > 0 && (
+                  <ul className="flex flex-col gap-0.5">
+                    {visibleSchedules.map((s) => (
+                      <li
+                        key={s.id}
+                        className="text-xs normal-case text-muted-foreground"
+                      >
+                        {describeSchedule(s)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {outOfWindow && (
+                  <span className="inline-flex w-fit items-center rounded-full border border-warning px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-warning">
+                    Fuera de horario actual
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <div className="flex flex-col items-end gap-2">
           {canEdit && (

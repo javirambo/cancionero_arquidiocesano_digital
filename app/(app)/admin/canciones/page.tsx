@@ -52,7 +52,7 @@ export default async function AdminCancionesPage({
           href="/admin/canciones/nueva"
           className="rounded-full border border-primary bg-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90"
         >
-          + Nueva canción
+          + Nuevo canto
         </Link>
       </header>
 

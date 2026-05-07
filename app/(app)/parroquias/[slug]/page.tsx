@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getParishBySlug } from "@/lib/songs";
+import { getParishBySlug, listAnnouncementsForParish } from "@/lib/songs";
 import { listPlaylistsForParish } from "@/lib/playlists";
+import { createClient } from "@/lib/supabase/server";
+import { AnnouncementCard } from "@/app/components/announcement-card";
 
 export default async function ParroquiaPage({
   params,
@@ -15,8 +17,47 @@ export default async function ParroquiaPage({
   const playlists = await listPlaylistsForParish(parish.id, { parishSlug: parish.slug });
   const previewPlaylists = playlists.slice(0, 4);
 
+  // Anuncios solo si el usuario es miembro de esta parroquia.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let parishAnnouncements: Awaited<
+    ReturnType<typeof listAnnouncementsForParish>
+  > = { items: [], total: 0 };
+  if (user) {
+    const { data: member } = await supabase
+      .from("parish_members")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .eq("parish_id", parish.id)
+      .maybeSingle();
+    if (member) {
+      parishAnnouncements = await listAnnouncementsForParish(parish.id);
+    }
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
+      <Link
+        href="/parroquias"
+        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Volver a parroquias
+      </Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
@@ -84,6 +125,24 @@ export default async function ParroquiaPage({
           </ul>
         )}
       </section>
+
+      {parishAnnouncements.items.length > 0 && (
+        <section
+          aria-labelledby="anuncios-heading"
+          className="flex flex-col gap-4"
+        >
+          <h2 id="anuncios-heading" className="text-xl">
+            Anuncios
+          </h2>
+          <ul className="grid gap-3">
+            {parishAnnouncements.items.map((item, i) => (
+              <li key={i}>
+                <AnnouncementCard item={item} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

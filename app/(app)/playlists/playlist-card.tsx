@@ -31,7 +31,7 @@ export function PlaylistCard({ playlist, badge }: Props) {
         className="flex h-full flex-col gap-1 rounded-xl border border-border bg-background p-4 pr-12 transition-colors hover:border-primary"
       >
         <span className="text-base text-primary">{playlist.name}</span>
-        {playlist.parish && (
+        {playlist.parish && !badge && (
           <span className="text-sm normal-case text-secondary">
             {playlist.parish.name}
           </span>

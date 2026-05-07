@@ -28,6 +28,7 @@ export function PlaylistForm({
   parishOptions,
   personalAllowed,
   adminParishOptions,
+  restricted,
 }: {
   initial?: PlaylistFormData;
   mode: "create" | "edit";
@@ -44,6 +45,9 @@ export function PlaylistForm({
   // Sólo poblada cuando el editor es admin. Habilita reasignar el dueño
   // de la playlist (CU-17). Aplica únicamente en mode="edit".
   adminParishOptions?: AdminParishOption[];
+  // Edición restringida: dueño de lista personal. Oculta visibilidad,
+  // alcance, vigencia y cartel de "se creará como personal".
+  restricted?: boolean;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<PlaylistFormData>(
@@ -219,7 +223,7 @@ export function PlaylistForm({
             </select>
           </Field>
         )}
-        {personalAllowed && !needsParishSelector && (
+        {personalAllowed && !needsParishSelector && !restricted && (
           <Field label="Alcance" full>
             <p className="text-sm normal-case text-muted-foreground">
               Se creará como playlist personal.
@@ -243,20 +247,7 @@ export function PlaylistForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Visibilidad">
-          <select
-            value={form.visibility}
-            onChange={(e) =>
-              update("visibility", e.target.value as PlaylistFormData["visibility"])
-            }
-            className={inputClass}
-          >
-            <option value="public">Pública</option>
-            <option value="unlisted">No listada (solo con link)</option>
-            <option value="private">Privada</option>
-          </select>
-        </Field>
-        {archdiocesanVisible && (
+        {archdiocesanVisible && !restricted && (
           <Field label="Alcance" full>
             <label className="flex items-center gap-2 text-sm normal-case">
               <input
@@ -270,18 +261,20 @@ export function PlaylistForm({
         )}
       </div>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-secondary">
-          Vigencia
-        </h2>
-        <p className="text-sm normal-case text-muted-foreground">
-          Si no agregás reglas, la playlist se muestra siempre. Las reglas se evalúan en hora de Argentina; si hay varias, basta con que una se cumpla.
-        </p>
-        <ScheduleEditor
-          value={form.schedules}
-          onChange={(schedules) => update("schedules", schedules)}
-        />
-      </section>
+      {!restricted && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-secondary">
+            Vigencia
+          </h2>
+          <p className="text-sm normal-case text-muted-foreground">
+            Si no agregás reglas, la playlist se muestra siempre. Las reglas se evalúan en hora de Argentina; si hay varias, basta con que una se cumpla.
+          </p>
+          <ScheduleEditor
+            value={form.schedules}
+            onChange={(schedules) => update("schedules", schedules)}
+          />
+        </section>
+      )}
 
       {error && <p className="text-sm normal-case text-destructive">{error}</p>}
 

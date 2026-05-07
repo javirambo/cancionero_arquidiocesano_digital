@@ -18,7 +18,7 @@ export default async function NuevaCancionPage() {
   const { data, error } = await supabase
     .from("songs")
     .insert({
-      title: "Nueva canción",
+      title: "Nuevo canto",
       slug,
       body: "",
       status: "draft",

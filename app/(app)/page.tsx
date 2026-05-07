@@ -31,13 +31,20 @@ export default async function Home() {
   let primaryParish: ParishLite | null = null;
   let otherParishes: ParishLite[] = [];
   if (user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("parish_id")
-      .eq("id", user.id)
-      .maybeSingle();
-    const primaryId = (profile?.parish_id as string | undefined) ?? null;
-    if (primaryId) {
+    const [profileRes, membersRes] = await Promise.all([
+      supabase.from("users").select("parish_id").eq("id", user.id).maybeSingle(),
+      supabase
+        .from("parish_members")
+        .select("parish_id, joined_at, parishes(id, slug, name)")
+        .eq("user_id", user.id)
+        .order("joined_at", { ascending: false }),
+    ]);
+    const primaryId = (profileRes.data?.parish_id as string | undefined) ?? null;
+    const memberParishIds = new Set(
+      (membersRes.data ?? []).map((m) => m.parish_id as string)
+    );
+    // Defensivo: solo aceptar primaryId si el user es realmente miembro.
+    if (primaryId && memberParishIds.has(primaryId)) {
       const { data: pr } = await supabase
         .from("parishes")
         .select("id, slug, name")
@@ -46,13 +53,8 @@ export default async function Home() {
       if (pr) primaryParish = pr as ParishLite;
     }
     // Otras parroquias asociadas (excluida la principal), por joined_at desc.
-    const { data: members } = await supabase
-      .from("parish_members")
-      .select("parish_id, joined_at, parishes(id, slug, name)")
-      .eq("user_id", user.id)
-      .order("joined_at", { ascending: false });
     const others: ParishLite[] = [];
-    for (const m of members ?? []) {
+    for (const m of membersRes.data ?? []) {
       const rel = m.parishes as ParishLite | ParishLite[] | null;
       const p = Array.isArray(rel) ? rel[0] : rel;
       if (!p) continue;

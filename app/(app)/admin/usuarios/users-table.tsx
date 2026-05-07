@@ -153,6 +153,12 @@ export function UsersTable({
       setBusyUserId(null);
       return;
     }
+    // Si la parroquia que se quita era la principal del usuario, limpiarla.
+    await supabase
+      .from("users")
+      .update({ parish_id: null })
+      .eq("id", user.id)
+      .eq("parish_id", parishId);
     updateUser(user.id, {
       memberships: user.memberships.filter((x) => x.parish_id !== parishId),
     });
