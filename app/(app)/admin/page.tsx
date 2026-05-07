@@ -10,18 +10,6 @@ type Seccion = {
 
 const secciones: Seccion[] = [
   {
-    href: "/admin/parroquias",
-    titulo: "Parroquias",
-    descripcion: "Alta, edición y baja de parroquias de la Arquidiócesis.",
-    show: (a) => a.isAdmin,
-  },
-  {
-    href: "/admin/anuncios",
-    titulo: "Anuncios",
-    descripcion: "Anuncios y novedades destacadas en la home, con destino global o multi-parroquia.",
-    show: (a) => a.isAdmin || a.isEditor || a.isAnyCoordinator,
-  },
-  {
     href: "/admin/canciones",
     titulo: "Canciones",
     descripcion: "Edición de canciones: metadatos, letra/acordes y archivos asociados (partituras, audios).",
@@ -32,6 +20,18 @@ const secciones: Seccion[] = [
     titulo: "Playlists generales",
     descripcion: "Repertorio arquidiocesano: alta, edición y baja de playlists visibles en todas las parroquias.",
     show: (a) => a.isAdmin || a.isEditor,
+  },
+  {
+    href: "/admin/parroquias",
+    titulo: "Parroquias",
+    descripcion: "Alta, edición y baja de parroquias de la Arquidiócesis.",
+    show: (a) => a.isAdmin,
+  },
+  {
+    href: "/admin/anuncios",
+    titulo: "Anuncios",
+    descripcion: "Anuncios y novedades destacadas en la home, con destino global o multi-parroquia.",
+    show: (a) => a.isAdmin || a.isEditor || a.isAnyCoordinator,
   },
   {
     href: "/admin/usuarios",

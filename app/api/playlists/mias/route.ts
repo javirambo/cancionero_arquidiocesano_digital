@@ -91,21 +91,22 @@ export async function GET() {
     }
   }
 
-  // 3. Arquidiocesanas (solo admin/editor).
+  // 3. Arquidiocesanas (solo admin/editor). Dedupe contra los ids ya
+  // listados en grupos previos (caso: usuario es coordinator de la
+  // parroquia "arquidiocesis", entonces sus playlists ya aparecen en
+  // el bloque 2).
   if (isEditor) {
+    const seen = new Set(groups.flatMap((g) => g.items.map((i) => i.id)));
     const { data: archRows } = await supabase
       .from("playlists")
       .select("id, name")
       .eq("is_archdiocesan", true)
       .order("name", { ascending: true });
-    if ((archRows ?? []).length > 0) {
-      groups.push({
-        label: "Arquidiócesis",
-        items: (archRows ?? []).map((p) => ({
-          id: p.id as string,
-          name: p.name as string,
-        })),
-      });
+    const items = (archRows ?? [])
+      .map((p) => ({ id: p.id as string, name: p.name as string }))
+      .filter((p) => !seen.has(p.id));
+    if (items.length > 0) {
+      groups.push({ label: "Arquidiócesis", items });
     }
   }
 
