@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   detectSystem,
@@ -10,6 +11,7 @@ import {
   type ChordSystem,
 } from "@/lib/chordpro";
 import { useFavorites } from "@/app/components/favorites";
+import { useUserRoles } from "@/app/components/user-roles";
 import { DownloadFilesMenu } from "@/app/components/download-files-menu";
 import { PlayMenu } from "@/app/components/play-menu";
 import { groupChorus, LineView } from "@/app/components/song-render";
@@ -44,6 +46,8 @@ export function SongView({
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
   const { isAuthenticated } = useFavorites();
+  const { isAdmin, isEditor } = useUserRoles();
+  const canEdit = isAdmin || isEditor;
   // CU-03: los acordes y la transposición sólo se exponen a usuarios con sesión.
   const chordsAvailable = chordsExist && isAuthenticated;
 
@@ -136,8 +140,8 @@ export function SongView({
         >
           <button
             type="button"
-            onClick={() => setSemitones((s) => s - 1)}
-            disabled={!showChords}
+            onClick={() => setSemitones((s) => Math.max(-12, s - 1))}
+            disabled={!showChords || semitones <= -12}
             aria-label="Bajar un semitono"
             title="Bajar un semitono"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
@@ -164,8 +168,8 @@ export function SongView({
           </button>
           <button
             type="button"
-            onClick={() => setSemitones((s) => s + 1)}
-            disabled={!showChords}
+            onClick={() => setSemitones((s) => Math.min(12, s + 1))}
+            disabled={!showChords || semitones >= 12}
             aria-label="Subir un semitono"
             title="Subir un semitono"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
@@ -215,19 +219,55 @@ export function SongView({
               system,
             }}
           />
+          {canEdit && (
+            <Link
+              href={`/admin/canciones/${songId}/editar`}
+              aria-label="Editar canción"
+              title="Editar canción"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+              </svg>
+            </Link>
+          )}
         </div>
       </div>
 
       {media?.type === "youtube" && youtubeEmbed && (
-        <div className="aspect-video w-full overflow-hidden rounded-xl border border-border">
-          <iframe
-            src={youtubeEmbed}
-            title="Reproductor de YouTube"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="h-full w-full"
-          />
-        </div>
+        youtubeEmbed.includes("open.spotify.com") ? (
+          <div className="w-full overflow-hidden rounded-xl border border-border">
+            <iframe
+              src={youtubeEmbed}
+              title="Reproductor de Spotify"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+              loading="lazy"
+              className="w-full"
+              style={{ height: 152 }}
+            />
+          </div>
+        ) : (
+          <div className="aspect-video w-full overflow-hidden rounded-xl border border-border">
+            <iframe
+              src={youtubeEmbed}
+              title="Reproductor de YouTube"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full"
+            />
+          </div>
+        )
       )}
 
       {media?.type === "audio" && (

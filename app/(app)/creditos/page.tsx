@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { HeroContent } from "@/app/components/home-hero";
 
 export const metadata: Metadata = {
   title: "Créditos · Cancionero Arquidiocesano",
@@ -6,9 +8,32 @@ export const metadata: Metadata = {
     "Créditos del Cancionero Arquidiocesano y referencia al cantoral oficial.",
 };
 
-export default function CreditosPage() {
+async function getPrimaryParishName(): Promise<string | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase
+    .from("users")
+    .select("parish_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  const primaryId = (profile?.parish_id as string | undefined) ?? null;
+  if (!primaryId) return null;
+  const { data: pr } = await supabase
+    .from("parishes")
+    .select("name")
+    .eq("id", primaryId)
+    .maybeSingle();
+  return (pr?.name as string | undefined) ?? null;
+}
+
+export default async function CreditosPage() {
+  const parishName = await getPrimaryParishName();
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16">
+      <HeroContent parishName={parishName} />
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.2em] text-secondary">
           Información

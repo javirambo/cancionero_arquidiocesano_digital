@@ -12,6 +12,7 @@ import { FavoritesDialog } from "./favorites-dialog";
 import { useFavorites } from "./favorites";
 import { useUserRoles } from "./user-roles";
 import { useWakeLock } from "./wake-lock";
+import { useHomeTitle } from "./home-title-context";
 import { CloseIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 type MenuItemProps = {
@@ -222,6 +223,19 @@ export function SiteHeader() {
   const { favorites } = useFavorites();
   const { active: wakeLockActive, supported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
   const { isAdmin, isEditor } = useUserRoles();
+  const { title } = useHomeTitle();
+  const [displayTitle, setDisplayTitle] = useState(title);
+  const [titleVisible, setTitleVisible] = useState(true);
+
+  useEffect(() => {
+    if (title === displayTitle) return;
+    setTitleVisible(false);
+    const t = setTimeout(() => {
+      setDisplayTitle(title);
+      setTitleVisible(true);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [title, displayTitle]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -286,14 +300,15 @@ export function SiteHeader() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="border-b border-border bg-sidebar">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
+    <header className="sticky top-0 z-30 border-b border-border bg-sidebar">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-1">
         <Link href="/" className="flex items-baseline gap-3">
-          <span className="text-2xl font-bold tracking-wide text-primary">
-            Cancionero
-          </span>
-          <span className="hidden text-sm normal-case tracking-normal text-muted-foreground sm:inline">
-            Arquidiócesis de Rosario
+          <span
+            className={`text-xl font-bold tracking-wide text-primary transition-opacity duration-300 ease-in-out ${
+              titleVisible ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {displayTitle}
           </span>
         </Link>
 

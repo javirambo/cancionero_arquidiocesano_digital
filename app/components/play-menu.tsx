@@ -188,7 +188,7 @@ function PlayDropdown({
   return (
     <div
       role="menu"
-      className="absolute right-0 top-12 z-40 w-72 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+      className="absolute left-1/2 top-12 z-40 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-background shadow-lg sm:left-auto sm:right-0 sm:w-72 sm:translate-x-0"
     >
       {loading && (
         <p className="px-4 py-3 text-sm text-muted-foreground">Cargando…</p>

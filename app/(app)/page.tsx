@@ -14,6 +14,7 @@ import { GoogleSignInButton } from "@/app/(app)/perfil/google-sign-in-button";
 import { AnnouncementCard } from "@/app/components/announcement-card";
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
+import { HomeHero } from "@/app/components/home-hero";
 
 const PREVIEW = 3;
 const PLAYLIST_HOME_LIMIT = 4;
@@ -94,23 +95,8 @@ export default async function Home() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-6 py-12">
-        {/* Header */}
-        <section className="flex flex-col items-center gap-4 text-center">
-          {primaryParish && (
-            <p className="text-2xl text-secondary">{primaryParish.name}</p>
-          )}
-          <p className="text-sm uppercase tracking-[0.2em] text-secondary">
-            Evangelizar a través de la música
-          </p>
-          <h1 className="text-4xl leading-tight sm:text-5xl">
-            Cancionero Arquidiocesano
-          </h1>
-          <p className="max-w-2xl text-lg leading-8 text-muted-foreground normal-case">
-            Una herramienta común para coros, ministerios de música y asambleas
-            de toda la Arquidiócesis.
-          </p>
-        </section>
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12">
+        <HomeHero parishName={primaryParish?.name ?? null} />
 
         {/* Playlists: una sola sección mezclada, dedupe, máximo 4. */}
         {(() => {

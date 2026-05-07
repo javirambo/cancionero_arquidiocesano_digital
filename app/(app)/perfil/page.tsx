@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { SignOutButton } from "./sign-out-button";
+import { HeroContent } from "@/app/components/home-hero";
 
 export const metadata = {
   title: "Perfil · Cancionero Arquidiocesano",
@@ -15,7 +16,8 @@ export default async function PerfilPage() {
 
   if (!user) {
     return (
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
+        <HeroContent parishName={null} />
         <header className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             Perfil
@@ -114,9 +116,12 @@ export default async function PerfilPage() {
   const favParishes = (favParishesRes.data ?? []) as FavParish[];
 
   const displayName = profile?.display_name ?? user.email ?? "Usuario";
+  const primaryParishName =
+    myParishes.find((p) => p.id === primaryParishId)?.name ?? null;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
+      <HeroContent parishName={primaryParishName} />
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {profile?.avatar_url ? (

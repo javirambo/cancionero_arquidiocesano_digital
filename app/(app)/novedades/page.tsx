@@ -17,7 +17,7 @@ export default async function NovedadesPage() {
   const empty = liturgical.items.length === 0 && common.items.length === 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-6 py-12">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-4 py-12">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Novedades</h1>
         <p className="text-base normal-case text-muted-foreground">

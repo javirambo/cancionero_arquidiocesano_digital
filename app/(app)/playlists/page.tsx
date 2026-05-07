@@ -19,7 +19,7 @@ export default async function PlaylistsPage() {
   if (!user) {
     const archdiocesan = await listArchdiocesanPlaylists();
     return (
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl">Playlists</h1>
           <p className="text-base italic normal-case text-muted-foreground">
@@ -33,9 +33,6 @@ export default async function PlaylistsPage() {
 
         {archdiocesan.length > 0 ? (
           <section className="flex flex-col gap-3">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-              Arquidiócesis
-            </h2>
             <ul className="grid gap-3 sm:grid-cols-2">
               {archdiocesan.map((p) => (
                 <PlaylistCard
@@ -72,7 +69,7 @@ export default async function PlaylistsPage() {
 
   if (isEmpty) {
     return (
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
         <header className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             Playlists
@@ -96,7 +93,7 @@ export default async function PlaylistsPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl">Tus playlists</h1>
         <p className="text-base normal-case text-muted-foreground">
@@ -105,75 +102,50 @@ export default async function PlaylistsPage() {
         </p>
       </header>
 
-      {sections.personal.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Mis playlists
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {sections.personal.map((p) => (
-              <PlaylistCard
-                key={p.id}
-                playlist={{
-                  id: p.id,
-                  name: p.name,
-                  description: p.description,
-                  parish: p.parish,
-                }}
-                badge="Personal"
-              />
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {sections.byParish.map((g) => (
-        <section key={g.parish.id} className="flex flex-col gap-3">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-            {g.parish.name}
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {g.items.map((p) => (
-              <PlaylistCard
-                key={p.id}
-                playlist={{
-                  id: p.id,
-                  name: p.name,
-                  description: p.description,
-                  parish: p.parish,
-                }}
-                badge={
-                  p.relation === "subscribed" && p.parish
-                    ? `Compartida por ${p.parish.name}`
-                    : null
-                }
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
-
-      {sections.archdiocesan.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Arquidiócesis
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {sections.archdiocesan.map((p) => (
-              <PlaylistCard
-                key={p.id}
-                playlist={{
-                  id: p.id,
-                  name: p.name,
-                  description: p.description,
-                  parish: p.parish,
-                }}
-                badge="De la Arquidiócesis"
-              />
-            ))}
-          </ul>
-        </section>
-      )}
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {sections.personal.map((p) => (
+          <PlaylistCard
+            key={p.id}
+            playlist={{
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              parish: p.parish,
+            }}
+            badge="Personal"
+          />
+        ))}
+        {sections.byParish.flatMap((g) =>
+          g.items.map((p) => (
+            <PlaylistCard
+              key={p.id}
+              playlist={{
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                parish: p.parish,
+              }}
+              badge={
+                p.relation === "subscribed" && p.parish
+                  ? `Compartida por ${p.parish.name}`
+                  : null
+              }
+            />
+          ))
+        )}
+        {sections.archdiocesan.map((p) => (
+          <PlaylistCard
+            key={p.id}
+            playlist={{
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              parish: p.parish,
+            }}
+            badge="De la Arquidiócesis"
+          />
+        ))}
+      </ul>
     </main>
   );
 }
