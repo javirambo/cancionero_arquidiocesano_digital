@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PlaylistForm, type ParishOption } from "@/app/(app)/playlists/playlist-form";
 
-export default async function NuevaPlaylistPage() {
+export default async function NuevaPlaylistPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ scope?: string; parish?: string }>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,7 +30,97 @@ export default async function NuevaPlaylistPage() {
   const isAdmin = roleNames.includes("admin");
   const isEditor = isAdmin || roleNames.includes("editor");
 
-  // Resolver contexto de creación según rol.
+  // 1a. Scope explícito por query param.
+  if (sp.scope === "personal") {
+    return (
+      <CreateLayout title="Nueva lista personal">
+        <PlaylistForm
+          mode="create"
+          parishSlug={null}
+          showArchdiocesan={false}
+          personalAllowed
+          restricted
+          initial={{
+            parish_id: null,
+            name: "",
+            description: "",
+            schedules: [],
+            visibility: "unlisted",
+            is_archdiocesan: false,
+          }}
+        />
+      </CreateLayout>
+    );
+  }
+
+  if (sp.scope === "parish" && sp.parish) {
+    // Verificar que el user es coordinator (o admin) de esa parroquia.
+    const [parishRes, memberRes] = await Promise.all([
+      supabase
+        .from("parishes")
+        .select("id, slug, name")
+        .eq("id", sp.parish)
+        .maybeSingle(),
+      supabase
+        .from("parish_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("parish_id", sp.parish)
+        .maybeSingle(),
+    ]);
+    const allowed =
+      isAdmin || memberRes.data?.role === "coordinator";
+    if (parishRes.data && allowed) {
+      const par = parishRes.data as { id: string; slug: string; name: string };
+      return (
+        <CreateLayout title={`Nueva lista en ${par.name}`}>
+          <PlaylistForm
+            mode="create"
+            parishSlug={par.slug}
+            showArchdiocesan={false}
+            initial={{
+              parish_id: par.id,
+              name: "",
+              description: "",
+              schedules: [],
+              visibility: "public",
+              is_archdiocesan: false,
+            }}
+          />
+        </CreateLayout>
+      );
+    }
+    redirect("/playlists");
+  }
+
+  if (sp.scope === "archdiocesan" && isEditor) {
+    const { data: arch } = await supabase
+      .from("parishes")
+      .select("id, slug, name")
+      .eq("slug", "arquidiocesis")
+      .maybeSingle();
+    if (arch) {
+      return (
+        <CreateLayout title="Nueva lista arquidiocesana">
+          <PlaylistForm
+            mode="create"
+            parishSlug={arch.slug as string}
+            showArchdiocesan={true}
+            initial={{
+              parish_id: arch.id as string,
+              name: "",
+              description: "",
+              schedules: [],
+              visibility: "public",
+              is_archdiocesan: true,
+            }}
+          />
+        </CreateLayout>
+      );
+    }
+  }
+
+  // Fallback: resolver contexto de creación según rol.
   // 1. admin / editor → parroquia virtual `arquidiocesis`.
   if (isEditor) {
     const { data: arch } = await supabase
@@ -36,7 +131,7 @@ export default async function NuevaPlaylistPage() {
     if (!arch) {
       return (
         <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-12">
-          <h1 className="text-2xl">Nueva playlist</h1>
+          <h1 className="text-2xl">Nueva lista</h1>
           <p className="text-sm normal-case text-destructive">
             No se encontró la parroquia &quot;arquidiocesis&quot;. Contactá al
             administrador.
@@ -45,7 +140,7 @@ export default async function NuevaPlaylistPage() {
       );
     }
     return (
-      <CreateLayout title="Nueva playlist arquidiocesana">
+      <CreateLayout title="Nueva lista arquidiocesana">
         <PlaylistForm
           mode="create"
           parishSlug={arch.slug as string}
@@ -81,7 +176,7 @@ export default async function NuevaPlaylistPage() {
   if (coordParishes.length === 1) {
     const par = coordParishes[0];
     return (
-      <CreateLayout title={`Nueva playlist en ${par.name}`}>
+      <CreateLayout title={`Nueva lista en ${par.name}`}>
         <PlaylistForm
           mode="create"
           parishSlug={par.slug}
@@ -105,7 +200,7 @@ export default async function NuevaPlaylistPage() {
       name: p.name,
     }));
     return (
-      <CreateLayout title="Nueva playlist">
+      <CreateLayout title="Nueva lista">
         <PlaylistForm
           mode="create"
           parishSlug={null}
@@ -126,18 +221,19 @@ export default async function NuevaPlaylistPage() {
 
   // 3. member (sin coordinator ni editor) → playlist personal.
   return (
-    <CreateLayout title="Nueva playlist personal">
+    <CreateLayout title="Nueva lista personal">
       <PlaylistForm
         mode="create"
         parishSlug={null}
         showArchdiocesan={false}
         personalAllowed
+        restricted
         initial={{
           parish_id: null,
           name: "",
           description: "",
           schedules: [],
-          visibility: "public",
+          visibility: "unlisted",
           is_archdiocesan: false,
         }}
       />

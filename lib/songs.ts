@@ -315,13 +315,15 @@ export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
     .not("kind", "is", null)
     .order("priority", { ascending: false });
   if (error) throw error;
-  const rows = data ?? [];
+  const allRows = (data ?? []) as Array<{ id: string } & Record<string, unknown>>;
+  if (allRows.length === 0) return null;
+  const rows = await filterAnnouncementsByParish(allRows);
   if (rows.length === 0) return null;
 
-  const ids = rows.map((r) => r.id as string);
+  const ids = rows.map((r) => r.id);
   const sched = await loadSchedules("announcement", ids);
   const vigente = rows.find((r) =>
-    isVisibleNow(sched.get(r.id as string))
+    isVisibleNow(sched.get(r.id))
   );
   if (!vigente) return null;
 
@@ -430,6 +432,58 @@ async function resolveAnnouncementHrefs(
   });
 }
 
+// Parroquias asociadas al usuario actual (principal en `users.parish_id` +
+// asociadas vía `parish_members`). Devuelve set vacío si no hay sesión.
+async function getCurrentUserParishIds(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return new Set();
+  const [profileRes, membersRes] = await Promise.all([
+    supabase.from("users").select("parish_id").eq("id", user.id).maybeSingle(),
+    supabase.from("parish_members").select("parish_id").eq("user_id", user.id),
+  ]);
+  const ids = new Set<string>();
+  const primary = (profileRes.data?.parish_id as string | null) ?? null;
+  if (primary) ids.add(primary);
+  for (const m of membersRes.data ?? []) {
+    if (m.parish_id) ids.add(m.parish_id as string);
+  }
+  return ids;
+}
+
+// Filtra anuncios por parroquia: un anuncio es visible si NO tiene filas en
+// `announcement_parishes` (es global/arquidiocesano) o si intersecta con las
+// parroquias del usuario actual.
+async function filterAnnouncementsByParish<T extends { id: string }>(
+  rows: T[]
+): Promise<T[]> {
+  if (rows.length === 0) return rows;
+  const supabase = await createClient();
+  const { data: links } = await supabase
+    .from("announcement_parishes")
+    .select("announcement_id, parish_id")
+    .in(
+      "announcement_id",
+      rows.map((r) => r.id)
+    );
+  const byAnn = new Map<string, Set<string>>();
+  for (const l of links ?? []) {
+    const annId = l.announcement_id as string;
+    const parId = l.parish_id as string;
+    if (!byAnn.has(annId)) byAnn.set(annId, new Set());
+    byAnn.get(annId)!.add(parId);
+  }
+  const userParishes = await getCurrentUserParishIds();
+  return rows.filter((r) => {
+    const scoped = byAnn.get(r.id);
+    if (!scoped || scoped.size === 0) return true; // global
+    for (const p of scoped) if (userParishes.has(p)) return true;
+    return false;
+  });
+}
+
 async function listAnnouncementsByKindFilter(
   kindFilter: "null" | "not-null",
   limit?: number
@@ -444,8 +498,9 @@ async function listAnnouncementsByKindFilter(
   const { data, error } = await query;
   if (error) throw error;
   const all = (data ?? []) as AnnouncementRow[];
-  const sched = await loadSchedules("announcement", all.map((r) => r.id));
-  const visibles = all.filter((r) => isVisibleNow(sched.get(r.id)));
+  const byParish = await filterAnnouncementsByParish(all);
+  const sched = await loadSchedules("announcement", byParish.map((r) => r.id));
+  const visibles = byParish.filter((r) => isVisibleNow(sched.get(r.id)));
   const rows = limit ? visibles.slice(0, limit) : visibles;
   const items = await resolveAnnouncementHrefs(rows);
   return { items, total: visibles.length };
@@ -461,6 +516,37 @@ export async function listLiturgicalAnnouncements(
   limit?: number
 ): Promise<{ items: Featured[]; total: number }> {
   return listAnnouncementsByKindFilter("not-null", limit);
+}
+
+// Anuncios vinculados específicamente a una parroquia (excluye globales).
+// Filtra por vigencia horaria (isVisibleNow). Mezcla comunes y litúrgicos.
+export async function listAnnouncementsForParish(
+  parishId: string,
+  limit?: number
+): Promise<{ items: Featured[]; total: number }> {
+  const supabase = await createClient();
+  const { data: links, error: linkErr } = await supabase
+    .from("announcement_parishes")
+    .select("announcement_id")
+    .eq("parish_id", parishId);
+  if (linkErr) throw linkErr;
+  const ids = (links ?? []).map((l) => l.announcement_id as string);
+  if (ids.length === 0) return { items: [], total: 0 };
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(
+      "id, title, body, kind, target_kind, target_id, target_url, priority, created_at"
+    )
+    .in("id", ids)
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  const sched = await loadSchedules("announcement", all.map((r) => r.id));
+  const visibles = all.filter((r) => isVisibleNow(sched.get(r.id)));
+  const rows = limit ? visibles.slice(0, limit) : visibles;
+  const items = await resolveAnnouncementHrefs(rows);
+  return { items, total: visibles.length };
 }
 
 // Compat: la home anterior llamaba listActiveFeatured (5 items, kind null).

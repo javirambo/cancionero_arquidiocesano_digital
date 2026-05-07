@@ -5,6 +5,10 @@ import {
   listMyPlaylistsSections,
 } from "@/lib/playlists";
 import { PlaylistCard } from "./playlist-card";
+import {
+  NewPlaylistButton,
+  type NewPlaylistOption,
+} from "./new-playlist-button";
 
 export const metadata = {
   title: "Playlists · Cancionero Arquidiocesano",
@@ -67,6 +71,57 @@ export default async function PlaylistsPage() {
     sections.byParish.length === 0 &&
     sections.archdiocesan.length === 0;
 
+  // Opciones del botón "+ Nueva".
+  const [profileRes, rolesRes, coordRes] = await Promise.all([
+    supabase
+      .from("users")
+      .select("display_name, email")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase.from("user_roles").select("roles(name)").eq("user_id", user.id),
+    supabase
+      .from("parish_members")
+      .select("parishes(id, name)")
+      .eq("user_id", user.id)
+      .eq("role", "coordinator"),
+  ]);
+  const displayName =
+    (profileRes.data?.display_name as string | null) ||
+    (profileRes.data?.email as string | null) ||
+    "Personal";
+  const roleNames = (rolesRes.data ?? [])
+    .map((r) => {
+      const rel = r.roles as { name: string } | { name: string }[] | null;
+      const single = Array.isArray(rel) ? rel[0] : rel;
+      return single?.name as string | undefined;
+    })
+    .filter((n): n is string => Boolean(n));
+  const isAdmin = roleNames.includes("admin");
+  const isEditor = isAdmin || roleNames.includes("editor");
+  type ParishLite = { id: string; name: string };
+  const coordParishes: ParishLite[] = (coordRes.data ?? [])
+    .map((m) => {
+      const rel = m.parishes as ParishLite | ParishLite[] | null;
+      return Array.isArray(rel) ? rel[0] : rel;
+    })
+    .filter((p): p is ParishLite => Boolean(p));
+  const newOptions: NewPlaylistOption[] = [
+    { kind: "personal", label: `Personal de ${displayName}` },
+    ...coordParishes.map<NewPlaylistOption>((p) => ({
+      kind: "parish",
+      parishId: p.id,
+      label: `De ${p.name}`,
+    })),
+    ...(isEditor
+      ? [
+          {
+            kind: "archdiocesan" as const,
+            label: "Pública Arquidiocesana",
+          },
+        ]
+      : []),
+  ];
+
   if (isEmpty) {
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
@@ -74,12 +129,15 @@ export default async function PlaylistsPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             Playlists
           </p>
-          <h1 className="text-3xl">Tus Listas</h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-3xl">Mis Listas</h1>
+            <NewPlaylistButton options={newOptions} />
+          </div>
         </header>
         <section className="rounded-2xl border border-border bg-sidebar p-6">
           <p className="text-sm normal-case text-muted-foreground">
-            Todavía no tenés playlists. Vinculá tu parroquia o creá una playlist
-            personal desde el menú &quot;…&quot; de cualquier canción.
+            Todavía no tenés listas. Vinculá tu parroquia o creá una lista
+            personal desde el menú &quot;…&quot; de cualquier canto.
           </p>
           <Link
             href="/perfil"
@@ -95,7 +153,10 @@ export default async function PlaylistsPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl">Tus Listas</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-3xl">Mis Listas</h1>
+          <NewPlaylistButton options={newOptions} />
+        </div>
         <p className="text-base normal-case text-muted-foreground">
           Tus repertorios personales, los de tus parroquias y los de la
           Arquidiócesis.

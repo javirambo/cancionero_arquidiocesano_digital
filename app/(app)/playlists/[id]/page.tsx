@@ -26,32 +26,61 @@ export default async function PlaylistPage({
   } = await supabase.auth.getUser();
   let canEdit = false;
   if (user) {
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("roles(name)")
-      .eq("user_id", user.id);
-    const roleNames = (roles ?? [])
-      .map((r) => {
-        const rel = r.roles as { name: string } | { name: string }[] | null;
-        const single = Array.isArray(rel) ? rel[0] : rel;
-        return single?.name;
-      })
-      .filter((n): n is string => Boolean(n));
-    if (roleNames.includes("admin")) {
+    // Dueño de la playlist (relevante para playlists personales sin parroquia).
+    const { data: ownerRow } = await supabase
+      .from("playlists")
+      .select("created_by")
+      .eq("id", pl.id)
+      .maybeSingle();
+    if (ownerRow?.created_by === user.id) {
       canEdit = true;
-    } else if (pl.parish) {
-      const { data: member } = await supabase
-        .from("parish_members")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("parish_id", pl.parish.id)
-        .maybeSingle();
-      if (member?.role === "coordinator") canEdit = true;
+    } else {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("roles(name)")
+        .eq("user_id", user.id);
+      const roleNames = (roles ?? [])
+        .map((r) => {
+          const rel = r.roles as { name: string } | { name: string }[] | null;
+          const single = Array.isArray(rel) ? rel[0] : rel;
+          return single?.name;
+        })
+        .filter((n): n is string => Boolean(n));
+      if (roleNames.includes("admin")) {
+        canEdit = true;
+      } else if (pl.parish) {
+        const { data: member } = await supabase
+          .from("parish_members")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("parish_id", pl.parish.id)
+          .maybeSingle();
+        if (member?.role === "coordinator") canEdit = true;
+      }
     }
   }
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
+      <Link
+        href="/playlists"
+        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Volver a las listas
+      </Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl">{pl.name}</h1>

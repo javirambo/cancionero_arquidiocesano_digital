@@ -160,7 +160,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
         </button>
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-[0.15em] text-secondary normal-case">
-            Nombre de la playlist
+            Nombre de la lista
           </span>
           <input
             ref={newNameRef}
@@ -175,7 +175,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
             }}
             disabled={busy}
             maxLength={120}
-            placeholder="Mi nueva playlist"
+            placeholder="Mi nueva lista"
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
           />
         </label>
@@ -228,7 +228,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
           <p className="px-4 py-3 text-sm normal-case text-muted-foreground">
             {filter.trim().length > 0
               ? "Sin resultados."
-              : "Todavía no tenés playlists."}
+              : "Todavía no tenés listas."}
           </p>
         )}
         {!error &&

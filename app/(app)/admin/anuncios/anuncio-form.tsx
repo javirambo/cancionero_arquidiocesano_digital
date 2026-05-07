@@ -379,7 +379,7 @@ export function AnuncioForm({
           )}
           {!allowGlobal && (
             <p className="text-xs normal-case text-muted-foreground">
-              Como coordinator solo podés crear anuncios para tus parroquias.
+              Como coordinador parroquial solo podés crear anuncios para tus parroquias.
               Elegí al menos una abajo.
             </p>
           )}
