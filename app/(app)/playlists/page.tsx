@@ -62,7 +62,9 @@ export default async function PlaylistsPage() {
     );
   }
 
-  const sections = await listMyPlaylistsSections(user.id);
+  const sections = await listMyPlaylistsSections(user.id, {
+    includeOutOfWindow: true,
+  });
   const isEmpty =
     sections.personal.length === 0 &&
     sections.byParish.length === 0 &&

@@ -16,31 +16,8 @@ import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
 
 const PREVIEW = 3;
+const PLAYLIST_HOME_LIMIT = 4;
 const SONGS_PAGE_SIZE = 50;
-
-type AccesoRapido = {
-  href: string;
-  titulo: string;
-  descripcion: string;
-};
-
-const accesos: AccesoRapido[] = [
-  {
-    href: "/canciones",
-    titulo: "Canciones",
-    descripcion: "Letras, acordes y partituras del repertorio litúrgico.",
-  },
-  {
-    href: "/playlists",
-    titulo: "Playlists",
-    descripcion: "Repertorios armados por parroquias y festividades.",
-  },
-  {
-    href: "/parroquias",
-    titulo: "Parroquias",
-    descripcion: "Comunidades de la Arquidiócesis y su música propia.",
-  },
-];
 
 type ParishLite = { id: string; slug: string; name: string };
 
@@ -135,36 +112,27 @@ export default async function Home() {
           </p>
         </section>
 
-        {/* Logueado: parroquia principal */}
-        {user && primaryParish && primaryParishPlaylists.length > 0 && (
-          <PlaylistsSection
-            heading={`Playlists de ${primaryParish.name}`}
-            playlists={primaryParishPlaylists}
-            seeAllHref={`/parroquias/${primaryParish.slug}/playlists`}
-          />
-        )}
-
-        {/* Logueado: hasta 2 parroquias asociadas */}
-        {user &&
-          otherParishPlaylists
-            .filter((g) => g.items.length > 0)
-            .map((g) => (
-              <PlaylistsSection
-                key={g.parish.id}
-                heading={g.parish.name}
-                playlists={g.items}
-                seeAllHref={`/parroquias/${g.parish.slug}/playlists`}
-              />
-            ))}
-
-        {/* Arquidiocesanas */}
-        {archdiocesan.length > 0 && (
-          <PlaylistsSection
-            heading="Playlists recomendadas"
-            playlists={archdiocesan}
-            seeAllHref="/playlists"
-          />
-        )}
+        {/* Playlists: una sola sección mezclada, dedupe, máximo 4. */}
+        {(() => {
+          const merged: PlaylistSummary[] = [];
+          const seen = new Set<string>();
+          const push = (p: PlaylistSummary) => {
+            if (seen.has(p.id)) return;
+            seen.add(p.id);
+            merged.push(p);
+          };
+          primaryParishPlaylists.forEach(push);
+          otherParishPlaylists.forEach((g) => g.items.forEach(push));
+          archdiocesan.forEach(push);
+          if (merged.length === 0) return null;
+          return (
+            <PlaylistsSection
+              heading="Playlists"
+              playlists={merged.slice(0, PLAYLIST_HOME_LIMIT)}
+              seeAllHref="/playlists"
+            />
+          );
+        })()}
 
         {/* Anuncios litúrgicos */}
         {liturgical.items.length > 0 && (
@@ -193,27 +161,6 @@ export default async function Home() {
           />
         )}
 
-        {/* Accesos rápidos */}
-        <section aria-labelledby="accesos-heading" className="flex flex-col gap-4">
-          <h2 id="accesos-heading" className="text-xl">
-            Accesos rápidos
-          </h2>
-          <ul className="grid gap-4 sm:grid-cols-3">
-            {accesos.map((acceso) => (
-              <li key={acceso.href}>
-                <Link
-                  href={acceso.href}
-                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-6 transition-colors hover:border-primary"
-                >
-                  <span className="text-lg text-primary">{acceso.titulo}</span>
-                  <span className="text-sm leading-6 text-muted-foreground normal-case">
-                    {acceso.descripcion}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
 
         {/* Iniciá sesión (solo invitado, al final) */}
         {!user && (
