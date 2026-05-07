@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const showEditorLinks = access.isAdmin || access.isEditor;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
       <div className="flex flex-col gap-2 border-b border-border pb-3">
         <span className="text-sm uppercase tracking-[0.2em] text-secondary">
           Administración

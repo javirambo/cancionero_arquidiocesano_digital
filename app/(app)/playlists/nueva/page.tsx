@@ -35,7 +35,7 @@ export default async function NuevaPlaylistPage() {
       .maybeSingle();
     if (!arch) {
       return (
-        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-12">
           <h1 className="text-2xl">Nueva playlist</h1>
           <p className="text-sm normal-case text-destructive">
             No se encontró la parroquia &quot;arquidiocesis&quot;. Contactá al
@@ -153,7 +153,7 @@ function CreateLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
       <Link
         href="/playlists"
         className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"

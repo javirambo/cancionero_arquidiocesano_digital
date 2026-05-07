@@ -69,7 +69,7 @@ export default async function EditarPlaylistPage({
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-8">
       <Link
         href={`/playlists/${pl.id}`}
         className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"

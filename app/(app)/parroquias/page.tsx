@@ -55,7 +55,7 @@ export default async function ParroquiasPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-wrap items-start gap-4">
         <div className="flex flex-1 flex-col gap-2">
           <h1 className="text-3xl">Parroquias</h1>

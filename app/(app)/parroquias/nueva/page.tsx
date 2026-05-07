@@ -15,7 +15,7 @@ export default async function NuevaParroquiaUserPage() {
   if (!user) redirect("/perfil");
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
       <Link
         href="/parroquias"
         className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
