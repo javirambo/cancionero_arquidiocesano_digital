@@ -75,25 +75,35 @@ export default async function PlaylistPage({
               {pl.description}
             </p>
           )}
-          {schedules.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <ul className="flex flex-col gap-0.5">
-                {schedules.map((s) => (
-                  <li
-                    key={s.id}
-                    className="text-xs normal-case text-muted-foreground"
-                  >
-                    {describeSchedule(s)}
-                  </li>
-                ))}
-              </ul>
-              {outOfWindow && (
-                <span className="inline-flex w-fit items-center rounded-full border border-warning px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-warning">
-                  Fuera de horario actual
-                </span>
-              )}
-            </div>
-          )}
+          {(() => {
+            const visibleSchedules = canEdit
+              ? schedules
+              : schedules.filter(
+                  (s) => !(s.time_mode === "all_day" && s.date_mode === "always")
+                );
+            if (visibleSchedules.length === 0 && !outOfWindow) return null;
+            return (
+              <div className="flex flex-col gap-1">
+                {visibleSchedules.length > 0 && (
+                  <ul className="flex flex-col gap-0.5">
+                    {visibleSchedules.map((s) => (
+                      <li
+                        key={s.id}
+                        className="text-xs normal-case text-muted-foreground"
+                      >
+                        {describeSchedule(s)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {outOfWindow && (
+                  <span className="inline-flex w-fit items-center rounded-full border border-warning px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-warning">
+                    Fuera de horario actual
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <div className="flex flex-col items-end gap-2">
           {canEdit && (
