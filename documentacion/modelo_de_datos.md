@@ -303,6 +303,11 @@ Pares clave/valor globales (config feature flags, textos institucionales).
 | `value`     | jsonb | NOT NULL     |
 | `updated_at`| timestamptz | default now() |
 
+**Keys conocidas:**
+- `admin_contact_emails` (jsonb array de strings) — emails del administrador general que se muestran en la vista pública de parroquia cuando esa parroquia no tiene Coordinador asignado, para que un visitante pueda solicitar el alta. Editable desde `/admin/parroquias` (sección "Configuración general"). Seed inicial `[]` en migración 0028.
+
+**RLS:** SELECT público (`using (true)`). INSERT/UPDATE/DELETE solo `is_admin()`.
+
 ---
 
 ## FASE 2
@@ -382,6 +387,8 @@ Vínculo usuario ↔ parroquia con rol contextual (un mismo usuario puede ser co
 | `joined_at` | timestamptz | default now()                                                  |
 
 **PK compuesta:** `(user_id, parish_id)`.
+
+**RPC `get_parish_coordinators(p_parish_id uuid)`** (mig. 0026 + 0027) — `security definer`, devuelve `(user_id, display_name, email, avatar_url)` de los coordinators de una parroquia. Necesaria porque `users` tiene RLS restrictiva y la vista pública de parroquia debe mostrar la sección "Contacto" a visitantes anónimos. GRANT EXECUTE a `anon` y `authenticated`.
 
 ---
 

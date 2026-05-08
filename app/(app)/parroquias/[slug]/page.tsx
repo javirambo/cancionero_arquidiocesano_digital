@@ -17,24 +17,59 @@ export default async function ParroquiaPage({
   const playlists = await listPlaylistsForParish(parish.id, { parishSlug: parish.slug });
   const previewPlaylists = playlists.slice(0, 4);
 
-  // Anuncios solo si el usuario es miembro de esta parroquia.
   const supabase = await createClient();
+  const [coordinatorsRes, adminEmailsRes] = await Promise.all([
+    supabase.rpc("get_parish_coordinators", { p_parish_id: parish.id }),
+    supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "admin_contact_emails")
+      .maybeSingle(),
+  ]);
+  const coordinators = (coordinatorsRes.data ?? []) as Array<{
+    user_id: string;
+    display_name: string | null;
+    email: string;
+    avatar_url: string | null;
+  }>;
+  const adminContactEmails: string[] = Array.isArray(adminEmailsRes.data?.value)
+    ? (adminEmailsRes.data?.value as string[])
+    : [];
+
+  // Anuncios solo si el usuario es miembro de esta parroquia.
   const {
     data: { user },
   } = await supabase.auth.getUser();
   let parishAnnouncements: Awaited<
     ReturnType<typeof listAnnouncementsForParish>
   > = { items: [], total: 0 };
+  let canEdit = false;
   if (user) {
-    const { data: member } = await supabase
-      .from("parish_members")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .eq("parish_id", parish.id)
-      .maybeSingle();
-    if (member) {
+    const [memberRes, rolesRes] = await Promise.all([
+      supabase
+        .from("parish_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("parish_id", parish.id)
+        .maybeSingle(),
+      supabase
+        .from("user_roles")
+        .select("roles(name)")
+        .eq("user_id", user.id),
+    ]);
+    if (memberRes.data) {
       parishAnnouncements = await listAnnouncementsForParish(parish.id);
     }
+    const roleNames =
+      (rolesRes.data ?? [])
+        .map((r: { roles: { name: string } | { name: string }[] | null }) => {
+          const roles = r.roles;
+          if (Array.isArray(roles)) return roles[0]?.name;
+          return roles?.name;
+        })
+        .filter(Boolean) as string[];
+    const isAdmin = roleNames.includes("admin");
+    canEdit = isAdmin || memberRes.data?.role === "coordinator";
   }
 
   return (
@@ -58,23 +93,31 @@ export default async function ParroquiaPage({
         </svg>
         Volver a parroquias
       </Link>
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Parroquia
-          </p>
+      <header className="flex flex-col gap-2">
+        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+          Parroquia
+        </p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-3xl">{parish.name}</h1>
-          {(parish.address || parish.city) && (
-            <p className="text-sm normal-case text-muted-foreground">
-              {[parish.address, parish.city].filter(Boolean).join(" · ")}
-            </p>
-          )}
-          {parish.description && (
-            <p className="max-w-2xl text-base normal-case text-muted-foreground">
-              {parish.description}
-            </p>
+          {canEdit && (
+            <Link
+              href={`/admin/parroquias/${parish.id}`}
+              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              Editar
+            </Link>
           )}
         </div>
+        {(parish.address || parish.city) && (
+          <p className="text-sm normal-case text-muted-foreground">
+            {[parish.address, parish.city].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {parish.description && (
+          <p className="max-w-2xl text-base normal-case text-muted-foreground">
+            {parish.description}
+          </p>
+        )}
       </header>
 
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">
@@ -143,6 +186,81 @@ export default async function ParroquiaPage({
           </ul>
         </section>
       )}
+
+      <section aria-labelledby="contacto-heading" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 id="contacto-heading" className="text-xl">
+            Contacto
+          </h2>
+          <p className="text-sm normal-case text-muted-foreground">
+            Por cualquier sugerencia puede contactarse con el Coordinador Parroquial
+          </p>
+        </div>
+        {coordinators.length === 0 ? (
+          <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+            Esta parroquia todavía no tiene un administrador parroquial asignado.
+            {adminContactEmails.length > 0 && (
+              <>
+                {" "}
+                Puede contactarse con{" "}
+                {adminContactEmails.map((email, i) => (
+                  <span key={email}>
+                    {i > 0 && (i === adminContactEmails.length - 1 ? " o " : ", ")}
+                    <a
+                      href={`mailto:${email}`}
+                      className="text-primary hover:underline"
+                    >
+                      {email}
+                    </a>
+                  </span>
+                ))}{" "}
+                para solicitarlo.
+              </>
+            )}
+          </p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {coordinators.map((c) => {
+              const name = c.display_name ?? c.email;
+              const initial = name.charAt(0).toUpperCase();
+              return (
+                <li
+                  key={c.user_id}
+                  className="flex items-center gap-4 rounded-xl border border-border bg-background p-5"
+                >
+                  {c.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.avatar_url}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sidebar text-lg text-primary"
+                    >
+                      {initial}
+                    </div>
+                  )}
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="truncate text-lg text-primary">
+                      {name}
+                    </span>
+                    <a
+                      href={`mailto:${c.email}`}
+                      className="truncate text-sm normal-case text-muted-foreground hover:text-primary hover:underline"
+                    >
+                      {c.email}
+                    </a>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }
