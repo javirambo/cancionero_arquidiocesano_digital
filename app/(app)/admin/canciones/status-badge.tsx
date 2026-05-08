@@ -18,7 +18,7 @@ const STYLE: Record<SongStatus, { label: string; className: string }> = {
     className: "border-destructive text-destructive",
   },
   archived: {
-    label: "Eliminado",
+    label: "Archivado",
     className: "border-border text-muted-foreground opacity-70",
   },
 };

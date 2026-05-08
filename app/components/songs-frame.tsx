@@ -37,11 +37,16 @@ export function SongsFrame({
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [categorySlug, setCategorySlug] = useState<string | null>(null);
+  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  if (initialTotal === 0 && mode === "paged" && !pending && !categorySlug)
+  if (
+    initialTotal === 0 &&
+    mode === "paged" &&
+    !pending &&
+    categorySlugs.length === 0
+  )
     return null;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -49,22 +54,24 @@ export function SongsFrame({
   const to = Math.min(page * pageSize, total);
   const hasPrev = mode === "paged" && page > 1;
   const hasNext = mode === "paged" && page < totalPages;
-  const activeCategoryName =
-    categorySlug !== null
-      ? categories.find((c) => c.slug === categorySlug)?.name ?? null
-      : null;
+  const activeCategories = categorySlugs
+    .map((slug) => categories.find((c) => c.slug === slug))
+    .filter((c): c is PublicCategoryOption => Boolean(c));
+  const hasActiveFilter = categorySlugs.length > 0;
 
-  function buildQs(params: { q?: string; p?: number; cat?: string | null }) {
+  function buildQs(params: { q?: string; p?: number; cats?: string[] }) {
     const sp = new URLSearchParams();
     if (params.q) sp.set("q", params.q);
     if (params.p !== undefined && params.p > 1) sp.set("p", String(params.p));
-    if (params.cat) sp.set("cat", params.cat);
+    if (params.cats) {
+      for (const slug of params.cats) sp.append("cat", slug);
+    }
     return sp.toString();
   }
 
-  function fetchPage(nextPage: number, cat: string | null = categorySlug) {
+  function fetchPage(nextPage: number, cats: string[] = categorySlugs) {
     startTransition(async () => {
-      const qs = buildQs({ p: nextPage, cat });
+      const qs = buildQs({ p: nextPage, cats });
       const res = await fetch(`/api/songs/paged${qs ? `?${qs}` : ""}`, {
         cache: "no-store",
       });
@@ -77,9 +84,9 @@ export function SongsFrame({
     });
   }
 
-  function fetchSearch(term: string, cat: string | null = categorySlug) {
+  function fetchSearch(term: string, cats: string[] = categorySlugs) {
     startTransition(async () => {
-      const qs = buildQs({ q: term, cat });
+      const qs = buildQs({ q: term, cats });
       const res = await fetch(`/api/songs/paged?${qs}`, {
         cache: "no-store",
       });
@@ -117,9 +124,8 @@ export function SongsFrame({
     if (mode === "search") fetchPage(1);
   }
 
-  function toggleCategory(slug: string) {
-    const next = categorySlug === slug ? null : slug;
-    setCategorySlug(next);
+  function applyCategories(next: string[]) {
+    setCategorySlugs(next);
     const term = query.trim();
     if (term && searchOpen) {
       fetchSearch(term, next);
@@ -128,8 +134,15 @@ export function SongsFrame({
     }
   }
 
-  function clearCategory() {
-    toggleCategory(categorySlug ?? "");
+  function toggleCategory(slug: string) {
+    const next = categorySlugs.includes(slug)
+      ? categorySlugs.filter((s) => s !== slug)
+      : [...categorySlugs, slug];
+    applyCategories(next);
+  }
+
+  function removeCategory(slug: string) {
+    applyCategories(categorySlugs.filter((s) => s !== slug));
   }
 
   const arrowEnabled =
@@ -186,9 +199,9 @@ export function SongsFrame({
               type="button"
               onClick={() => setFilterOpen((v) => !v)}
               aria-label={filterOpen ? "Cerrar filtros" : "Filtrar por categoría"}
-              aria-pressed={filterOpen || categorySlug !== null}
+              aria-pressed={filterOpen || hasActiveFilter}
               className={
-                categorySlug !== null || filterOpen ? arrowActive : arrowEnabled
+                hasActiveFilter || filterOpen ? arrowActive : arrowEnabled
               }
             >
               <span className="scale-150">
@@ -212,7 +225,7 @@ export function SongsFrame({
       {filterOpen && categories.length > 0 && (
         <div className="flex flex-wrap gap-1.5 rounded-lg border border-border bg-background px-3 py-2">
           {categories.map((c) => {
-            const selected = categorySlug === c.slug;
+            const selected = categorySlugs.includes(c.slug);
             return (
               <button
                 key={c.id}
@@ -232,20 +245,23 @@ export function SongsFrame({
         </div>
       )}
 
-      {!filterOpen && activeCategoryName && (
-        <div className="flex items-center gap-2 text-xs normal-case text-muted-foreground">
+      {!filterOpen && activeCategories.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-xs normal-case text-muted-foreground">
           <span>Filtrado por:</span>
-          <button
-            type="button"
-            onClick={clearCategory}
-            className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground"
-            aria-label={`Quitar filtro ${activeCategoryName}`}
-          >
-            {activeCategoryName}
-            <span className="scale-90">
-              <CloseIcon />
-            </span>
-          </button>
+          {activeCategories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => removeCategory(c.slug)}
+              className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground"
+              aria-label={`Quitar filtro ${c.name}`}
+            >
+              {c.name}
+              <span className="scale-90">
+                <CloseIcon />
+              </span>
+            </button>
+          ))}
         </div>
       )}
 
@@ -286,9 +302,13 @@ export function SongsFrame({
           <p className="px-5 py-6 text-sm normal-case text-muted-foreground">
             {mode === "search"
               ? "No se encontraron canciones."
-              : activeCategoryName
-                ? `No hay canciones en "${activeCategoryName}".`
-                : "No hay canciones."}
+              : activeCategories.length === 1
+                ? `No hay canciones en "${activeCategories[0].name}".`
+                : activeCategories.length > 1
+                  ? `No hay canciones que estén en todas: ${activeCategories
+                      .map((c) => `"${c.name}"`)
+                      .join(", ")}.`
+                  : "No hay canciones."}
           </p>
         ) : (
           items.map((s) => <SongRow key={s.id} song={s} />)

@@ -75,20 +75,38 @@ export async function listPublicCategories(): Promise<PublicCategoryOption[]> {
 
 async function resolveCategorySongIds(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  categorySlug: string
+  categorySlugs: string[]
 ): Promise<string[]> {
-  const { data: cat } = await supabase
+  if (categorySlugs.length === 0) return [];
+  const { data: cats, error: catErr } = await supabase
     .from("categories")
-    .select("id")
-    .eq("slug", categorySlug)
-    .maybeSingle();
-  if (!cat) return [];
-  const { data: links, error } = await supabase
-    .from("song_categories")
-    .select("song_id")
-    .eq("category_id", (cat as { id: string }).id);
-  if (error) throw error;
-  return ((links ?? []) as { song_id: string }[]).map((l) => l.song_id);
+    .select("id, slug")
+    .in("slug", categorySlugs);
+  if (catErr) throw catErr;
+  const catRows = (cats ?? []) as { id: string; slug: string }[];
+  // AND estricto: si algún slug no existe, no puede haber resultados.
+  if (catRows.length !== categorySlugs.length) return [];
+  // Para cada categoría, traer el set de song_id e intersectar.
+  let intersection: Set<string> | null = null;
+  for (const c of catRows) {
+    const { data: links, error } = await supabase
+      .from("song_categories")
+      .select("song_id")
+      .eq("category_id", c.id);
+    if (error) throw error;
+    const ids = new Set(
+      ((links ?? []) as { song_id: string }[]).map((l) => l.song_id)
+    );
+    if (intersection === null) {
+      intersection = ids;
+    } else {
+      const next = new Set<string>();
+      for (const id of intersection) if (ids.has(id)) next.add(id);
+      intersection = next;
+    }
+    if (intersection.size === 0) return [];
+  }
+  return intersection ? Array.from(intersection) : [];
 }
 
 export async function listPublishedSongs(limit = 100): Promise<SongSummary[]> {
@@ -143,15 +161,15 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
 export async function listSongsWithCapabilities(
   q: string = "",
   limit = 100,
-  categorySlug?: string
+  categorySlugs: string[] = []
 ): Promise<(SongSummary & SongCapabilities)[]> {
   const supabase = await createClient();
   const term = q.trim();
 
-  // Si hay filtro por categoría: resolver IDs antes para usarlo como restricción.
+  // Si hay filtro por categorías (AND): resolver intersección de IDs.
   let categoryIds: string[] | null = null;
-  if (categorySlug) {
-    categoryIds = await resolveCategorySongIds(supabase, categorySlug);
+  if (categorySlugs.length > 0) {
+    categoryIds = await resolveCategorySongIds(supabase, categorySlugs);
     if (categoryIds.length === 0) return [];
   }
 
@@ -234,7 +252,7 @@ export async function listSongsWithCapabilities(
 export async function listSongsPaged(
   page: number,
   pageSize: number,
-  categorySlug?: string
+  categorySlugs: string[] = []
 ): Promise<{ items: (SongSummary & SongCapabilities)[]; total: number }> {
   const supabase = await createClient();
   const safePage = Math.max(1, Math.floor(page));
@@ -242,8 +260,8 @@ export async function listSongsPaged(
   const to = from + pageSize - 1;
 
   let categoryIds: string[] | null = null;
-  if (categorySlug) {
-    categoryIds = await resolveCategorySongIds(supabase, categorySlug);
+  if (categorySlugs.length > 0) {
+    categoryIds = await resolveCategorySongIds(supabase, categorySlugs);
     if (categoryIds.length === 0) return { items: [], total: 0 };
   }
 

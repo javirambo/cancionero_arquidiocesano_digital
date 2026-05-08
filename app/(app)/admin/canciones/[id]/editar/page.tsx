@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getAdminAccess } from "@/app/(app)/admin/access";
+import { createClient } from "@/lib/supabase/server";
 import {
   getSongForAdmin,
   listAuthorOptions,
@@ -29,6 +30,20 @@ export default async function EditarCancionPage({
   ]);
   if (!song) notFound();
 
+  // Una canción se puede borrar definitivamente solo si nunca salió de
+  // draft. Como aproximación estricta sin tabla de auditoría: status =
+  // 'draft' y sin filas en song_versions (snapshot que se inserta al
+  // pasar a 'review' por primera vez).
+  let canDelete = false;
+  if (song.status === "draft") {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("song_versions")
+      .select("song_id", { count: "exact", head: true })
+      .eq("song_id", song.id);
+    canDelete = (count ?? 0) === 0;
+  }
+
   return (
     <main className="flex flex-col gap-6">
       <nav className="text-sm normal-case text-muted-foreground">
@@ -49,6 +64,7 @@ export default async function EditarCancionPage({
         status={song.status}
         reviewNotes={song.review_notes}
         canReview={access.isEditor || access.isAdmin}
+        canDelete={canDelete}
       />
 
       <SongForm

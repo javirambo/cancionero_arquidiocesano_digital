@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/app/components/toast";
+import { TrashIcon } from "@/app/components/icons";
 import type { SongStatus } from "@/lib/songs-admin";
 import { SongStatusBadge } from "../../status-badge";
 
@@ -54,11 +55,13 @@ export function ReviewActions({
   status,
   reviewNotes,
   canReview,
+  canDelete,
 }: {
   songId: string;
   status: SongStatus;
   reviewNotes: string | null;
   canReview: boolean;
+  canDelete: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -129,13 +132,34 @@ export function ReviewActions({
   async function onArchive() {
     if (
       !confirm(
-        "¿Eliminar esta canción? Dejará de aparecer en búsquedas y vistas públicas. Las playlists que la incluyen la marcarán como no disponible."
+        "¿Archivar esta canción? Dejará de aparecer en búsquedas y vistas públicas. Las playlists que la incluyen la marcarán como no disponible."
       )
     )
       return;
-    if (!confirm("Confirmar: eliminar definitivamente esta canción.")) return;
+    if (!confirm("Confirmar: archivar esta canción.")) return;
     const ok = await call("archive_song", { p_song_id: songId });
     if (ok) router.push("/admin/canciones");
+  }
+
+  async function onDelete() {
+    if (
+      !confirm(
+        "¿Borrar definitivamente esta canción? Solo se permite si nunca salió de borrador. Esta acción no se puede deshacer."
+      )
+    )
+      return;
+    if (!confirm("Confirmar: borrar definitivamente esta canción.")) return;
+    setBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("delete_draft_song", {
+      p_song_id: songId,
+    });
+    setBusy(false);
+    if (error) {
+      toast.show(error.message, "error");
+      return;
+    }
+    router.push("/admin/canciones");
   }
 
   async function onUnarchive() {
@@ -244,7 +268,20 @@ export function ReviewActions({
             disabled={busy}
             className="rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
           >
-            Eliminar
+            Archivar
+          </button>
+        )}
+        {canDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={busy}
+            aria-label="Borrar definitivamente"
+            title="Borrar definitivamente"
+            className="inline-flex items-center gap-2 rounded-full border border-destructive px-4 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
+          >
+            <TrashIcon />
+            <span>Borrar</span>
           </button>
         )}
         {caps.canUnarchive && (

@@ -10,6 +10,7 @@ import {
   PlayIcon,
 } from "@/app/components/icons";
 import { SongStatusBadge } from "./status-badge";
+import { SearchForm } from "./search-form";
 
 type EstadoTab = SongStatus | "todas";
 
@@ -19,7 +20,7 @@ const TABS: { value: EstadoTab; label: string }[] = [
   { value: "review", label: "En revisión" },
   { value: "published", label: "Publicados" },
   { value: "rejected", label: "Rechazados" },
-  { value: "archived", label: "Eliminados" },
+  { value: "archived", label: "Archivados" },
 ];
 
 function isEstadoTab(v: string | undefined): v is EstadoTab {
@@ -79,24 +80,7 @@ export default async function AdminCancionesPage({
         })}
       </nav>
 
-      <form className="flex flex-wrap gap-2" action="/admin/canciones">
-        {estado !== "todas" && (
-          <input type="hidden" name="estado" value={estado} />
-        )}
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Buscar por título o número…"
-          className="flex-1 min-w-[200px] rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
-        />
-        <button
-          type="submit"
-          className="rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-foreground hover:border-primary hover:text-primary"
-        >
-          Buscar
-        </button>
-      </form>
+      <SearchForm defaultValue={q} estado={estado} />
 
       {songs.length === 0 ? (
         <p className="text-sm normal-case text-muted-foreground">

@@ -9,31 +9,19 @@ export default async function NuevaCancionPage() {
   if (!access.isAdmin && !access.isEditor) redirect("/admin");
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/admin");
+  const { data, error } = await supabase.rpc("create_blank_song", {
+    p_title: "Nuevo canto",
+  });
 
-  const slug = `nueva-cancion-${Date.now()}`;
-  const { data, error } = await supabase
-    .from("songs")
-    .insert({
-      title: "Nuevo canto",
-      slug,
-      body: "",
-      status: "draft",
-      created_by: user.id,
-    })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    redirect(
-      `/admin/canciones?error=${encodeURIComponent(
-        error?.message ?? "No se pudo crear la canción"
-      )}`
+  if (error) {
+    throw new Error(`create_blank_song falló: ${error.message}`);
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || !row.id) {
+    throw new Error(
+      `create_blank_song no devolvió fila. data=${JSON.stringify(data)}`
     );
   }
 
-  redirect(`/admin/canciones/${data.id}/editar`);
+  redirect(`/admin/canciones/${row.id}/editar`);
 }
