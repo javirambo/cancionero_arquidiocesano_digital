@@ -204,9 +204,9 @@ Estructura visual de la fila:
 
 Las líneas marcadas como estribillo en el `body` (entre `{start_of_chorus}` y `{end_of_chorus}`, o `{soc}` / `{eoc}`) se renderizan como un bloque visualmente distinto del resto de la letra:
 
-- **Borde lateral izquierdo** de 4px en color `primary`.
-- **Padding izquierdo** que separa el texto del borde.
-- **Itálica** en todo el bloque (la negrita de los acordes se mantiene).
+- **Borde lateral izquierdo** de 3px en color `primary`.
+- **Padding izquierdo** chico que separa el texto del borde.
+- **Negrita** en todo el bloque (los acordes ya en negrita se mantienen).
 - Margen vertical reducido para mantener el bloque cohesionado.
 
 Aplica en la vista pública (`/canciones/[slug]`) y en la previsualización del editor (`/admin/canciones/[id]/editar`).

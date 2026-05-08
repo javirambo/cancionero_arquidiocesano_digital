@@ -297,7 +297,7 @@ export function SongView({
           block.inChorus ? (
             <div
               key={i}
-              className="my-2 border-l-4 border-primary pl-4 italic"
+              className="my-2 border-l-[3px] border-primary pl-2 font-bold"
             >
               {block.lines.map((line, j) => (
                 <LineView
