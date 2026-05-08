@@ -224,6 +224,7 @@ Lista de canciones de una parroquia para una celebración o uso general. La URL 
 | `description`     | text        |                                                           |
 | `visibility`      | text        | CHECK in ('public','unlisted','private'); default 'public'|
 | `is_archdiocesan` | boolean     | default false. Cuando true (solo si `parish_id` corresponde a la parroquia virtual `arquidiocesis`), la playlist se ve por defecto en todas las parroquias |
+| `image_path`      | text        | NULL permitido. Path dentro del bucket `images` para la imagen de la card (mig. 0023) |
 | `created_by`      | uuid        | FK → `users.id`                                           |
 | `created_at`      | timestamptz | default now()                                             |
 | `updated_at`      | timestamptz | default now()                                             |
@@ -439,6 +440,7 @@ Anuncios + festividades litúrgicas que aparecen en la home (CU-07, CU-21). Pued
 | `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`                                    |
 | `target_url`   | text        | requerido si `target_kind='external'`                                                         |
 | `priority`     | int         | default 0                                                                                     |
+| `image_path`   | text        | NULL permitido. Path dentro del bucket `images` para la imagen del anuncio (mig. 0023)        |
 | `created_by`   | uuid        | FK → `users.id` ON DELETE SET NULL                                                            |
 | `created_at`   | timestamptz | default now()                                                                                 |
 | `updated_at`   | timestamptz | default now()                                                                                 |
@@ -469,6 +471,7 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 | `partituras`  | PDFs de partituras              | lectura pública (solo `published`); escritura: Coordinador/Editor; revisión: Editor    |
 | `audios`      | mp3/ogg de referencia           | lectura pública (solo `published`); escritura: Coordinador/Editor; revisión: Editor    |
 | `parishes`    | logos / imágenes de parroquia   | lectura pública; escritura: admin                                                      |
+| `images`      | imágenes de cards (playlists/anuncios) — mig. 0023 | lectura pública; escritura: editor o coordinator (autenticado, dueño del objeto); update/delete: editor o dueño |
 
 > RLS de Storage verifica que el `song_files` que apunta al objeto pertenezca a una canción en `songs.status = 'published'` (vía join) antes de permitir lectura pública. Si la canción está en `draft`/`review`/`rejected`, los archivos solo son visibles para el uploader y Editor/Admin.
 

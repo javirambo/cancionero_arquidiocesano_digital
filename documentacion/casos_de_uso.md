@@ -126,6 +126,7 @@ Rol global con permisos plenos.
 - **Flujos alternativos:**
   - 2a. Sin resultados: el sistema muestra mensaje "No se encontraron canciones" y sugerencias de categorías.
   - 2b. Búsqueda vacía: el sistema muestra el catálogo completo paginado.
+  - 2c. **Filtro por categoría litúrgica:** el componente `SongsFrame` (catálogo `/canciones` y bloque "Cantos" de la home) ofrece un botón de filtros (ícono embudo) que despliega chips de categorías. Tocar un chip restringe el listado/búsqueda a las canciones de esa categoría (resuelta server-side cruzando `song_categories` por `slug`); volver a tocarlo lo quita. El filtro convive con la búsqueda y con la paginación, y se transmite como query string `cat=<slug>` a `/api/songs/paged`.
 - **Postcondiciones:** Ninguna persistente.
 
 ---
@@ -437,7 +438,7 @@ Rol global con permisos plenos.
 
 ### Flujo principal — Coordinador parroquial (envía)
 
-1. El coordinador crea una canción nueva o edita una existente: título, autor, categorías litúrgicas (una o varias, vía chips clicables), letra, acordes (ChordPro), tonalidad original, tempo, link YT, partituras y audios.
+1. El coordinador crea una canción nueva o edita una existente: título, autor, categorías litúrgicas (una o varias, vía chips clicables), letra, acordes (ChordPro), tonalidad original, tempo, link YT, partituras y audios. **Alta:** el botón "+ Nuevo" llama al RPC `create_blank_song` (mig. 0024), que asigna automáticamente el siguiente número (`max(number) + 1` sobre todos los estados, con `pg_advisory_xact_lock` para evitar carreras) y redirige al editor con la canción ya creada en `draft`. Los huecos no se reusan.
 2. El sistema valida formato de acordes y campos obligatorios.
 3. El sistema sube los archivos a Supabase Storage (`partituras`, `audios`) en estado `draft` (no son visibles públicamente).
 4. La canción queda persistida con `status = 'draft'`. El coordinador puede seguir editándola.
@@ -528,7 +529,7 @@ Edición específica de la información musical.
 ### Flujo principal — Crear
 
 1. Coordinador (o admin) entra a `/parroquias/{slug}/playlists/nueva`.
-2. Completa nombre (obligatorio), descripción, visibilidad, **vigencia** (ver más abajo) y opcionalmente `is_archdiocesan` (solo visible si la parroquia es `arquidiocesis`).
+2. Completa nombre (obligatorio), descripción, visibilidad, **vigencia** (ver más abajo), **imagen opcional** (CU-17.4) y opcionalmente `is_archdiocesan` (solo visible si la parroquia es `arquidiocesis`).
 3. Al guardar, el sistema redirige a `/playlists/{nuevo-id}/editar`.
 4. En la pantalla de edición, abajo aparece el editor de canciones (CU-17.1.a).
 
@@ -578,6 +579,15 @@ e. *(Pendiente)* **Edición en lote** con marcado para eliminación múltiple.
 - **Disparador:** botón **Quitar** en cada fila del editor de canciones (`/playlists/{id}/editar`).
 - **Flujo:** confirmación + `delete from playlist_songs where playlist_id=… and song_id=… and position=…`.
 - **Postcondiciones:** la canción ya no figura en la playlist; sigue existiendo en `songs`.
+
+### CU-17.4: Imagen de la playlist (opcional)
+
+Una playlist puede tener una imagen asociada que aparece como franja izquierda (75px) en la card en home y listados. Persistencia: `playlists.image_path` (mig. 0023) apuntando a un objeto del bucket público `images`.
+
+- **Disparador:** sección "Imagen" del formulario en `/playlists/nueva` y `/playlists/{id}/editar`. Componente `ImageUploadField`.
+- **Validaciones cliente:** JPG/PNG/WEBP, hasta 2 MB. Al cambiar la imagen, la anterior se borra del bucket antes de subir la nueva.
+- **Permisos:** RLS sobre `storage.objects` exige autenticado + dueño + (`is_editor()` o `is_any_coordinator()`) para INSERT; UPDATE/DELETE permiten editor o dueño del objeto.
+- **Render:** `CardWithImage` (componente reusable). Si no hay imagen, la card no muestra franja.
 
 ---
 
@@ -680,7 +690,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ### Flujo principal — Crear
 
 1. El admin entra a `/admin/anuncios/nuevo`.
-2. Completa: `title` (obligatorio), `body` (opcional), `kind` (opcional — festividad), `priority`, **vigencia** (ver CU-17.3 — mismo editor reusado).
+2. Completa: `title` (obligatorio), `body` (opcional), `kind` (opcional — festividad), `priority`, **imagen opcional** (`image_path` en bucket `images`, mismas reglas que CU-17.4), **vigencia** (ver CU-17.3 — mismo editor reusado).
 3. Selecciona destinatarios:
    - **Todas las parroquias** (default) — no se insertan filas en `announcement_parishes`.
    - **Parroquias específicas** — selector multi-select. Debe elegir al menos una.

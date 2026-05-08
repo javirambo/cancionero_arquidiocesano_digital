@@ -191,13 +191,3 @@ Las líneas marcadas como estribillo en el `body` (entre `{start_of_chorus}` y `
 - Margen vertical reducido para mantener el bloque cohesionado.
 
 Aplica en la vista pública (`/canciones/[slug]`) y en la previsualización del editor (`/admin/canciones/[id]/editar`).
-
-
-## Componentes
-
-- badges:
-- headers:
-- tablas:
-- forms:
-- diálogos:
-- botones:

@@ -4,6 +4,63 @@ Decisiones de modelo y su justificación. Una entrada por cambio significativo.
 
 ---
 
+## 2026-05-08 — Alta de canción con número auto-asignado (RPC `create_blank_song`)
+
+**Migración:** `0024_create_blank_song.sql` (aplicada).
+
+### Contexto
+
+Hasta ahora, "+ Nuevo canto" insertaba con `number = NULL` y el coordinador/editor debía completarlo a mano. Pedido: que el sistema asigne automáticamente el próximo número disponible (`max(number) + 1`) sobre todas las canciones (incluso archivadas) — los huecos no se reusan.
+
+### Decisiones
+
+1. **`create_blank_song(p_title text default 'Nuevo canto') returns table(id uuid, number int)`**: editor/admin/coordinator. Inserta `status='draft'`, `created_by=auth.uid()`, slug `nueva-cancion-<epoch_ms>`, `body=''`.
+2. **Anti-carrera con `pg_advisory_xact_lock`**: dos usuarios creando en simultáneo podrían resolver el mismo `max + 1` y violar `songs_number_unique`. El advisory lock con clave fija (hash de `'songs.next_number'`) serializa el cálculo dentro de la transacción; se libera al commit.
+3. **No se reusan huecos**: `max(number)` se calcula sobre **todos** los estados (incluido `archived`), porque liberar números dejaría huérfanas las referencias históricas en cancioneros impresos.
+
+### Alternativas consideradas y descartadas
+
+- **Numeración por secuencia (`bigserial`/`sequence`)**: descartado. Una secuencia salta huecos al hacer rollback y no se puede consultar atómicamente con `INSERT ... RETURNING` sin perder números en errores; el cálculo `max+1` con advisory lock es más predecible y cumple el requisito.
+- **Resolver el número en el cliente**: descartado. Sin lock no hay forma de evitar la carrera, y mover la lógica al servidor mantiene la regla en un solo lugar.
+
+### Impacto
+
+- **DB**: una RPC nueva con `SECURITY DEFINER` y guard de rol.
+- **UI**: el botón "+ Nuevo" del listado admin de canciones llama directo al RPC y navega al editor con la canción ya creada y numerada.
+
+---
+
+## 2026-05-08 — Imágenes en cards de playlists y anuncios (bucket `images`)
+
+**Migración:** `0023_card_images.sql` (aplicada).
+
+### Contexto
+
+Las cards de playlists y anuncios en la home eran solo texto. Pedido: poder asociar una imagen opcional a cada una para enriquecer visualmente la home y los listados.
+
+### Decisiones
+
+1. **Columnas `image_path text` (nullable)** en `playlists` y `announcements`. Guardan el path relativo dentro del bucket; la URL pública se reconstruye en `lib/supabase/storage.ts:getPublicImageUrl`.
+2. **Bucket `images` público** (lectura abierta, sin signed URLs). Es contenido visual de cards públicas; no hay nada confidencial.
+3. **Una sola carpeta `/images`** sin segregar por entidad. Pocas imágenes esperadas; segmentar por subcarpeta agrega complejidad sin beneficio.
+4. **RLS sobre `storage.objects`**:
+   - **SELECT**: público (anon + authenticated).
+   - **INSERT**: autenticado + `owner = auth.uid()` + (`is_editor()` o `is_any_coordinator()`). Los coordinators suben imágenes para sus propios anuncios.
+   - **UPDATE/DELETE**: editor/admin **o** dueño del objeto (el coordinator que lo subió puede mantenerlo).
+5. **Validación cliente** en `ImageUploadField`: JPG/PNG/WEBP, máximo 2 MB. Al cambiar la imagen, se elimina la anterior del bucket antes de subir la nueva (no se acumulan huérfanos en uso normal).
+
+### Alternativas consideradas y descartadas
+
+- **Bucket por entidad** (`playlist-images`, `announcement-images`): descartado. Mismo régimen RLS, misma audiencia, no había razón para duplicar configuración.
+- **Bucket privado + signed URLs**: descartado. Las imágenes se renderizan en home pública y para anónimos; pagar el costo de firmar URLs no aporta nada.
+
+### Impacto
+
+- **DB**: dos columnas nullable + un bucket nuevo + 4 policies sobre `storage.objects`.
+- **UI**: nuevos componentes `ImageUploadField` (form) y `CardWithImage` (render con franja izquierda de 75px). `announcement-card.tsx` y `playlist-card.tsx` usan el nuevo componente.
+
+---
+
 ## 2026-05-08 — Activación del estado `archived` (RPCs `archive_song` / `unarchive_song`)
 
 **Migración:** `0022_archive_song.sql` (aplicada).
