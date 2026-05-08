@@ -166,7 +166,7 @@ Usamos formato ChordPro:
 
 Dos route groups en `app/`:
 
-- `(app)/` — todas las rutas con header, footer y diálogos globales. Contiene `canciones/`, `playlists/`, `parroquias/`, `perfil/`, `admin/`, etc. Su layout monta `SiteHeader`, `SiteFooter` y `MergeFavoritesDialog`.
+- `(app)/` — todas las rutas con header, footer y diálogos globales. Contiene `canciones/`, `playlists/`, `parroquias/`, `admin/`, `install/`, etc. Su layout monta `SiteHeader`, `SiteFooter` y `MergeFavoritesDialog`.
 - `(print)/` — vistas standalone sin chrome del sitio. Hoy solo `canciones/[slug]/imprimir`. Su layout sólo renderiza `{children}`. Útil para CU-10 (canción imprimible) y a futuro CU-11 (cancionero de playlist).
 
 El `app/layout.tsx` raíz contiene únicamente los providers globales (theme, sesión, roles, preferencias, favoritos, toast, wake-lock). No agrega UI visible: cada route group decide qué chrome mostrar.

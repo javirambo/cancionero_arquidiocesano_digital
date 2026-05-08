@@ -10,14 +10,14 @@ export const metadata = {
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const access = await getAdminAccess();
-  if (!access.userId) redirect("/perfil");
+  if (!access.userId) redirect("/");
 
   // El acceso a `/admin/*` lo tienen admin, editor y cualquier
   // coordinator (que puede gestionar anuncios de sus parroquias).
   // Cada sub-página verifica permisos más específicos.
   const canAccess =
     access.isAdmin || access.isEditor || access.isAnyCoordinator;
-  if (!canAccess) redirect("/perfil");
+  if (!canAccess) redirect("/");
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">

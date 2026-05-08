@@ -82,14 +82,20 @@ export function PrecacheButton({
 
   if (status === "done" || (status === "idle" && persistedAt)) {
     return (
-      <button
-        type="button"
-        onClick={handleDownload}
-        className={buttonClass}
-        title={persistedAt ? `Última descarga: ${new Date(persistedAt).toLocaleString("es-AR")}` : undefined}
-      >
-        ✓ Disponible offline · Actualizar
-      </button>
+      <div className="flex flex-col items-start gap-1">
+        <button
+          type="button"
+          onClick={handleDownload}
+          className={buttonClass}
+        >
+          ✓ Disponible offline · Actualizar
+        </button>
+        {persistedAt && (
+          <p className="text-xs normal-case text-muted-foreground">
+            Última descarga: {new Date(persistedAt).toLocaleString("es-AR")}
+          </p>
+        )}
+      </div>
     );
   }
 

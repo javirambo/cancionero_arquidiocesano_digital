@@ -18,6 +18,7 @@ import {
 import { useFavorites } from "./favorites";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { DownloadFilesPanel } from "./download-files-menu";
+import { createClient } from "@/lib/supabase/client";
 
 export type SongRowItem = {
   id: string;
@@ -271,11 +272,20 @@ function RowMenu({
                   onClick={() => setView("addToPlaylist")}
                 />
               ) : (
-                <MenuLink
+                <MenuButton
                   icon={<PlaylistIcon />}
                   label="Iniciá sesión para usar playlists"
-                  href="/perfil"
-                  onClick={close}
+                  onClick={() => {
+                    close();
+                    const supabase = createClient();
+                    supabase.auth.signInWithOAuth({
+                      provider: "google",
+                      options: {
+                        redirectTo: `${window.location.origin}/auth/callback`,
+                        queryParams: { prompt: "select_account" },
+                      },
+                    });
+                  }}
                 />
               )}
               <MenuLink

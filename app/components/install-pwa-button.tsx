@@ -7,30 +7,35 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
+type Platform = "ios" | "android" | "desktop";
+
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
-  // iOS Safari
   const nav = window.navigator as Navigator & { standalone?: boolean };
   return nav.standalone === true;
 }
 
-function isIOS(): boolean {
-  if (typeof window === "undefined") return false;
+function detectPlatform(): Platform {
+  if (typeof window === "undefined") return "desktop";
   const ua = window.navigator.userAgent;
-  return /iPhone|iPad|iPod/i.test(ua);
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "desktop";
 }
 
 export function InstallPwaButton() {
+  const [mounted, setMounted] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosHelp, setShowIosHelp] = useState(false);
-  const [iosDevice, setIosDevice] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [platform, setPlatform] = useState<Platform>("desktop");
 
   useEffect(() => {
+    setMounted(true);
     setInstalled(isStandalone());
-    setIosDevice(isIOS());
+    setPlatform(detectPlatform());
 
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
@@ -49,9 +54,14 @@ export function InstallPwaButton() {
     };
   }, []);
 
-  if (installed) return null;
+  if (!mounted || installed) return null;
 
-  // Caso 1: hay prompt nativo disponible (Chrome/Android/desktop).
+  const primaryClass =
+    "rounded-full bg-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:opacity-90";
+  const secondaryClass =
+    "rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:border-primary hover:text-primary";
+
+  // Caso 1: hay prompt nativo disponible (Chrome/Android/desktop reciente).
   if (deferredPrompt) {
     return (
       <section className="rounded-2xl border border-border bg-sidebar p-6">
@@ -70,7 +80,7 @@ export function InstallPwaButton() {
             }
             setDeferredPrompt(null);
           }}
-          className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:opacity-90"
+          className={`mt-4 ${primaryClass}`}
         >
           Instalar app
         </button>
@@ -78,40 +88,71 @@ export function InstallPwaButton() {
     );
   }
 
-  // Caso 2: iOS Safari (no dispara beforeinstallprompt).
-  if (iosDevice) {
+  // Caso 2: no llegó el evento (o ya se consumió). Mostramos instrucciones según plataforma.
+  const helpContent = (() => {
+    if (platform === "ios") {
+      return (
+        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm normal-case text-muted-foreground">
+          <li>Abrí esta página en Safari (no en otro navegador).</li>
+          <li>
+            Tocá el botón <strong>Compartir</strong> (cuadrado con flecha hacia
+            arriba).
+          </li>
+          <li>
+            Elegí <strong>Agregar a pantalla de inicio</strong>.
+          </li>
+          <li>
+            Confirmá tocando <strong>Agregar</strong>.
+          </li>
+        </ol>
+      );
+    }
+    if (platform === "android") {
+      return (
+        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm normal-case text-muted-foreground">
+          <li>Tocá el menú de tres puntos arriba a la derecha de Chrome.</li>
+          <li>
+            Elegí <strong>Instalar app</strong> o{" "}
+            <strong>Agregar a la pantalla de inicio</strong>.
+          </li>
+          <li>
+            Confirmá tocando <strong>Instalar</strong>.
+          </li>
+        </ol>
+      );
+    }
     return (
-      <section className="rounded-2xl border border-border bg-sidebar p-6">
-        <h2 className="text-lg">Instalar app</h2>
-        <p className="mt-2 text-sm normal-case text-muted-foreground">
-          En iPhone / iPad podés instalar el cancionero como app desde Safari.
-        </p>
-        <button
-          type="button"
-          onClick={() => setShowIosHelp((v) => !v)}
-          className="mt-4 rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-        >
-          {showIosHelp ? "Ocultar instrucciones" : "Cómo instalar"}
-        </button>
-        {showIosHelp && (
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm normal-case text-muted-foreground">
-            <li>Abrí esta página en Safari (no en otro navegador).</li>
-            <li>
-              Tocá el botón <strong>Compartir</strong> (cuadrado con flecha
-              hacia arriba).
-            </li>
-            <li>
-              Elegí <strong>Agregar a pantalla de inicio</strong>.
-            </li>
-            <li>
-              Confirmá tocando <strong>Agregar</strong>.
-            </li>
-          </ol>
-        )}
-      </section>
+      <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm normal-case text-muted-foreground">
+        <li>
+          Buscá el ícono de instalación en la barra de direcciones (a la
+          derecha de la URL, suele ser un cuadrado con una flecha).
+        </li>
+        <li>
+          O abrí el menú de Chrome / Edge y elegí{" "}
+          <strong>Instalar Cancionero…</strong>.
+        </li>
+        <li>
+          Confirmá tocando <strong>Instalar</strong>.
+        </li>
+      </ol>
     );
-  }
+  })();
 
-  // Caso 3: navegador sin soporte (o ya instalada en otro perfil) → no mostrar nada.
-  return null;
+  return (
+    <section className="rounded-2xl border border-border bg-sidebar p-6">
+      <h2 className="text-lg">Instalar app</h2>
+      <p className="mt-2 text-sm normal-case text-muted-foreground">
+        Instalá el cancionero como app en tu dispositivo para acceder más
+        rápido y usarlo sin conexión.
+      </p>
+      <button
+        type="button"
+        onClick={() => setShowHelp((v) => !v)}
+        className={`mt-4 ${secondaryClass}`}
+      >
+        {showHelp ? "Ocultar instrucciones" : "Cómo instalar"}
+      </button>
+      {showHelp && helpContent}
+    </section>
+  );
 }

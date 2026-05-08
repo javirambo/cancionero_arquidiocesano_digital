@@ -17,7 +17,7 @@ El panel admin está protegido. Cada rol ve solo lo que le corresponde.
 | **coordinator** | Rol por parroquia — el admin lo asigna.         | Anuncios de sus parroquias.                                          |
 | Otros           | (member, anónimo)                               | No tienen acceso al panel; entran a `/admin` y los manda al inicio. |
 
-Si entrás sin sesión, te lleva a `/perfil` para iniciar.
+Si entrás sin sesión, te lleva al inicio (`/`) para iniciar.
 
 ---
 

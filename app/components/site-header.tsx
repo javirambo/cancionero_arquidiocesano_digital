@@ -109,13 +109,6 @@ const iconProps = {
   strokeLinejoin: "round" as const,
 };
 
-const PerfilIcon = () => (
-  <svg {...iconProps}>
-    <circle cx="12" cy="8" r="3.5" />
-    <path d="M5 20c1.5-3.5 4.2-5 7-5s5.5 1.5 7 5" />
-  </svg>
-);
-
 const ModoOscuroIcon = () => (
   <svg {...iconProps}>
     <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />
@@ -152,14 +145,6 @@ const CerrarSesionIcon = () => (
     <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
     <path d="M10 16l-4-4 4-4" />
     <path d="M6 12h12" />
-  </svg>
-);
-
-const IngresarIcon = () => (
-  <svg {...iconProps}>
-    <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
-    <path d="M14 8l4 4-4 4" />
-    <path d="M18 12H8" />
   </svg>
 );
 
@@ -209,6 +194,22 @@ const NovedadesIcon = () => (
   </svg>
 );
 
+const IngresarIcon = () => (
+  <svg {...iconProps}>
+    <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+    <path d="M14 8l4 4-4 4" />
+    <path d="M18 12H8" />
+  </svg>
+);
+
+const InstallIcon = () => (
+  <svg {...iconProps}>
+    <path d="M12 4v12" />
+    <path d="M7 11l5 5 5-5" />
+    <path d="M5 20h14" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
@@ -218,7 +219,7 @@ export function SiteHeader() {
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const showQr = pathname !== "/perfil";
+  const showQr = true;
   const { theme, toggle } = useTheme();
   const { favorites } = useFavorites();
   const { active: wakeLockActive, supported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
@@ -346,49 +347,14 @@ export function SiteHeader() {
                 aria-label="Menú de usuario"
                 className="absolute right-0 top-12 z-40 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
               >
-                <div className="border-b border-border px-4 py-3 normal-case">
-                  {user ? (
-                    <>
-                      <p className="text-sm text-foreground">
-                        {user.user_metadata?.full_name ??
-                          user.user_metadata?.name ??
-                          user.email ??
-                          "Usuario"}
-                      </p>
-                      {user.email && (
-                        <p className="text-xs text-muted-foreground">
-                          {user.email}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm text-foreground">Invitado</p>
-                      <p className="text-xs text-muted-foreground">
-                        Iniciá sesión para acceder a tu perfil
-                      </p>
-                    </>
-                  )}
-                </div>
+                <ProfileSummary
+                  user={user}
+                  onSignIn={() => {
+                    closeMenu();
+                    handleSignIn();
+                  }}
+                />
                 <ul className="py-1 text-sm">
-                  <li>
-                    <MenuItem
-                      href="/perfil"
-                      icon={<PerfilIcon />}
-                      label="Perfil"
-                      onSelect={closeMenu}
-                    />
-                  </li>
-                  <li>
-                    <MenuItem
-                      icon={theme === "dark" ? <ModoClaroIcon /> : <ModoOscuroIcon />}
-                      label={theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
-                      onSelect={() => {
-                        toggle();
-                        closeMenu();
-                      }}
-                    />
-                  </li>
                   <li>
                     <MenuItem
                       href="/canciones"
@@ -421,6 +387,7 @@ export function SiteHeader() {
                       onSelect={closeMenu}
                     />
                   </li>
+                  <li role="separator" aria-hidden="true" className="my-1 border-t border-border" />
                   {wakeLockSupported !== false && (
                     <li>
                       <MenuToggleItem
@@ -435,6 +402,16 @@ export function SiteHeader() {
                       />
                     </li>
                   )}
+                  <li>
+                    <MenuItem
+                      icon={theme === "dark" ? <ModoClaroIcon /> : <ModoOscuroIcon />}
+                      label={theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+                      onSelect={() => {
+                        toggle();
+                        closeMenu();
+                      }}
+                    />
+                  </li>
                   {showQr && (
                     <li>
                       <MenuItem
@@ -459,21 +436,18 @@ export function SiteHeader() {
                   )}
                 </ul>
                 <div className="border-t border-border py-1 text-sm">
-                  {user ? (
+                  <MenuItem
+                    href="/install"
+                    icon={<InstallIcon />}
+                    label="Instalar app"
+                    onSelect={closeMenu}
+                  />
+                  {user && (
                     <MenuItem
                       icon={<CerrarSesionIcon />}
                       label="Cerrar Sesión"
                       onSelect={handleSignOut}
                       destructive
-                    />
-                  ) : (
-                    <MenuItem
-                      icon={<IngresarIcon />}
-                      label="Ingresar con Google"
-                      onSelect={() => {
-                        closeMenu();
-                        handleSignIn();
-                      }}
                     />
                   )}
                 </div>
@@ -648,6 +622,75 @@ function CircleButton({
       </span>
       <span className="text-[10px] leading-none">{label}</span>
     </button>
+  );
+}
+
+function ProfileSummary({
+  user,
+  onSignIn,
+}: {
+  user: User | null;
+  onSignIn: () => void;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3 normal-case">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-muted-foreground">
+          <UserIcon />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="truncate text-sm text-foreground">Invitado</p>
+          <button
+            type="button"
+            onClick={onSignIn}
+            className="flex items-center gap-1 self-start text-left text-sm text-foreground hover:underline"
+          >
+            <span aria-hidden="true">
+              <IngresarIcon />
+            </span>
+            Iniciá sesión
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const meta = user.user_metadata as
+    | { avatar_url?: string; picture?: string; full_name?: string; name?: string }
+    | undefined;
+  const avatarUrl = meta?.avatar_url ?? meta?.picture ?? null;
+  const displayName = meta?.full_name ?? meta?.name ?? user.email ?? "Usuario";
+  const showImg = avatarUrl && !imgFailed;
+
+  return (
+    <div className="flex items-center gap-3 border-b border-border px-4 py-3 normal-case">
+      {showImg ? (
+        <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-background">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatarUrl}
+            alt=""
+            referrerPolicy="no-referrer"
+            onError={() => setImgFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        </span>
+      ) : (
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-muted-foreground">
+          {displayName.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="flex min-w-0 flex-col">
+        <p className="truncate text-sm text-foreground">{displayName}</p>
+        {user.email && (
+          <p className="truncate text-xs lowercase text-muted-foreground">
+            {user.email}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

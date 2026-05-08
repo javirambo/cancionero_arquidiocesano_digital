@@ -11,7 +11,7 @@ import {
   type PlaylistSummary,
 } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
-import { GoogleSignInButton } from "@/app/(app)/perfil/google-sign-in-button";
+import { GoogleSignInButton } from "@/app/components/google-sign-in-button";
 import { AnnouncementCard } from "@/app/components/announcement-card";
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
