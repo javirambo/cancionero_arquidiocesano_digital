@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ScheduleEditor } from "@/app/components/schedule-editor";
 import { replaceSchedulesWith, type ScheduleInput } from "@/lib/schedule";
+import { ImageUploadField } from "@/app/components/image-upload-field";
 
 export type AnnouncementKind =
   | null
@@ -23,6 +24,7 @@ export type AnnouncementFormData = {
   target_id: string | null;
   target_url: string;
   target_label: string;
+  image_path: string | null;
   scope: "all" | "selected";
   parish_ids: string[];
   schedules: ScheduleInput[];
@@ -39,6 +41,7 @@ const empty: AnnouncementFormData = {
   target_id: null,
   target_url: "",
   target_label: "",
+  image_path: null,
   scope: "all",
   parish_ids: [],
   schedules: [],
@@ -204,6 +207,7 @@ export function AnuncioForm({
           : null,
       target_url:
         form.target_kind === "external" ? form.target_url.trim() : null,
+      image_path: form.image_path,
     };
 
     let announcementId = form.id;
@@ -333,6 +337,11 @@ export function AnuncioForm({
             <option value="tiempo">Tiempo litúrgico</option>
           </select>
         </Field>
+        <ImageUploadField
+          value={form.image_path}
+          onChange={(path) => update("image_path", path)}
+          pathPrefix="announcements"
+        />
       </div>
 
       <section className="rounded-2xl border border-border bg-sidebar p-5">

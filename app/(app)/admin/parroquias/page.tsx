@@ -18,14 +18,19 @@ export default async function AdminParroquiasPage() {
 
   return (
     <main className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-center gap-4">
-        <h1 className="flex-1 text-2xl">Parroquias</h1>
-        <Link
-          href="/admin/parroquias/nueva"
-          className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          + Nueva parroquia
-        </Link>
+      <header className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl">Parroquias</h1>
+          <Link
+            href="/admin/parroquias/nueva"
+            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            + Nueva
+          </Link>
+        </div>
+        <p className="text-sm normal-case text-muted-foreground">
+          Alta, edición y baja de parroquias de la Arquidiócesis. Las parroquias en estado pendiente requieren revisión.
+        </p>
       </header>
 
       {pending.length > 0 && (

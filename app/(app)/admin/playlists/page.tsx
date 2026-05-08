@@ -18,19 +18,19 @@ export default async function AdminPlaylistsPage() {
 
   return (
     <main className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-1 flex-col gap-1">
+      <header className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl">Listas Públicas</h1>
-          <p className="text-sm normal-case text-muted-foreground">
-            Repertorio arquidiocesano (visible en todas las parroquias).
-          </p>
+          <Link
+            href="/playlists/nueva"
+            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            + Nueva
+          </Link>
         </div>
-        <Link
-          href="/playlists/nueva"
-          className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          + Nueva lista
-        </Link>
+        <p className="text-sm normal-case text-muted-foreground">
+          Repertorio arquidiocesano (visible en todas las parroquias).
+        </p>
       </header>
 
       {!playlists || playlists.length === 0 ? (

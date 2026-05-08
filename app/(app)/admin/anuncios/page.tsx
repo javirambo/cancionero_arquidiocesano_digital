@@ -74,14 +74,19 @@ export default async function AdminAnunciosPage() {
 
   return (
     <main className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-center gap-4">
-        <h1 className="flex-1 text-2xl">Anuncios</h1>
-        <Link
-          href="/admin/anuncios/nuevo"
-          className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          + Nuevo anuncio
-        </Link>
+      <header className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl">Anuncios</h1>
+          <Link
+            href="/admin/anuncios/nuevo"
+            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            + Nuevo
+          </Link>
+        </div>
+        <p className="text-sm normal-case text-muted-foreground">
+          Anuncios y novedades destacadas en la home, con destino global o multi-parroquia. Configurá vigencia y prioridad.
+        </p>
       </header>
 
       {announcements.length === 0 ? (

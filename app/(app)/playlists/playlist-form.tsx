@@ -6,12 +6,14 @@ import { createClient } from "@/lib/supabase/client";
 import { TrashIcon } from "@/app/components/icons";
 import { ScheduleEditor } from "@/app/components/schedule-editor";
 import { replaceSchedulesWith, type ScheduleInput } from "@/lib/schedule";
+import { ImageUploadField } from "@/app/components/image-upload-field";
 
 export type PlaylistFormData = {
   id?: string;
   parish_id: string | null;
   name: string;
   description: string;
+  image_path: string | null;
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
   schedules: ScheduleInput[];
@@ -55,6 +57,7 @@ export function PlaylistForm({
       parish_id: null,
       name: "",
       description: "",
+      image_path: null,
       visibility: "public",
       is_archdiocesan: false,
       schedules: [],
@@ -111,6 +114,7 @@ export function PlaylistForm({
       parish_id: form.parish_id,
       name: form.name.trim(),
       description: form.description.trim() || null,
+      image_path: form.image_path,
       visibility: form.visibility,
       is_archdiocesan: archdiocesanVisible ? form.is_archdiocesan : false,
     };
@@ -247,6 +251,11 @@ export function PlaylistForm({
             className={inputClass}
           />
         </Field>
+        <ImageUploadField
+          value={form.image_path}
+          onChange={(path) => update("image_path", path)}
+          pathPrefix="playlists"
+        />
         {archdiocesanVisible && !restricted && (
           <Field label="Alcance" full>
             <label className="flex items-center gap-2 text-sm normal-case">

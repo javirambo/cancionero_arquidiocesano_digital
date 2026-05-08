@@ -84,7 +84,7 @@ Catálogo de autores. Una canción puede tener un autor principal.
 ---
 
 ### `categories`
-Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.).
+Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.). Vocabulario controlado, multi-asignable a una canción vía `song_categories`.
 
 | Columna       | Tipo        | Notas                                  |
 | ------------- | ----------- | -------------------------------------- |
@@ -94,6 +94,20 @@ Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.).
 | `description` | text        |                                        |
 | `sort_order`  | int         | para ordenar en filtros                |
 | `created_at`  | timestamptz | default now()                          |
+
+---
+
+### `song_categories`
+Tabla pivote N:M: una canción puede tener múltiples categorías litúrgicas y una categoría agrupa muchas canciones (mig. 0021).
+
+| Columna       | Tipo | Notas                                                     |
+| ------------- | ---- | --------------------------------------------------------- |
+| `song_id`     | uuid | FK → `songs.id` ON DELETE CASCADE                         |
+| `category_id` | uuid | FK → `categories.id` ON DELETE CASCADE                    |
+
+**PK compuesta:** `(song_id, category_id)`.
+**Índices:** `category_id` (para filtros por categoría).
+**RLS:** lectura abierta; escritura solo `is_editor()` o `is_admin()`.
 
 ---
 
@@ -109,11 +123,9 @@ El `body` también soporta directivas ChordPro de estribillo: las líneas que se
 | `title`             | text        | NOT NULL                                                                 |
 | `slug`              | text        | NOT NULL, UNIQUE                                                         |
 | `author_id`         | uuid        | FK → `authors.id`, ON DELETE SET NULL                                    |
-| `category_id`       | uuid        | FK → `categories.id`, ON DELETE SET NULL                                 |
 | `body`              | text        | NOT NULL — letra con acordes en notación ChordPro                        |
 | `original_key`      | text        | tonalidad original (ej. "G", "Em")                                       |
 | `tempo_bpm`         | int         |                                                                          |
-| `tags`              | text[]      | etiquetas libres                                                         |
 | `youtube_url`       | text        | link de referencia (CU-04)                                               |
 | `status`            | text        | CHECK in ('draft','review','published','rejected','archived'); default 'draft' |
 | `current_version`   | int         | NOT NULL default 1 — apunta a `song_versions.version`                    |
@@ -131,7 +143,9 @@ El `body` también soporta directivas ChordPro de estribillo: las líneas que se
 - `title`, `body` con `pg_trgm` (búsqueda por título y fragmento de letra — CU-01).
 - `tsvector` generado de `title || body` para full-text search.
 - `number` UNIQUE.
-- `category_id`, `author_id`, `status`.
+- `author_id`, `status`.
+
+> Las categorías litúrgicas se modelan vía `song_categories` (N:M). Una canción puede pertenecer a varias (Entrada y Salida, Comunión y Mariana, etc.).
 
 ---
 
@@ -147,10 +161,8 @@ Historial inmutable de versiones de una canción. Cada vez que el Editor publica
 | `body`          | text        | NOT NULL — snapshot de letra+acordes                                 |
 | `original_key`  | text        |                                                                      |
 | `tempo_bpm`     | int         |                                                                      |
-| `tags`          | text[]      |                                                                      |
 | `youtube_url`   | text        |                                                                      |
 | `author_id`     | uuid        | FK → `authors.id`                                                    |
-| `category_id`   | uuid        | FK → `categories.id`                                                 |
 | `change_summary`| text        | descripción del cambio (ej. "corrección acorde compás 8")            |
 | `submitted_by`  | uuid        | FK → `users.id`                                                      |
 | `reviewed_by`   | uuid        | FK → `users.id`                                                      |
@@ -160,7 +172,22 @@ Historial inmutable de versiones de una canción. Cada vez que el Editor publica
 **PK compuesta:** `(song_id, version)` UNIQUE.
 **Índices:** `song_id`, `(song_id, version DESC)`.
 
-> **Nota:** las ediciones en curso (`draft`/`review`) viven en `songs`. Solo al aprobar se materializa la nueva fila en `song_versions` y se incrementa `songs.current_version`.
+> **Nota:** las ediciones en curso (`draft`/`review`) viven en `songs`. Solo al aprobar se materializa la nueva fila en `song_versions` y se incrementa `songs.current_version`. Las categorías del snapshot se guardan en `song_version_categories` (mig. 0021).
+
+---
+
+### `song_version_categories`
+Snapshot de categorías por versión publicada (N:M, mig. 0021). Se completa al ejecutar `approve_song`, copiando las filas vigentes de `song_categories`.
+
+| Columna       | Tipo | Notas                                                                  |
+| ------------- | ---- | ---------------------------------------------------------------------- |
+| `song_id`     | uuid | parte de FK compuesta a `song_versions(song_id, version)` ON DELETE CASCADE |
+| `version`     | int  | parte de FK compuesta                                                  |
+| `category_id` | uuid | FK → `categories.id` ON DELETE CASCADE                                 |
+
+**PK compuesta:** `(song_id, version, category_id)`.
+**Índices:** `category_id`.
+**RLS:** lectura abierta; escritura solo `is_editor()` o `is_admin()`.
 
 ---
 

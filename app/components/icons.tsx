@@ -64,6 +64,14 @@ export function MoreIcon(): ReactElement {
   );
 }
 
+export function FilterIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true" width={20} height={20}>
+      <path d="M4 5h16l-6 8v6l-4-2v-4z" />
+    </svg>
+  );
+}
+
 export function SearchIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true" width={20} height={20}>
@@ -260,6 +268,16 @@ export function BellIcon(): ReactElement {
     <svg {...baseProps} aria-hidden="true">
       <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5L6 16Z" />
       <path d="M10 19a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
+export function ExternalLinkIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M14 5h5v5" />
+      <path d="M19 5l-8 8" />
+      <path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
     </svg>
   );
 }

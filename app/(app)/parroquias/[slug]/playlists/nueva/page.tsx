@@ -79,6 +79,7 @@ export default async function NuevaPlaylistPage({
           parish_id: parish.id,
           name: "",
           description: "",
+          image_path: null,
           schedules: [],
           visibility: "public",
           is_archdiocesan: false,

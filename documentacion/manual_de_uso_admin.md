@@ -36,7 +36,7 @@ Listado completo del catálogo con filtros por estado.
 
 - **Tabs** arriba para filtrar por estado: **Todas · Borradores · En revisión · Publicadas · Rechazadas · Archivadas**.
 - **Buscador** "Buscar por título o número…". Si escribís solo dígitos (ej: `42`), busca canciones con ese número exacto **o** con `42` en el título; si escribís texto, busca solo por título.
-- Cada fila muestra: número (si tiene), título, categoría, íconos de capacidades (🎵 acordes, ▶ video, 📄 archivos), fecha de modificación y un **badge chico** con el estado (Borrador / En revisión / Publicada / Rechazada / Archivada).
+- Cada fila muestra: número (si tiene), título, **categorías litúrgicas** (separadas por coma cuando hay varias), íconos de capacidades (🎵 acordes, ▶ video, 📄 archivos), fecha de modificación y un **badge chico** con el estado (Borrador / En revisión / Publicada / Rechazada / Archivada).
 - Botón **"Editar"** a la derecha de cada fila → abre el editor.
 - Arriba a la derecha del listado, botón **"+ Nueva canción"**.
 
@@ -57,11 +57,13 @@ El editor está organizado en **tres acordeones**:
 - **Título** *(obligatorio)*
 - **Número en cancionero**
 - **Tonalidad original** (ej: `G`, `Em`, `F#m`)
-- **Autor** (lista; "— Sin autor —" si no hay)
-- **Categoría litúrgica** (lista; "— Sin categoría —")
+- **Autor** (lista; "— Sin autor —" si no hay; opción "+ Nuevo autor…" para crear sin salir del form).
+- **Categorías litúrgicas**: chips clicables (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.). Tocá para seleccionar/deseleccionar; podés elegir **una o varias** por canción.
 - **Tempo (BPM)**
-- **Link de YouTube**
-- **Etiquetas** (separadas por coma)
+- **Link de YouTube / Spotify**
+
+> **Nota:** el campo libre "Etiquetas" fue eliminado en mig. 0021 (no se usaba). Las clases litúrgicas ahora viven solo en las categorías controladas.
+> El catálogo de categorías es estable y se gestiona por SQL — no hay pantalla para crear/editar categorías nuevas (CU-25).
 
 #### b) Letra y acordes *(abierto por defecto)*
 
@@ -106,6 +108,8 @@ Borrador → En revisión → Publicada
 | En revisión            | **"Rechazar"** (botón con borde rojo)   | Editor / Admin       | Abre un diálogo donde **es obligatorio escribir notas** explicando qué corregir.              |
 | En revisión            | **"Devolver a borrador"**               | Editor / Admin       | Equivalente a "Retirar" pero hecho por el editor.                                              |
 | Publicada              | **🗑️ icono de tacho** (a la derecha del estado) | Editor / Admin       | Despublica la canción y la vuelve a Borrador. Útil si se detecta un error después de publicar. |
+| Cualquiera salvo Archivada | **"Archivar"** (botón con borde rojo) | Editor / Admin | Baja lógica: la canción deja de aparecer en búsquedas y vistas públicas. Las playlists que la incluyen la marcan como no disponible. Pide **doble confirmación** y vuelve al listado. El historial de versiones se preserva. |
+| Archivada              | **"Desarchivar"** (botón dorado)        | Editor / Admin       | Vuelve la canción a Borrador. Si querés republicarla, debe pasar nuevamente por revisión.     |
 
 ### 4.2. Editar una canción ya publicada
 
@@ -248,7 +252,7 @@ Botón al pie. Le quita todos los roles globales y todas las membresías de parr
 - **En revisión (`review`)** — el coordinator la envió al editor. Queda bloqueada para edición del coordinator hasta que el editor decida.
 - **Publicada (`published`)** — aprobada por el editor. Se ve en el catálogo público y en las playlists.
 - **Rechazada (`rejected`)** — el editor la rechazó con notas. Vuelve al coordinator para corregir y reenviar.
-- **Archivada (`archived`)** — fuera de circulación. No se ve públicamente. Hoy no hay UI para archivar; queda como estado disponible en BD.
+- **Archivada (`archived`)** — fuera de circulación. No se ve públicamente. Editor/Admin pueden archivar y desarchivar desde el editor de canción (acción "Archivar" con doble confirmación; "Desarchivar" la vuelve a Borrador para republicar vía flujo de revisión).
 - **Versión** — cada vez que el editor aprueba una canción, queda registrada una "versión" histórica del contenido. Se preservan al despublicar.
 - **`is_archdiocesan`** — flag de playlists creadas por la parroquia virtual "arquidiócesis". Aparecen por defecto en todas las parroquias sin necesidad de suscribirse.
 - **Parroquia "pendiente"** — parroquia creada por un coordinator pero todavía no aprobada por un admin. No aparece en listados públicos.

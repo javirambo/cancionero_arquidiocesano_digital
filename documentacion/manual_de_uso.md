@@ -80,7 +80,7 @@ A la derecha, tres botones circulares con tooltip al pasar el cursor:
 
 ## 4. Vista de canción (`/canciones/[slug]`)
 
-- **Cabecera**: número, categoría, título, autor.
+- **Cabecera**: número, título, autor y **chips de categorías litúrgicas** (puede haber una o varias: Entrada, Comunión, Mariana, etc.).
 - **Botón "Descargar QR"** (arriba a la derecha): genera un código QR con la URL de esta canción. Se descarga como PNG o SVG.
 - **Toolbar** con los controles de canto (orden de izquierda a derecha):
 

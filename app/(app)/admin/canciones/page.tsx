@@ -19,7 +19,7 @@ const TABS: { value: EstadoTab; label: string }[] = [
   { value: "review", label: "En revisión" },
   { value: "published", label: "Publicados" },
   { value: "rejected", label: "Rechazados" },
-  { value: "archived", label: "Archivados" },
+  { value: "archived", label: "Eliminados" },
 ];
 
 function isEstadoTab(v: string | undefined): v is EstadoTab {
@@ -41,19 +41,19 @@ export default async function AdminCancionesPage({
 
   return (
     <main className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-1 flex-col gap-1">
+      <header className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl">Cantos</h1>
-          <p className="text-sm normal-case text-muted-foreground">
-            Edición de metadatos, letra/acordes y archivos. Flujo editorial draft → revisión → publicado.
-          </p>
+          <Link
+            href="/admin/canciones/nueva"
+            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            + Nuevo
+          </Link>
         </div>
-        <Link
-          href="/admin/canciones/nueva"
-          className="rounded-full border border-primary bg-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90"
-        >
-          + Nuevo canto
-        </Link>
+        <p className="text-sm normal-case text-muted-foreground">
+          Edición de metadatos, letra/acordes y archivos. Flujo editorial draft → revisión → publicado.
+        </p>
       </header>
 
       <nav className="flex flex-wrap gap-2" aria-label="Filtrar por estado">

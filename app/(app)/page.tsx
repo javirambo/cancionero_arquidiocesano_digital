@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   listCommonAnnouncements,
   listLiturgicalAnnouncements,
+  listPublicCategories,
   listSongsPaged,
 } from "@/lib/songs";
 import {
@@ -72,6 +73,7 @@ export default async function Home() {
     liturgical,
     songsResult,
     novedades,
+    songCategories,
   ] = await Promise.all([
     primaryParish
       ? listPlaylistsForParish(primaryParish.id, {
@@ -93,6 +95,7 @@ export default async function Home() {
     listLiturgicalAnnouncements(PREVIEW),
     listSongsPaged(1, SONGS_PAGE_SIZE),
     listCommonAnnouncements(PREVIEW),
+    listPublicCategories(),
   ]);
 
   return (
@@ -137,6 +140,7 @@ export default async function Home() {
           initialItems={songsResult.items}
           initialTotal={songsResult.total}
           pageSize={SONGS_PAGE_SIZE}
+          categories={songCategories}
         />
 
         {/* Novedades */}
@@ -182,7 +186,7 @@ function PlaylistsSection({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl">{heading}</h2>
         <Link
           href={seeAllHref}
@@ -199,6 +203,7 @@ function PlaylistsSection({
               id: p.id,
               name: p.name,
               description: p.description,
+              image_path: p.image_path,
               parish: p.parish,
             }}
           />
@@ -223,7 +228,7 @@ function AnnouncementsSection({
   const list = items as import("@/lib/songs").Featured[];
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl">{heading}</h2>
         {total > list.length && (
           <Link

@@ -14,6 +14,8 @@ type Capabilities = {
   canApprove: boolean;
   canReject: boolean;
   canUnpublish: boolean;
+  canArchive: boolean;
+  canUnarchive: boolean;
 };
 
 function capsFor(status: SongStatus, canReview: boolean): Capabilities {
@@ -23,15 +25,24 @@ function capsFor(status: SongStatus, canReview: boolean): Capabilities {
     canApprove: false,
     canReject: false,
     canUnpublish: false,
+    canArchive: false,
+    canUnarchive: false,
   };
   if (canReview && status === "review") {
-    return { ...base, canWithdraw: true, canApprove: true, canReject: true };
+    return { ...base, canWithdraw: true, canApprove: true, canReject: true, canArchive: true };
   }
   if (canReview && status === "published") {
-    return { ...base, canUnpublish: true };
+    return { ...base, canUnpublish: true, canArchive: true };
+  }
+  if (canReview && status === "archived") {
+    return { ...base, canUnarchive: true };
   }
   if (status === "draft" || status === "rejected") {
-    return { ...base, canSubmit: true };
+    return {
+      ...base,
+      canSubmit: true,
+      canArchive: canReview,
+    };
   }
   if (status === "review") {
     return { ...base, canWithdraw: true };
@@ -114,6 +125,28 @@ export function ReviewActions({
     )
       return;
     await call("unpublish_song", { p_song_id: songId });
+  }
+
+  async function onArchive() {
+    if (
+      !confirm(
+        "¿Eliminar esta canción? Dejará de aparecer en búsquedas y vistas públicas. Las playlists que la incluyen la marcarán como no disponible."
+      )
+    )
+      return;
+    if (!confirm("Confirmar: eliminar definitivamente esta canción.")) return;
+    const ok = await call("archive_song", { p_song_id: songId });
+    if (ok) router.push("/admin/canciones");
+  }
+
+  async function onUnarchive() {
+    if (
+      !confirm(
+        "¿Recuperar esta canción? Volverá a borrador y deberá pasar por revisión antes de publicarse nuevamente."
+      )
+    )
+      return;
+    await call("unarchive_song", { p_song_id: songId });
   }
 
   async function onConfirmReject() {
@@ -205,6 +238,26 @@ export function ReviewActions({
             className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
           >
             {canReview ? "Devolver a borrador" : "Retirar de revisión"}
+          </button>
+        )}
+        {caps.canArchive && (
+          <button
+            type="button"
+            onClick={onArchive}
+            disabled={busy}
+            className="rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
+          >
+            Eliminar
+          </button>
+        )}
+        {caps.canUnarchive && (
+          <button
+            type="button"
+            onClick={onUnarchive}
+            disabled={busy}
+            className="rounded-full border border-secondary bg-secondary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            Recuperar
           </button>
         )}
       </div>

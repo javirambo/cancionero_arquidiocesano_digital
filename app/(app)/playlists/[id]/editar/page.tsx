@@ -114,6 +114,7 @@ export default async function EditarPlaylistPage({
             parish_id: pl.parish?.id ?? null,
             name: pl.name,
             description: pl.description ?? "",
+            image_path: pl.image_path,
             visibility: pl.visibility,
             is_archdiocesan: pl.is_archdiocesan,
             schedules: schedules.map((s) => ({

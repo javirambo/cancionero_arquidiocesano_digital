@@ -54,7 +54,6 @@ export default async function CancionPage({
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             {song.number !== null ? `Nº ${song.number}` : "Canto"}
-            {song.category && ` · ${song.category}`}
           </p>
           <h1 className="text-3xl leading-tight">
             <span className="relative inline-block">
@@ -66,6 +65,18 @@ export default async function CancionPage({
             <p className="text-sm normal-case text-muted-foreground">
               Autor: {song.author}
             </p>
+          )}
+          {song.categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {song.categories.map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full border border-border bg-sidebar px-2 py-px text-[10px] uppercase tracking-wide text-secondary"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </header>

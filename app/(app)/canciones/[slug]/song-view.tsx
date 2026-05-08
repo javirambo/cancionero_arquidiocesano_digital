@@ -21,6 +21,7 @@ import {
   LETTER_SCALE_MAX,
   LETTER_SCALE_STEP,
 } from "@/app/components/letter-scale";
+import { usePreferences } from "@/app/components/preferences";
 
 type Props = {
   songId: string;
@@ -52,7 +53,10 @@ export function SongView({
   const chordsAvailable = chordsExist && isAuthenticated;
 
 
-  const [showChords, setShowChords] = useState(true);
+  const { showChords, setPreference } = usePreferences();
+  const toggleShowChords = () => {
+    void setPreference("showChords", !showChords);
+  };
   const [media, setMedia] = useState<
     | { type: "youtube" }
     | { type: "audio"; src: string; label: string }
@@ -102,7 +106,7 @@ export function SongView({
           <div className="flex items-center gap-2 sm:gap-3">
         <button
           type="button"
-          onClick={() => setShowChords((v) => !v)}
+          onClick={toggleShowChords}
           aria-pressed={showChords}
           aria-label={showChords ? "Ocultar acordes" : "Mostrar acordes"}
           title={showChords ? "Ocultar acordes" : "Mostrar acordes"}

@@ -17,10 +17,9 @@ export type SongFormState = {
   title: string;
   number: string;
   author_id: string;
-  category_id: string;
+  category_ids: string[];
   youtube_url: string;
   tempo_bpm: string;
-  tags: string;
   original_key: string;
   body: string;
 };
@@ -30,10 +29,9 @@ function toFormState(song: AdminSongDetail): SongFormState {
     title: song.title,
     number: song.number !== null ? String(song.number) : "",
     author_id: song.author_id ?? "",
-    category_id: song.category_id ?? "",
+    category_ids: [...song.category_ids],
     youtube_url: song.youtube_url ?? "",
     tempo_bpm: song.tempo_bpm !== null ? String(song.tempo_bpm) : "",
-    tags: song.tags.join(", "),
     original_key: song.original_key ?? "",
     body: song.body,
   };
@@ -79,10 +77,6 @@ export function SongForm({
     setOkMsg(null);
     const supabase = createClient();
 
-    const tagsArr = form.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
     const numberVal = form.number.trim() === "" ? null : Number(form.number);
     const tempoVal =
       form.tempo_bpm.trim() === "" ? null : Number(form.tempo_bpm);
@@ -91,24 +85,55 @@ export function SongForm({
       title: form.title.trim(),
       number: numberVal,
       author_id: form.author_id || null,
-      category_id: form.category_id || null,
       youtube_url: form.youtube_url.trim() || null,
       tempo_bpm: tempoVal,
-      tags: tagsArr,
       original_key: form.original_key.trim() || null,
       body: form.body,
     };
 
-    const { error } = await supabase
+    const { error: updateErr } = await supabase
       .from("songs")
       .update(payload)
       .eq("id", song.id);
 
-    setSaving(false);
-    if (error) {
-      setError(error.message);
+    if (updateErr) {
+      setSaving(false);
+      setError(updateErr.message);
       return;
     }
+
+    // Sincronizar categorías: comparar prev vs nuevo, borrar las que se sacaron
+    // e insertar las nuevas. Evitamos delete+reinsert total para no chocar con
+    // posibles triggers/auditoría.
+    const prevSet = new Set(song.category_ids);
+    const nextSet = new Set(form.category_ids);
+    const toRemove = [...prevSet].filter((id) => !nextSet.has(id));
+    const toAdd = [...nextSet].filter((id) => !prevSet.has(id));
+
+    if (toRemove.length > 0) {
+      const { error: delErr } = await supabase
+        .from("song_categories")
+        .delete()
+        .eq("song_id", song.id)
+        .in("category_id", toRemove);
+      if (delErr) {
+        setSaving(false);
+        setError(delErr.message);
+        return;
+      }
+    }
+    if (toAdd.length > 0) {
+      const { error: insErr } = await supabase
+        .from("song_categories")
+        .insert(toAdd.map((category_id) => ({ song_id: song.id, category_id })));
+      if (insErr) {
+        setSaving(false);
+        setError(insErr.message);
+        return;
+      }
+    }
+
+    setSaving(false);
     setOkMsg("Cambios guardados.");
     router.push("/admin/canciones");
     router.refresh();

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Featured } from "@/lib/songs";
+import { CardWithImage } from "./card-with-image";
 
 const KIND_LABEL: Record<string, string> = {
   solemnidad: "Solemnidad",
@@ -10,12 +10,14 @@ const KIND_LABEL: Record<string, string> = {
 
 export function AnnouncementCard({ item }: { item: Featured }) {
   const kindLabel = item.kind ? KIND_LABEL[item.kind] ?? item.kind : null;
-  const isExternal = item.target_kind === "external" && item.href;
-  const cardClass =
-    "block rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary";
+  const isExternal = item.target_kind === "external" && Boolean(item.href);
 
-  const content = (
-    <>
+  return (
+    <CardWithImage
+      imagePath={item.image_path}
+      href={item.href}
+      external={isExternal}
+    >
       {kindLabel && (
         <span className="text-xs uppercase tracking-wide text-secondary">
           {kindLabel}
@@ -27,27 +29,6 @@ export function AnnouncementCard({ item }: { item: Featured }) {
           {item.body}
         </p>
       )}
-    </>
+    </CardWithImage>
   );
-
-  if (item.href && isExternal) {
-    return (
-      <a
-        href={item.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cardClass}
-      >
-        {content}
-      </a>
-    );
-  }
-  if (item.href) {
-    return (
-      <Link href={item.href} className={cardClass}>
-        {content}
-      </Link>
-    );
-  }
-  return <div className="rounded-xl border border-border bg-background p-5">{content}</div>;
 }

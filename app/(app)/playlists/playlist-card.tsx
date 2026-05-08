@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useFavorites } from "@/app/components/favorites";
 import { HeartIcon } from "@/app/components/icons";
+import { CardWithImage } from "@/app/components/card-with-image";
 
 export type PlaylistCardData = {
   id: string;
   name: string;
   description: string | null;
+  image_path?: string | null;
   parish: { id: string; name: string; slug: string } | null;
 };
 
@@ -26,11 +27,11 @@ export function PlaylistCard({ playlist, badge }: Props) {
 
   return (
     <li className="relative">
-      <Link
+      <CardWithImage
+        imagePath={playlist.image_path ?? null}
         href={`/playlists/${playlist.id}`}
-        className="flex h-full flex-col gap-1 rounded-xl border border-border bg-background p-4 pr-12 transition-colors hover:border-primary"
       >
-        <span className="text-base text-primary">{playlist.name}</span>
+        <span className="text-base text-primary pr-10">{playlist.name}</span>
         {playlist.parish && !badge && (
           <span className="text-sm normal-case text-secondary">
             {playlist.parish.name}
@@ -46,7 +47,7 @@ export function PlaylistCard({ playlist, badge }: Props) {
             {playlist.description}
           </span>
         )}
-      </Link>
+      </CardWithImage>
       <button
         type="button"
         aria-label={fav ? "Quitar de Mis favoritos" : "Agregar a Mis favoritos"}
@@ -59,7 +60,7 @@ export function PlaylistCard({ playlist, badge }: Props) {
             subtitle: playlist.parish?.name,
           });
         }}
-        className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-colors hover:border-border ${
+        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-colors hover:border-border ${
           fav ? "text-primary" : "text-muted-foreground hover:text-primary"
         }`}
       >
