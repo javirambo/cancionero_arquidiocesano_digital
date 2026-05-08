@@ -19,7 +19,9 @@
       "Bash(git log *)",
       "Bash(gh run *)",
       "Bash(npx eslint *)",
-      "Bash(xargs sed *)"
+      "Bash(xargs sed *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

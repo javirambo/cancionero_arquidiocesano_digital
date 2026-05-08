@@ -140,6 +140,25 @@ Reglas:
 
 **Ejemplo — menú del header del usuario** (ya implementado, sirve como referencia visual): `UserIcon` Perfil · `MoonIcon` Modo oscuro · `ChordsIcon` Sugerir acordes · `PlaylistIcon` Playlists · `ParishIcon` Parroquias · `ShieldIcon` Administración · `QrIcon` Descargar QR.
 
+## Cards con imagen (`CardWithImage`)
+
+Layout estándar de las cards "navegables" del sitio (playlists, parroquias, anuncios, secciones de admin, etc.).
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ ░░░  Título                                          ♥   │
+│ ░░░  Subtítulo / badge / descripción                     │
+│ ░░░                                                  ›   │
+└──────────────────────────────────────────────────────────┘
+```
+
+- **Imagen (opcional):** banda de 75px de ancho a la izquierda, fondo `sidebar`, `object-cover`.
+- **Contenido:** título + metadata. Padding `p-5` con `pr-10` para reservar espacio del chevron.
+- **Esquina superior derecha:** acción contextual de la card (típicamente `HeartIcon` para favoritos). Posición `absolute top-3 right-3`.
+- **Esquina inferior derecha:** indicador de navegación (`ChevronRightIcon` para rutas internas, `ExternalLinkIcon` para externas). Posición `absolute bottom-3 right-3`. Color `muted-foreground`.
+- Hover: borde a `primary`.
+
+
 ## Lista de canciones (item)
 
 Layout estándar de cada fila de canción. Aplica en **todas** las listas: playlists, resultados de búsqueda, favoritos, canciones de parroquia, vistas de admin, etc.
