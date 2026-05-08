@@ -56,6 +56,41 @@ export type Song = Omit<SongSummary, "category"> & {
   hasFiles: boolean;
 };
 
+export type PublicCategoryOption = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export async function listPublicCategories(): Promise<PublicCategoryOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, name, slug")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as PublicCategoryOption[];
+}
+
+async function resolveCategorySongIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categorySlug: string
+): Promise<string[]> {
+  const { data: cat } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", categorySlug)
+    .maybeSingle();
+  if (!cat) return [];
+  const { data: links, error } = await supabase
+    .from("song_categories")
+    .select("song_id")
+    .eq("category_id", (cat as { id: string }).id);
+  if (error) throw error;
+  return ((links ?? []) as { song_id: string }[]).map((l) => l.song_id);
+}
+
 export async function listPublishedSongs(limit = 100): Promise<SongSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -107,10 +142,18 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
 
 export async function listSongsWithCapabilities(
   q: string = "",
-  limit = 100
+  limit = 100,
+  categorySlug?: string
 ): Promise<(SongSummary & SongCapabilities)[]> {
   const supabase = await createClient();
   const term = q.trim();
+
+  // Si hay filtro por categoría: resolver IDs antes para usarlo como restricción.
+  let categoryIds: string[] | null = null;
+  if (categorySlug) {
+    categoryIds = await resolveCategorySongIds(supabase, categorySlug);
+    if (categoryIds.length === 0) return [];
+  }
 
   // Si hay query: usamos el RPC accent-insensitive para obtener IDs y luego
   // fetcheamos capacidades. Si no, traemos todo el catálogo directo.
@@ -120,7 +163,11 @@ export async function listSongsWithCapabilities(
       lim: limit,
     });
     if (rpcErr) throw rpcErr;
-    const ids = ((matches ?? []) as { id: string }[]).map((r) => r.id);
+    let ids = ((matches ?? []) as { id: string }[]).map((r) => r.id);
+    if (categoryIds) {
+      const allowed = new Set(categoryIds);
+      ids = ids.filter((id) => allowed.has(id));
+    }
     if (ids.length === 0) return [];
     const { data: rows, error } = await supabase
       .from("songs")
@@ -153,12 +200,16 @@ export async function listSongsWithCapabilities(
   }
 
   // Sin query: catálogo completo ordenado por número.
-  const { data, error } = await supabase
+  let baseQuery = supabase
     .from("songs")
     .select(
       "id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id)"
     )
-    .eq("status", "published")
+    .eq("status", "published");
+  if (categoryIds) {
+    baseQuery = baseQuery.in("id", categoryIds);
+  }
+  const { data, error } = await baseQuery
     .order("number", { ascending: true, nullsFirst: false })
     .limit(limit);
   if (error) throw error;
@@ -182,19 +233,31 @@ export async function listSongsWithCapabilities(
 
 export async function listSongsPaged(
   page: number,
-  pageSize: number
+  pageSize: number,
+  categorySlug?: string
 ): Promise<{ items: (SongSummary & SongCapabilities)[]; total: number }> {
   const supabase = await createClient();
   const safePage = Math.max(1, Math.floor(page));
   const from = (safePage - 1) * pageSize;
   const to = from + pageSize - 1;
-  const { data, error, count } = await supabase
+
+  let categoryIds: string[] | null = null;
+  if (categorySlug) {
+    categoryIds = await resolveCategorySongIds(supabase, categorySlug);
+    if (categoryIds.length === 0) return { items: [], total: 0 };
+  }
+
+  let pagedQuery = supabase
     .from("songs")
     .select(
       "id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id)",
       { count: "exact" }
     )
-    .eq("status", "published")
+    .eq("status", "published");
+  if (categoryIds) {
+    pagedQuery = pagedQuery.in("id", categoryIds);
+  }
+  const { data, error, count } = await pagedQuery
     .order("number", { ascending: true, nullsFirst: false })
     .range(from, to);
   if (error) throw error;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   listCommonAnnouncements,
   listLiturgicalAnnouncements,
+  listPublicCategories,
   listSongsPaged,
 } from "@/lib/songs";
 import {
@@ -72,6 +73,7 @@ export default async function Home() {
     liturgical,
     songsResult,
     novedades,
+    songCategories,
   ] = await Promise.all([
     primaryParish
       ? listPlaylistsForParish(primaryParish.id, {
@@ -93,6 +95,7 @@ export default async function Home() {
     listLiturgicalAnnouncements(PREVIEW),
     listSongsPaged(1, SONGS_PAGE_SIZE),
     listCommonAnnouncements(PREVIEW),
+    listPublicCategories(),
   ]);
 
   return (
@@ -137,6 +140,7 @@ export default async function Home() {
           initialItems={songsResult.items}
           initialTotal={songsResult.total}
           pageSize={SONGS_PAGE_SIZE}
+          categories={songCategories}
         />
 
         {/* Novedades */}

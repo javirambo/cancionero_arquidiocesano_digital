@@ -64,6 +64,14 @@ export function MoreIcon(): ReactElement {
   );
 }
 
+export function FilterIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true" width={20} height={20}>
+      <path d="M4 5h16l-6 8v6l-4-2v-4z" />
+    </svg>
+  );
+}
+
 export function SearchIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true" width={20} height={20}>
