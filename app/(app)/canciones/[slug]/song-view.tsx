@@ -290,8 +290,8 @@ export function SongView({
       )}
 
       <div
-        className="font-serif text-base leading-8 normal-case text-foreground"
-        style={{ fontSize: `${letterScale}rem` }}
+        className="font-serif text-base normal-case text-foreground"
+        style={{ fontSize: `${letterScale}rem`, lineHeight: 2 }}
       >
         {groupChorus(transposed).map((block, i) =>
           block.inChorus ? (
