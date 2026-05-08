@@ -39,7 +39,7 @@ export function CardWithImage({
   const indicator =
     href && showIndicator ? (
       <span
-        className="flex shrink-0 items-center pr-5 text-muted-foreground"
+        className="absolute bottom-3 right-3 text-muted-foreground"
         aria-hidden="true"
       >
         {external ? <ExternalLinkIcon /> : <ChevronRightIcon />}
@@ -50,7 +50,7 @@ export function CardWithImage({
     <>
       {imageBlock}
       <div
-        className={`flex min-w-0 flex-1 flex-col p-5 ${imageUrl ? "ml-[75px]" : ""}`}
+        className={`flex min-w-0 flex-1 flex-col p-5 pr-10 ${imageUrl ? "ml-[75px]" : ""}`}
       >
         {children}
       </div>

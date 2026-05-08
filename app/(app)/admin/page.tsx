@@ -59,12 +59,28 @@ export default async function AdminHomePage() {
           <li key={s.href}>
             <Link
               href={s.href}
-              className="flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-6 transition-colors hover:border-primary"
+              className="flex h-full items-center gap-4 rounded-xl border border-border bg-background p-6 transition-colors hover:border-primary"
             >
-              <span className="text-lg text-primary">{s.titulo}</span>
-              <span className="text-sm leading-6 text-muted-foreground normal-case">
-                {s.descripcion}
-              </span>
+              <div className="flex flex-1 flex-col gap-2">
+                <span className="text-lg text-primary">{s.titulo}</span>
+                <span className="text-sm leading-6 text-muted-foreground normal-case">
+                  {s.descripcion}
+                </span>
+              </div>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="shrink-0 text-primary"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
             </Link>
           </li>
         ))}

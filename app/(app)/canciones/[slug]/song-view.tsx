@@ -100,7 +100,7 @@ export function SongView({
       <div
         role="toolbar"
         aria-label="Controles de la canción"
-        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-sidebar px-2 py-3 sm:justify-end sm:gap-3 sm:px-4"
+        className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-sidebar px-2 py-3 sm:justify-end sm:gap-3 sm:px-4"
       >
         {chordsAvailable && (
           <div className="flex items-center gap-2 sm:gap-3">
@@ -290,8 +290,8 @@ export function SongView({
       )}
 
       <div
-        className="font-serif text-base leading-8 normal-case text-foreground"
-        style={{ fontSize: `${letterScale}rem` }}
+        className="font-serif text-base normal-case text-foreground"
+        style={{ fontSize: `${letterScale}rem`, lineHeight: 1.6 }}
       >
         {groupChorus(transposed).map((block, i) =>
           block.inChorus ? (

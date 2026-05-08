@@ -300,7 +300,7 @@ export function SiteHeader() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-sidebar">
+    <header className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border bg-sidebar`}>
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-1">
         <Link href="/" className="flex items-baseline gap-3">
           <span

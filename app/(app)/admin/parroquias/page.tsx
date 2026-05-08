@@ -3,15 +3,27 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminAccess } from "../access";
 import { PendingParishRow } from "./pending-row";
+import { AdminContactEmailsForm } from "./admin-contact-emails-form";
 
 export default async function AdminParroquiasPage() {
   const access = await getAdminAccess();
   if (!access.isAdmin) redirect("/admin");
   const supabase = await createClient();
-  const { data: parishes } = await supabase
-    .from("parishes")
-    .select("id, name, slug, city, address, status")
-    .order("name");
+  const [parishesRes, settingRes] = await Promise.all([
+    supabase
+      .from("parishes")
+      .select("id, name, slug, city, address, status")
+      .order("name"),
+    supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "admin_contact_emails")
+      .maybeSingle(),
+  ]);
+  const parishes = parishesRes.data;
+  const adminContactEmails = Array.isArray(settingRes.data?.value)
+    ? (settingRes.data?.value as string[])
+    : [];
 
   const pending = (parishes ?? []).filter((p) => p.status === "pending");
   const others = (parishes ?? []).filter((p) => p.status !== "pending");
@@ -32,6 +44,13 @@ export default async function AdminParroquiasPage() {
           Alta, edición y baja de parroquias de la Arquidiócesis. Las parroquias en estado pendiente requieren revisión.
         </p>
       </header>
+
+      <section className="flex flex-col gap-3 rounded-xl border border-border p-5">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
+          Configuración general
+        </h2>
+        <AdminContactEmailsForm initialEmails={adminContactEmails} />
+      </section>
 
       {pending.length > 0 && (
         <section className="flex flex-col gap-3">

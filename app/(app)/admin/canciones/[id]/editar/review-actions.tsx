@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/app/components/toast";
 import type { SongStatus } from "@/lib/songs-admin";
-import { TrashIcon } from "@/app/components/icons";
 import { SongStatusBadge } from "../../status-badge";
 
 type Capabilities = {
@@ -167,18 +166,6 @@ export function ReviewActions({
           Estado:
         </span>
         <SongStatusBadge status={status} />
-        {caps.canUnpublish && (
-          <button
-            type="button"
-            onClick={onUnpublish}
-            disabled={busy}
-            aria-label="Despublicar (volver a borrador)"
-            title="Despublicar (volver a borrador)"
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
-          >
-            <TrashIcon />
-          </button>
-        )}
       </div>
 
       {status === "rejected" && reviewNotes && (
@@ -238,6 +225,16 @@ export function ReviewActions({
             className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
           >
             {canReview ? "Devolver a borrador" : "Retirar de revisión"}
+          </button>
+        )}
+        {caps.canUnpublish && (
+          <button
+            type="button"
+            onClick={onUnpublish}
+            disabled={busy}
+            className="rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
+          >
+            Despublicar
           </button>
         )}
         {caps.canArchive && (
