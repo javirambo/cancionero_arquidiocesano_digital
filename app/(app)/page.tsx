@@ -203,6 +203,7 @@ function PlaylistsSection({
               id: p.id,
               name: p.name,
               description: p.description,
+              image_path: p.image_path,
               parish: p.parish,
             }}
           />

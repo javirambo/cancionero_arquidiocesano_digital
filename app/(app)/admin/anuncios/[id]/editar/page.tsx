@@ -38,7 +38,7 @@ export default async function EditarAnuncioPage({
   const [annRes, apRes, parishes, access, schedules] = await Promise.all([
     supabase
       .from("announcements")
-      .select("id, title, body, kind, priority, target_kind, target_id, target_url")
+      .select("id, title, body, kind, priority, target_kind, target_id, target_url, image_path")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("announcement_parishes").select("parish_id").eq("announcement_id", id),
@@ -67,6 +67,7 @@ export default async function EditarAnuncioPage({
     target_id: (ann.target_id as string | null) ?? null,
     target_url: (ann.target_url as string | null) ?? "",
     target_label: targetLabel,
+    image_path: (ann.image_path as string | null) ?? null,
     scope: linkedParishIds.length === 0 ? "all" : "selected",
     parish_ids: linkedParishIds,
     schedules: schedules.map((s) => ({

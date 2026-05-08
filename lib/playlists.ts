@@ -7,6 +7,7 @@ export type PlaylistSummary = {
   id: string;
   name: string;
   description: string | null;
+  image_path: string | null;
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
   parish: { id: string; name: string; slug: string } | null;
@@ -36,12 +37,13 @@ function firstParish(
 }
 
 const PLAYLIST_SELECT =
-  "id, name, description, visibility, is_archdiocesan, parishes!playlists_parish_id_fkey(id, name, slug)";
+  "id, name, description, image_path, visibility, is_archdiocesan, parishes!playlists_parish_id_fkey(id, name, slug)";
 
 function rowToSummary(row: {
   id: string;
   name: string;
   description: string | null;
+  image_path: string | null;
   visibility: string;
   is_archdiocesan: boolean;
   parishes: ParishRel;
@@ -50,6 +52,7 @@ function rowToSummary(row: {
     id: row.id,
     name: row.name,
     description: row.description,
+    image_path: row.image_path,
     visibility: row.visibility as PlaylistSummary["visibility"],
     is_archdiocesan: row.is_archdiocesan,
     parish: firstParish(row.parishes),

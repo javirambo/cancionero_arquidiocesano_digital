@@ -7,7 +7,20 @@ export const STORAGE_BUCKETS = {
   partituras: "partituras",
   /** Audios de referencia (mp3/ogg). */
   audios: "audios",
+  /** Imágenes para cards de playlists y anuncios (bucket público). */
+  images: "images",
 } as const;
 
 export type StorageBucket =
   (typeof STORAGE_BUCKETS)[keyof typeof STORAGE_BUCKETS];
+
+/**
+ * Devuelve la URL pública de una imagen del bucket `images`.
+ * El bucket es público, así que no requiere signed URL.
+ */
+export function getPublicImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  return `${base}/storage/v1/object/public/${STORAGE_BUCKETS.images}/${path}`;
+}

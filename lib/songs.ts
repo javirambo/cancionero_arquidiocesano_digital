@@ -327,7 +327,7 @@ export async function searchGlobal(q: string): Promise<GlobalSearchResults> {
   );
   return {
     songs: r.songs ?? [],
-    playlists: visiblePlaylists,
+    playlists: visiblePlaylists.map((p) => ({ ...p, image_path: null })),
     parishes: r.parishes ?? [],
   };
 }
@@ -340,6 +340,7 @@ export type PlaylistSummary = {
   id: string;
   name: string;
   description: string | null;
+  image_path: string | null;
   parish: { name: string; slug: string } | null;
 };
 
@@ -455,6 +456,7 @@ export type Featured = {
   target_kind: string;
   target_id: string | null;
   target_url: string | null;
+  image_path: string | null;
   // URL ya resuelta a la que debe navegar el banner si es clickeable.
   // Null cuando target_kind === 'none' o no se pudo resolver.
   href: string | null;
@@ -468,6 +470,7 @@ type AnnouncementRow = {
   target_kind: string;
   target_id: string | null;
   target_url: string | null;
+  image_path: string | null;
   priority: number;
   created_at: string;
 };
@@ -518,6 +521,7 @@ async function resolveAnnouncementHrefs(
       target_kind: r.target_kind,
       target_id: r.target_id,
       target_url: r.target_url,
+      image_path: r.image_path,
       href,
     };
   });
@@ -582,7 +586,7 @@ async function listAnnouncementsByKindFilter(
   const supabase = await createClient();
   let query = supabase
     .from("announcements")
-    .select("id, title, body, kind, target_kind, target_id, target_url, priority, created_at")
+    .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, created_at")
     .order("created_at", { ascending: false });
   if (kindFilter === "null") query = query.is("kind", null);
   else query = query.not("kind", "is", null);
@@ -626,7 +630,7 @@ export async function listAnnouncementsForParish(
   const { data, error } = await supabase
     .from("announcements")
     .select(
-      "id, title, body, kind, target_kind, target_id, target_url, priority, created_at"
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, created_at"
     )
     .in("id", ids)
     .order("priority", { ascending: false })
