@@ -33,13 +33,20 @@ A la derecha, tres botones circulares con tooltip al pasar el cursor:
 
 ### 1.3. Menú "Mi cuenta" (silueta de usuario)
 
+Encabezado del menú: avatar + nombre + email del usuario logueado (read-only). Si es invitado: ícono genérico, "Invitado" y botón "Iniciá sesión" que dispara el login con Google.
+
 | Ítem            | Acción                                                              |
 | --------------- | ------------------------------------------------------------------- |
-| Perfil          | Abre `/perfil`. Si no hay sesión, muestra modo "Invitado".          |
-| Modo Oscuro / Modo Claro | Alterna el tema. Default: claro. Persiste en el navegador. |
-| Playlists       | Va a `/playlists`.                                                  |
+| Cantos          | Va a `/canciones`.                                                  |
+| Listas          | Va a `/playlists`.                                                  |
 | Parroquias      | Va a `/parroquias`.                                                 |
-| Cerrar Sesión   | Visible siempre, funcional cuando entre el login.                   |
+| Novedades       | Va a `/novedades`.                                                  |
+| No apagar pantalla | Toggle del wake lock para que la pantalla no se apague.          |
+| Modo Oscuro / Modo Claro | Alterna el tema. Default: claro. Persiste en el navegador. |
+| Descargar QR    | Genera el QR de la URL actual.                                      |
+| Administración  | Solo visible para admin/editor. Va a `/admin`.                       |
+| Instalar app    | Va a `/install`.                                                    |
+| Cerrar Sesión   | Solo visible si hay sesión.                                          |
 
 ---
 
@@ -135,19 +142,7 @@ A la derecha, tres botones circulares con tooltip al pasar el cursor:
 
 ---
 
-## 9. Perfil (`/perfil`)
-
-- **Modo Invitado** (sin sesión, hoy siempre):
-  - Saludo "Invitado", explicación de qué se desbloquea al iniciar sesión.
-  - Botón "Ingresar con Google" *(deshabilitado hasta que se habilite el login)*.
-  - Atajos a Canciones y Playlists.
-- **Modo Autenticado** (cuando entre login):
-  - Avatar, nombre, email.
-  - Sección "Mi parroquia" con la parroquia vinculada o el aviso de que no la vinculaste.
-
----
-
-## 10. Diálogo de QR
+## 9. Diálogo de QR
 
 Aparece al hacer clic en cualquier botón **"Descargar QR"**.
 
@@ -158,7 +153,7 @@ Aparece al hacer clic en cualquier botón **"Descargar QR"**.
 
 ---
 
-## 11. Atajos de teclado
+## 10. Atajos de teclado
 
 | Atajo                | Acción                                |
 | -------------------- | ------------------------------------- |
@@ -167,7 +162,7 @@ Aparece al hacer clic en cualquier botón **"Descargar QR"**.
 
 ---
 
-## 12. Glosario rápido
+## 11. Glosario rápido
 
 - **Cancionero**: el catálogo completo de canciones publicadas.
 - **Playlist**: una selección ordenada de canciones, asociada a una parroquia. Tiene URL pública compartible y se puede generar QR.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CloseIcon, HeartIcon } from "./icons";
 import { useFavorites, type FavoriteEntry, type FavoriteKind } from "./favorites";
 
@@ -18,8 +18,21 @@ const GROUP_LABELS: Record<FavoriteKind, string> = {
 
 const GROUP_ORDER: FavoriteKind[] = ["song", "playlist", "parish"];
 
+const PRECACHE_STORAGE_KEY = "pwa-precache:favorites-bundle";
+
+type DownloadStatus = "idle" | "loading" | "done" | "partial" | "error";
+
+function slugFromHref(href: string): string | null {
+  const match = href.match(/^\/canciones\/([^/?#]+)/);
+  return match ? match[1] : null;
+}
+
 export function FavoritesDialog({ open, onClose }: Props) {
   const { favorites, remove, loading } = useFavorites();
+  const [swReady, setSwReady] = useState(false);
+  const [persistedAt, setPersistedAt] = useState<string | null>(null);
+  const [status, setStatus] = useState<DownloadStatus>("idle");
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
 
   // Cerrar con ESC.
   useEffect(() => {
@@ -31,18 +44,110 @@ export function FavoritesDialog({ open, onClose }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Estado del SW + última descarga al abrir el dialog.
+  useEffect(() => {
+    if (!open) return;
+    if (typeof window === "undefined") return;
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        setSwReady(Boolean(reg?.active));
+      });
+    }
+    setPersistedAt(localStorage.getItem(PRECACHE_STORAGE_KEY));
+  }, [open]);
+
   const grouped = useMemo(() => {
     const out: Record<FavoriteKind, FavoriteEntry[]> = {
       song: [],
       playlist: [],
       parish: [],
     };
-    // Ya viene ordenado por added_at desc desde el provider.
     for (const f of favorites) out[f.kind].push(f);
     return out;
   }, [favorites]);
 
+  async function handleDownload() {
+    setStatus("loading");
+
+    // 1. Slugs de canciones favoritas directas.
+    const songSlugs = grouped.song
+      .map((f) => slugFromHref(f.href))
+      .filter((s): s is string => Boolean(s));
+
+    // 2. Slugs de canciones dentro de playlists favoritas.
+    const playlistIds = grouped.playlist.map((f) => f.id);
+    const playlistSongSlugs: string[] = [];
+    for (const plId of playlistIds) {
+      try {
+        const res = await fetch(`/api/playlists/${plId}/song-slugs`, {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { songs: { id: string; slug: string }[] };
+          for (const s of data.songs) {
+            if (s.slug) playlistSongSlugs.push(s.slug);
+          }
+        }
+      } catch {
+        // continuamos con la siguiente playlist
+      }
+    }
+
+    // 3. Dedupe por slug.
+    const allSlugs = Array.from(new Set([...songSlugs, ...playlistSongSlugs]));
+
+    if (allSlugs.length === 0) {
+      setStatus("idle");
+      return;
+    }
+
+    setProgress({ done: 0, total: allSlugs.length });
+
+    // 4. Descargar en serie (forzando red para que el SW capture la respuesta).
+    let okCount = 0;
+    for (const slug of allSlugs) {
+      try {
+        const res = await fetch(`/canciones/${slug}`, {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        if (res.ok) okCount++;
+      } catch {
+        // seguimos con la siguiente
+      }
+      setProgress((p) => ({ done: p.done + 1, total: p.total }));
+    }
+
+    if (okCount === allSlugs.length) {
+      const ts = new Date().toISOString();
+      localStorage.setItem(PRECACHE_STORAGE_KEY, ts);
+      setPersistedAt(ts);
+      setStatus("done");
+    } else if (okCount > 0) {
+      setStatus("partial");
+    } else {
+      setStatus("error");
+    }
+  }
+
   if (!open) return null;
+
+  const showDownload =
+    swReady && (grouped.song.length > 0 || grouped.playlist.length > 0);
+
+  const buttonClass =
+    "rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-60";
+
+  function buttonLabel(): string {
+    if (status === "loading") {
+      return `Descargando ${progress.done} / ${progress.total}…`;
+    }
+    if (status === "partial") return "Descarga parcial · Reintentar";
+    if (status === "error") return "Error al descargar · Reintentar";
+    if (persistedAt || status === "done") return "Actualizar favoritos";
+    return "Descargar favoritos";
+  }
 
   return (
     <div
@@ -119,6 +224,25 @@ export function FavoritesDialog({ open, onClose }: Props) {
             ))
           )}
         </div>
+
+        {showDownload && (
+          <div className="flex flex-col items-center gap-1 border-t border-border px-5 py-3">
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={status === "loading"}
+              className={buttonClass}
+            >
+              {buttonLabel()}
+            </button>
+            {persistedAt && status !== "loading" && (
+              <span className="text-xs normal-case text-muted-foreground">
+                Última descarga:{" "}
+                {new Date(persistedAt).toLocaleString("es-AR")}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

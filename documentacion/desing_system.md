@@ -138,7 +138,7 @@ Reglas:
 | `HeartIcon`      | Agregar a Mis favoritos     | `filled` si ya es favorito     |
 | `MinusIcon`      | Quitar de esta playlist     | Color `destructive`            |
 
-**Ejemplo — menú del header del usuario** (ya implementado, sirve como referencia visual): `UserIcon` Perfil · `MoonIcon` Modo oscuro · `ChordsIcon` Sugerir acordes · `PlaylistIcon` Playlists · `ParishIcon` Parroquias · `ShieldIcon` Administración · `QrIcon` Descargar QR.
+**Ejemplo — menú del header del usuario** (ya implementado, sirve como referencia visual): encabezado con avatar + nombre + email (o "Invitado" + botón "Iniciá sesión") · Cantos · Listas · Parroquias · Novedades · (separador) · No apagar pantalla · `MoonIcon` Modo oscuro · `QrIcon` Descargar QR · `ShieldIcon` Administración (solo admin) · Instalar app · Cerrar Sesión.
 
 ## Cards con imagen (`CardWithImage`)
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   listArchdiocesanPlaylists,
@@ -140,12 +139,6 @@ export default async function PlaylistsPage() {
             Todavía no tenés listas. Vinculá tu parroquia o creá una lista
             personal desde el menú &quot;…&quot; de cualquier canto.
           </p>
-          <Link
-            href="/perfil"
-            className="mt-4 inline-block rounded-full border border-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-          >
-            Ir a mi perfil
-          </Link>
         </section>
       </main>
     );

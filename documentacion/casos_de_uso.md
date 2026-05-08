@@ -781,10 +781,10 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
   1. En el extremo derecho del header se muestran **tres botones circulares** con tooltips:
      - 🔍 **Buscar** (lupa) → tooltip "Buscar".
      - ❤ **Mis favoritos** (corazón) → tooltip "Mis favoritos".
-     - 👤 **Perfil** (silueta de usuario) → tooltip "Mi cuenta".
+     - 👤 **Menú** (avatar del usuario o silueta si invitado) → tooltip "Menú".
   2. **Buscar:** abre un overlay/diálogo con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01.
   3. **Mis favoritos:** abre el diálogo popup de CU-22.
-  4. **Perfil:** abre el menú lateral existente (login, modo oscuro, listas, etc.).
+  4. **Menú:** abre el menú desplegable con encabezado de perfil read-only (avatar + nombre + email, o "Invitado" + botón "Iniciá sesión") y los items de navegación y configuración.
 - **Flujos alternativos:**
   - **Buscar sin término:** el overlay muestra accesos rápidos (parroquias destacadas, últimas playlists, etc.).
 - **Postcondiciones:** Ninguna persistente; las acciones derivadas siguen sus propios CU.

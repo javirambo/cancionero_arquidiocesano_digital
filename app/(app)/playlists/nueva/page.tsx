@@ -13,7 +13,7 @@ export default async function NuevaPlaylistPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/perfil");
+  if (!user) redirect("/");
 
   // Roles globales del usuario.
   const { data: rolesRows } = await supabase

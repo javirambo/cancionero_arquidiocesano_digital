@@ -17,9 +17,12 @@ El cancionero es una **Progressive Web App** instalable en celular y desktop, co
 - `app/apple-icon.tsx` — ícono para iOS (180×180).
 - `app/icon-192/route.tsx`, `app/icon-512/route.tsx`, `app/icon-maskable/route.tsx` — íconos PWA dinámicos generados con `ImageResponse`.
 - `app/components/sw-register.tsx` — registra el SW en el cliente. Montado en `app/layout.tsx`.
-- `app/components/install-pwa-button.tsx` — botón "Instalar app" en `/perfil`.
+- `app/components/install-pwa-prompt.tsx` — botón "Instalar ahora" mínimo, solo aparece si el browser ofrece prompt nativo. Usado en `/install`.
+- `app/components/install-pwa-button.tsx` — variante con card y texto, queda como componente reusable (no montado actualmente).
 - `app/components/offline-indicator.tsx` — badge fijo cuando no hay red.
-- `app/components/precache-button.tsx` — botón reusable "Descargar para offline".
+- `app/components/precache-button.tsx` — botón reusable "Descargar para offline" (usado en `/playlists/[id]` y `/install`).
+- `app/(app)/install/page.tsx` — página `/install` con instrucciones por plataforma (iPhone/Android/Desktop).
+- `app/api/playlists/[id]/song-slugs/route.ts` — endpoint GET liviano que devuelve `{ songs: [{ id, slug }] }` de una playlist. Usado por el botón "Descargar favoritos" para resolver las canciones de las playlists favoriteadas.
 
 ## Estrategias de cache (definidas en `app/sw.ts`)
 
@@ -39,20 +42,36 @@ El cancionero es una **Progressive Web App** instalable en celular y desktop, co
 
 ## Pre-cache forzado (modo "C")
 
-El componente `<PrecacheButton />` permite descargar un set de canciones antes de quedarse sin señal:
+Hay tres lugares donde el usuario puede forzar la descarga de canciones para offline:
 
-- En `/perfil` → botón "Descargar favoritos para offline".
-- En `/playlists/[id]` → botón "Descargar para usar sin conexión" (descarga las canciones de la lista de misa).
+### 1. `<PrecacheButton />` — playlists individuales y favoritos en `/install`
 
-Internamente hace `fetch("/canciones/<slug>", { cache: "no-store" })` por cada slug, lo que fuerza al SW a cachear cada página HTML. El botón muestra progreso ("Descargando 12 / 30…") y al finalizar cambia a "✓ Disponible offline · Actualizar". El estado se persiste en `localStorage` con clave `pwa-precache:<storageKey>`.
+- En `/playlists/[id]` → botón "Descargar para usar sin conexión" (descarga las canciones de esa lista).
+- En `/install` → botón "Descargar favoritos para offline" al final de la página (solo canciones favoriteadas, sin tocar playlists). Solo se muestra para usuarios logueados con favoritos.
 
-## Botón "Instalar"
+Internamente hace `fetch("/canciones/<slug>", { cache: "no-store" })` por cada slug, lo que fuerza al SW a cachear cada página HTML. Muestra progreso ("Descargando 12 / 30…") y al finalizar cambia a "✓ Disponible offline · Actualizar". El estado se persiste en `localStorage` con clave `pwa-precache:<storageKey>`.
 
-Vive en la página `/perfil`, al final, después de favoritos. Lógica:
+### 2. Botón "Descargar / Actualizar favoritos" en el dialog de Mis Favoritos
 
-- **Chrome / Android / desktop:** escucha `beforeinstallprompt` y muestra "Instalar app".
-- **iOS Safari:** muestra botón "Cómo instalar" con instrucciones manuales (Compartir → Agregar a pantalla de inicio).
-- **Ya instalada** (`display-mode: standalone` o `navigator.standalone`): no se muestra nada.
+Al final del `<FavoritesDialog />` (icono ❤ en el header) hay un botón que descarga **todo el contenido favoriteado** del usuario:
+
+- Todas las **canciones** marcadas como favoritas.
+- Todas las **canciones de cada playlist** favoriteada (resueltas vía `GET /api/playlists/<id>/song-slugs`).
+- **Dedupea por slug** (una canción que esté suelta y dentro de una playlist se descarga una sola vez).
+- Las **parroquias** favoriteadas se ignoran.
+
+Estados del botón:
+- **"Descargar favoritos"** la primera vez (no hay registro previo en localStorage).
+- **"Descargando 12 / 30…"** mientras corre.
+- **"Actualizar favoritos"** una vez que ya hay descarga previa, con texto chico debajo "Última descarga: …".
+- **"Descarga parcial · Reintentar"** / **"Error al descargar · Reintentar"** según el resultado.
+
+Solo se muestra si el SW está activo (`navigator.serviceWorker.getRegistration()` devuelve uno) y hay al menos una canción o playlist en favoritos. Clave de persistencia: `pwa-precache:favorites-bundle`.
+
+## Página `/install` y acceso desde el menú
+
+- **Página `/install`** ([app/(app)/install/page.tsx](../app/(app)/install/page.tsx)) — explica cómo instalar la PWA en iPhone/iPad, Android y Computadora con tarjetas separadas. Arriba muestra `<InstallPwaPrompt />`: si el browser ofrece prompt nativo aparece "Instalar ahora", si la app ya está instalada muestra "✓ La app ya está instalada en este dispositivo", y si no hay nada que ofrecer no se muestra.
+- **Item en el menú** del header (`app/components/site-header.tsx`) — entrada "Instalar app" en el bloque inferior. Visible siempre (no se oculta aunque la app esté instalada, porque el usuario puede consultar las instrucciones para mostrarle a otro).
 
 ## Indicador offline
 

@@ -20,7 +20,7 @@ export default async function EditarPlaylistPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/perfil");
+  if (!user) redirect("/");
 
   // Permisos: admin o coordinator de la parroquia dueña.
   const { data: roles } = await supabase
