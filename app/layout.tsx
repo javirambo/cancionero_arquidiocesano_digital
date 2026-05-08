@@ -8,6 +8,8 @@ import { PreferencesProvider } from "./components/preferences";
 import { UserRolesProvider } from "./components/user-roles";
 import { ToastProvider } from "./components/toast";
 import { WakeLockProvider } from "./components/wake-lock";
+import { SWRegister } from "./components/sw-register";
+import { OfflineIndicator } from "./components/offline-indicator";
 import "./globals.css";
 
 const cardo = Cardo({
@@ -59,7 +61,11 @@ export default function RootLayout({
               <PreferencesProvider>
                 <FavoritesProvider>
                   <ToastProvider>
-                    <WakeLockProvider>{children}</WakeLockProvider>
+                    <WakeLockProvider>
+                      <SWRegister />
+                      <OfflineIndicator />
+                      {children}
+                    </WakeLockProvider>
                   </ToastProvider>
                 </FavoritesProvider>
               </PreferencesProvider>

@@ -8,10 +8,6 @@
 
 [ ] **Backfill `parishes.latitude`/`longitude`.** Script Python (one-shot) que recorra las parroquias con `latitude IS NULL`, consulte Nominatim por nombre+ciudad+dirección y persista las coords. Documentar cómo correrlo. (Migración 0010 ya creó las columnas.)
 
-[ ] paseo general:
-- login como member fiel simple
-
-
 
 - el corazon en el titulo de la cancion se ve horrible.
 
