@@ -36,7 +36,7 @@ Listado completo del catálogo con filtros por estado.
 
 - **Tabs** arriba para filtrar por estado: **Todas · Borradores · En revisión · Publicadas · Rechazadas · Archivadas**.
 - **Buscador** "Buscar por título o número…". Si escribís solo dígitos (ej: `42`), busca canciones con ese número exacto **o** con `42` en el título; si escribís texto, busca solo por título.
-- Cada fila muestra: número (si tiene), título, categoría, íconos de capacidades (🎵 acordes, ▶ video, 📄 archivos), fecha de modificación y un **badge chico** con el estado (Borrador / En revisión / Publicada / Rechazada / Archivada).
+- Cada fila muestra: número (si tiene), título, **categorías litúrgicas** (separadas por coma cuando hay varias), íconos de capacidades (🎵 acordes, ▶ video, 📄 archivos), fecha de modificación y un **badge chico** con el estado (Borrador / En revisión / Publicada / Rechazada / Archivada).
 - Botón **"Editar"** a la derecha de cada fila → abre el editor.
 - Arriba a la derecha del listado, botón **"+ Nueva canción"**.
 
@@ -57,11 +57,13 @@ El editor está organizado en **tres acordeones**:
 - **Título** *(obligatorio)*
 - **Número en cancionero**
 - **Tonalidad original** (ej: `G`, `Em`, `F#m`)
-- **Autor** (lista; "— Sin autor —" si no hay)
-- **Categoría litúrgica** (lista; "— Sin categoría —")
+- **Autor** (lista; "— Sin autor —" si no hay; opción "+ Nuevo autor…" para crear sin salir del form).
+- **Categorías litúrgicas**: chips clicables (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.). Tocá para seleccionar/deseleccionar; podés elegir **una o varias** por canción.
 - **Tempo (BPM)**
-- **Link de YouTube**
-- **Etiquetas** (separadas por coma)
+- **Link de YouTube / Spotify**
+
+> **Nota:** el campo libre "Etiquetas" fue eliminado en mig. 0021 (no se usaba). Las clases litúrgicas ahora viven solo en las categorías controladas.
+> El catálogo de categorías es estable y se gestiona por SQL — no hay pantalla para crear/editar categorías nuevas (CU-25).
 
 #### b) Letra y acordes *(abierto por defecto)*
 

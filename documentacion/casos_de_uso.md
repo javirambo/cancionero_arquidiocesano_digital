@@ -34,7 +34,7 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      | ✅     |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
-| CU-25   | Creación de categorías litúrgicas                    | RF22      | ⏳ ABM de `categories` para coordinator/editor. En la edición o creación de cada canción debería aparecer una selección de categoría y otra e tags. |
+| CU-25   | Gestión de categorías litúrgicas                     | RF22      | ⚠️ Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.                                                                                                  |
 | CU-26   | ABM de festividades litúrgicas                       | RF23      | ❌ Deprecado — fusionado en CU-21 (anuncios con `kind` litúrgico).                                                                                                                                                                                              |
 
 ---
@@ -90,7 +90,7 @@ Rol global en `user_roles`.
   - Publicar nuevas versiones de canciones existentes.
   - Archivar canciones.
   - Crear canciones directamente (puede saltar el flujo de review).
-  - Crear categorías litúrgicas nuevas (CU-25).
+  - Asignar múltiples categorías litúrgicas a una canción (CU-25). El ABM del catálogo `categories` se gestiona hoy por SQL (catálogo estable).
 
 ### 6. 👑 *admin* (Administrador)
 
@@ -117,7 +117,7 @@ Rol global con permisos plenos.
 - **Precondiciones:** Catálogo de canciones cargado.
 - **Disparador:** El usuario escribe en el campo de búsqueda.
 - **Flujo principal:**
-  1. El usuario ingresa un término (título, fragmento de letra, número, playlist, categoría, parroquia).
+  1. El usuario ingresa un término (título, fragmento de letra, número, playlist, nombre de categoría litúrgica, parroquia).
   2. El sistema consulta el catálogo y devuelve resultados ordenados por relevancia.
   3. El usuario selecciona una canción.
   4. El sistema navega a la vista de canción (CU-02).
@@ -137,7 +137,7 @@ Rol global con permisos plenos.
 - **Precondiciones:** La canción existe en el catálogo.
 - **Disparador:** El usuario navega a `/canciones/{id}` (o desde búsqueda/playlist).
 - **Flujo principal:**
-  1. El sistema carga la canción: título, autor, categoría, letra, acordes y link de YouTube si existe.
+  1. El sistema carga la canción: título, autor, categorías litúrgicas (chips, una o varias), letra, acordes y link de YouTube si existe.
   2. El sistema renderiza letra sin acordes.
   3. El usuario puede alternar la visibilidad de los acordes.
 - **Flujos alternativos:**
@@ -154,7 +154,7 @@ Rol global con permisos plenos.
 - **Precondiciones:** La canción existe en el catálogo.
 - **Disparador:** El usuario navega a `/canciones/{id}` (o desde búsqueda/playlist).
 - **Flujo principal:**
-  1. El sistema carga la canción: título, autor, categoría, letra, acordes y link de YouTube si existe.
+  1. El sistema carga la canción: título, autor, categorías litúrgicas (chips, una o varias), letra, acordes y link de YouTube si existe.
   2. El sistema renderiza letra con acordes alineados sobre las sílabas correspondientes.
   3. El usuario puede alternar la visibilidad de los acordes.
 - **Flujos alternativos:**
@@ -437,7 +437,7 @@ Rol global con permisos plenos.
 
 ### Flujo principal — Coordinador parroquial (envía)
 
-1. El coordinador crea una canción nueva o edita una existente: título, autor, categoría, letra, acordes (ChordPro), tonalidad original, tempo, tags, link YT, partituras y audios.
+1. El coordinador crea una canción nueva o edita una existente: título, autor, categorías litúrgicas (una o varias, vía chips clicables), letra, acordes (ChordPro), tonalidad original, tempo, link YT, partituras y audios.
 2. El sistema valida formato de acordes y campos obligatorios.
 3. El sistema sube los archivos a Supabase Storage (`partituras`, `audios`) en estado `draft` (no son visibles públicamente).
 4. La canción queda persistida con `status = 'draft'`. El coordinador puede seguir editándola.
@@ -478,7 +478,7 @@ Rol global con permisos plenos.
 Edición rápida de una canción cuando solo se modifica la letra y los metadatos, sin tocar acordes.
 
 - **Disparador:** desde la vista de canción o desde `/admin/canciones`, opción "Editar".
-- **Campos editables:** `title`, `number`, `author_id`, `category_id`, `body` (solo letra, sin marcadores `[acorde]`), `tempo_bpm`, `tags`, `youtube_url`.
+- **Campos editables:** `title`, `number`, `author_id`, categorías litúrgicas (relación N:M `song_categories`), `body` (solo letra, sin marcadores `[acorde]`), `tempo_bpm`, `youtube_url`.
 - **Flujo:** al guardar, si la canción estaba `published` se crea una nueva edición en estado `draft` que sigue el flujo de revisión (CU-16). Si estaba en `draft`/`rejected`, se sobrescribe.
 - **Flujos alternativos:**
   - 1a. La canción tenía acordes en `body` previos: el editor "sin acordes" preserva los marcadores intactos y solo muestra la letra plana; los acordes no se pierden.
@@ -780,24 +780,29 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 
 ---
 
-## CU-25: Creación de categorías litúrgicas
+## CU-25: Gestión de categorías litúrgicas
 
 - **RF:** RF22
 - **Actores primarios:** Coordinador parroquial / Editor de contenido / Administrador.
-- **Precondiciones:** Sesión activa con uno de esos roles, y estar editando una canción (CU-16, CU-16.1).
-- **Disparador:** desde el selector de categoría en el formulario de edición de canción, opción **"+ Nueva categoría"** cuando la categoría buscada no existe.
-- **Flujo principal:**
-  1. En el formulario de canción (CU-16, CU-16.1), el campo `category_id` ofrece un selector con las categorías ordenadas por `sort_order, name`.
-  2. Si la categoría buscada no existe, el usuario hace clic en **"+ Nueva categoría"**.
-  3. Se abre un mini-diálogo con los campos `name` (obligatorio), `description` (opcional). `slug` se genera automáticamente con `slugify(name)`; `sort_order` se asigna al final.
-  4. Al guardar, la categoría queda persistida en `categories` y se selecciona automáticamente en la canción que se está editando.
-  5. El usuario sigue editando la canción sin haber salido del formulario.
-- **Flujos alternativos:**
-  - 3a (slug duplicado): el sistema sugiere uno alternativo con sufijo numérico (`comunion-2`).
-  - 3b (nombre duplicado): el sistema avisa "Ya existe una categoría con ese nombre" y propone seleccionarla en lugar de crear duplicado.
-- **Postcondiciones:** Categoría persistida en `categories` y asociada a la canción en edición.
+- **Precondiciones:** Sesión activa con uno de esos roles.
+- **Alcance:** una canción puede tener **una o varias** categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.). La relación canción↔categoría se modela como N:M en la tabla pivote `song_categories` (mig. 0021). El catálogo `categories` es un vocabulario controlado.
 
-> **Nota:** la **edición y baja** de categorías existentes no está cubierta en este CU y se decidirá más adelante. La FK `songs.category_id` es `ON DELETE SET NULL`, por lo que la baja eventual de una categoría dejaría las canciones asociadas sin categoría.
+### Asignación de categorías a una canción (implementado)
+
+- **Disparador:** desde el formulario de edición de canción (CU-16, CU-16.1), sección "Metadatos".
+- **Flujo principal:**
+  1. El sistema muestra todas las categorías del catálogo como **chips clicables** ordenadas por `sort_order, name`.
+  2. El usuario toca un chip para seleccionarlo (queda con estilo "primary"); vuelve a tocarlo para deseleccionarlo.
+  3. Al guardar la canción, el sistema sincroniza `song_categories` por diferencia: borra los vínculos quitados e inserta los nuevos. No se hace delete-all + insert.
+  4. Al publicar la canción (CU-16, `approve_song`), el snapshot de categorías vigentes se copia a `song_version_categories` para preservar trazabilidad por versión.
+- **Postcondiciones:** Filas en `song_categories` reflejan el conjunto seleccionado. Vista pública (CU-02) muestra los chips bajo el título; búsqueda (CU-01) matchea por nombre de categoría.
+
+### ABM del catálogo `categories` (no implementado)
+
+- **Estado:** la creación / edición / baja de categorías **no tiene pantalla** en la app.
+- **Razón:** el catálogo es estable (~18 entradas que cubren las clases litúrgicas estándar). No justifica el costo de mantener una UI dedicada.
+- **Cómo se gestiona hoy:** por SQL directo sobre `categories` (insert/update/delete). Las FKs en `song_categories` y `song_version_categories` son `ON DELETE CASCADE`: borrar una categoría desasocia automáticamente las canciones de ella, pero **no las elimina**.
+- **Si en el futuro se necesita ABM:** ver pantalla bajo `/admin/categorias`. Hoy se descarta para evitar tooling de bajo uso.
 
 ---
 

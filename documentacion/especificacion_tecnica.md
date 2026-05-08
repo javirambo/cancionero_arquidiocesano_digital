@@ -84,7 +84,7 @@ Definir arquitectura, decisiones tecnológicas y de diseño, lineamientos de imp
 * RF19: Gestionar anuncios (gestionados por admin) con ventana de fechas. Aparecen en la home durante su vigencia y desaparecen al vencer; el usuario no puede cerrarlos. Pueden tener destino global o a una/varias parroquias.
 * RF20: Permitir silenciar el dispositivo y que no se apague la pantalla.
 * RF21: Gestion de permisos
-* RF22: Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.) — creación on-demand al editar una canción y asignación a canciones
+* RF22: Categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.) — vocabulario controlado en `categories` con asignación N:M a canciones vía `song_categories` (mig. 0021). Una canción puede pertenecer a varias categorías. ABM del catálogo se gestiona por SQL (no hay pantalla; ver CU-25).
 * RF23: Festividades litúrgicas (calendario) — ABM y carga automática desde fuente externa (Conferencia Episcopal Argentina / Vaticano / iCal). Se usan en la home (CU-07) y como sugerencia de playlists para fechas específicas.
 
 
@@ -192,9 +192,9 @@ El `app/layout.tsx` raíz contiene únicamente los providers globales (theme, se
 
 ### **8.1 Entidades principales**
 
-* Canción (id, titulo, letra, acordes, tags (tonalidad, tempo), categoria, link YT, autor)  
-* Autor (id, nombre)  
-* Categoría litúrgica (id, nombre)  
+* Canción (id, titulo, letra+acordes en ChordPro, tonalidad original, tempo, link YT, autor; relación N:M con categorías vía `song_categories`)
+* Autor (id, nombre)
+* Categoría litúrgica (id, nombre, slug, sort_order) — vocabulario controlado, multi-asignable
 * Archivo (audio / partitura)  
 * Usuarios (id, nombre, mail, parro)  
 * Parroquias (id, nombre, direccion)  
