@@ -108,6 +108,8 @@ Borrador → En revisión → Publicada
 | En revisión            | **"Rechazar"** (botón con borde rojo)   | Editor / Admin       | Abre un diálogo donde **es obligatorio escribir notas** explicando qué corregir.              |
 | En revisión            | **"Devolver a borrador"**               | Editor / Admin       | Equivalente a "Retirar" pero hecho por el editor.                                              |
 | Publicada              | **🗑️ icono de tacho** (a la derecha del estado) | Editor / Admin       | Despublica la canción y la vuelve a Borrador. Útil si se detecta un error después de publicar. |
+| Cualquiera salvo Archivada | **"Archivar"** (botón con borde rojo) | Editor / Admin | Baja lógica: la canción deja de aparecer en búsquedas y vistas públicas. Las playlists que la incluyen la marcan como no disponible. Pide **doble confirmación** y vuelve al listado. El historial de versiones se preserva. |
+| Archivada              | **"Desarchivar"** (botón dorado)        | Editor / Admin       | Vuelve la canción a Borrador. Si querés republicarla, debe pasar nuevamente por revisión.     |
 
 ### 4.2. Editar una canción ya publicada
 
@@ -250,7 +252,7 @@ Botón al pie. Le quita todos los roles globales y todas las membresías de parr
 - **En revisión (`review`)** — el coordinator la envió al editor. Queda bloqueada para edición del coordinator hasta que el editor decida.
 - **Publicada (`published`)** — aprobada por el editor. Se ve en el catálogo público y en las playlists.
 - **Rechazada (`rejected`)** — el editor la rechazó con notas. Vuelve al coordinator para corregir y reenviar.
-- **Archivada (`archived`)** — fuera de circulación. No se ve públicamente. Hoy no hay UI para archivar; queda como estado disponible en BD.
+- **Archivada (`archived`)** — fuera de circulación. No se ve públicamente. Editor/Admin pueden archivar y desarchivar desde el editor de canción (acción "Archivar" con doble confirmación; "Desarchivar" la vuelve a Borrador para republicar vía flujo de revisión).
 - **Versión** — cada vez que el editor aprueba una canción, queda registrada una "versión" histórica del contenido. Se preservan al despublicar.
 - **`is_archdiocesan`** — flag de playlists creadas por la parroquia virtual "arquidiócesis". Aparecen por defecto en todas las parroquias sin necesidad de suscribirse.
 - **Parroquia "pendiente"** — parroquia creada por un coordinator pero todavía no aprobada por un admin. No aparece en listados públicos.

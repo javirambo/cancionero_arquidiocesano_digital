@@ -464,7 +464,8 @@ Rol global con permisos plenos.
 - **2a (validación):** Acordes mal formados → error inline; no se permite enviar a revisión.
 - **6a (sin permisos):** Un usuario sin rol Coordinador o Editor no puede acceder a `/admin/canciones` (RLS rechaza).
 - **Edición concurrente:** Si la canción está en `'review'`, el coordinador no puede editarla; debe esperar a que el editor decida o "retirar de revisión" (vuelve a `'draft'`).
-- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar. Se confirma con doble paso. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva.
+- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar (RPC `archive_song`, mig. 0022). Se confirma con doble paso (dos `confirm` consecutivos en la UI). La transición es válida desde cualquier estado salvo `archived`. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva. El archivado/Eliminado limpia los campos de flujo (`submitted_*`, `reviewed_*`, `published_at`, `review_notes`).
+- **Reverso (`unarchive_song`):** Editor o Admin pueden desarchivar; la canción vuelve a `draft` y debe pasar por el flujo de revisión si quiere republicarse.
 - **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`. *(Decisión: simplificación deliberada — el Editor tiene confianza total y el flujo de review se reserva para canciones nuevas. El coordinator no puede editar canciones publicadas.)*
 
 ### Postcondiciones

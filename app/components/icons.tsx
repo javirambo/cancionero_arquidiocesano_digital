@@ -271,3 +271,13 @@ export function BellIcon(): ReactElement {
     </svg>
   );
 }
+
+export function ExternalLinkIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M14 5h5v5" />
+      <path d="M19 5l-8 8" />
+      <path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
+    </svg>
+  );
+}

@@ -17,10 +17,14 @@ type Preferences = {
   // Sólo aplica a usuarios autenticados; al recargar requiere un gesto del
   // usuario para reactivarse (limitación de la Web API).
   keepScreenOn: boolean;
+  // Mostrar acordes en la vista de canción. Default false: la primera vez
+  // que un usuario entra (aunque tenga parroquia) los acordes están ocultos.
+  showChords: boolean;
 };
 
 const DEFAULTS: Preferences = {
   keepScreenOn: false,
+  showChords: false,
 };
 
 type Ctx = Preferences & {

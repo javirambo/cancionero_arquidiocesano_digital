@@ -4,6 +4,36 @@ Decisiones de modelo y su justificación. Una entrada por cambio significativo.
 
 ---
 
+## 2026-05-08 — Activación del estado `archived` (RPCs `archive_song` / `unarchive_song`)
+
+**Migración:** `0022_archive_song.sql` (aplicada).
+
+### Contexto
+
+El estado `archived` existía en `songs.status` desde la mig. 0001 pero **no había forma de llegar a él**: no había RPC, ni botón, ni acción. El listado admin tenía la pestaña "Archivados" y el badge tenía estilo, pero el estado era inalcanzable.
+
+CU-16 documentaba el archivado como "baja lógica" del flujo editorial. Esta migración cubre el gap.
+
+### Decisiones
+
+1. **`archive_song(p_song_id)`**: editor/admin, válido desde cualquier estado salvo `archived`. Limpia campos de flujo (`submitted_*`, `reviewed_*`, `published_at`, `review_notes`) para no dejar trazas inconsistentes si la canción se desarchiva más adelante. Mantiene `song_versions` intacto.
+2. **`unarchive_song(p_song_id)`**: simétrica. Solo desde `archived`, vuelve a `draft`. Si querés republicar, pasa por el flujo normal (`draft → review → published`).
+3. **No hay borrado físico** (alternativa B descartada). El archivado cubre los casos reales (canción que ya no se usa) sin romper integridad histórica de playlists ni versiones. Si en el futuro aparece un caso real de error de carga que justifique borrado físico, se evalúa.
+4. **UI**: botón "Archivar" en `ReviewActions` con **doble confirmación** (CU-16) y redirect al listado tras éxito; "Desarchivar" simétrico desde estado `archived`.
+
+### Alternativas consideradas y descartadas
+
+- **B) Borrado físico de canciones**: descartado. Riesgo alto sobre `playlist_songs` (FK `ON DELETE RESTRICT`), `song_versions` y `song_categories`. El archivado resuelve el 99% de los casos.
+- **`unarchive_song` → `published` directo**: descartado. Volver a `draft` fuerza una revisión consciente antes de re-exponer en público — más seguro, más simétrico con el flujo existente.
+
+### Impacto
+
+- **DB**: dos RPCs nuevas con `SECURITY DEFINER` y guard de rol. RLS sin cambios (la policy `songs_editor_all` ya cubría).
+- **UI**: `ReviewActions` extendido con dos nuevas capabilities (`canArchive`, `canUnarchive`).
+- **Documentación**: CU-16, manual admin (tabla 4.1 y glosario).
+
+---
+
 ## 2026-05-07 — Multi-categoría por canción + drop de `tags`
 
 **Migración:** `0021_songs_multi_category_drop_tags.sql` (aplicada).

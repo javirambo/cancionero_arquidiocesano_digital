@@ -186,7 +186,7 @@ function PlaylistsSection({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl">{heading}</h2>
         <Link
           href={seeAllHref}
@@ -227,7 +227,7 @@ function AnnouncementsSection({
   const list = items as import("@/lib/songs").Featured[];
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl">{heading}</h2>
         {total > list.length && (
           <Link

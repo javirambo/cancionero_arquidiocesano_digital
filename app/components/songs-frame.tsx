@@ -139,17 +139,17 @@ export function SongsFrame({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-xl">Cantos</h2>
-          <Link
-            href="/canciones"
-            className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-          >
-            Ver catálogo →
-          </Link>
-        </div>
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl">Cantos</h2>
+        <Link
+          href="/canciones"
+          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
+        >
+          Ver catálogo →
+        </Link>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs normal-case text-muted-foreground">
             {mode === "paged"
               ? `Cantos ${from}–${to} de ${total}`
