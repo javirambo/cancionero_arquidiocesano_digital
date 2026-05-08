@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadSchedulesForEntity } from "@/lib/schedule.server";
 import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { PlaylistView } from "./playlist-view";
+import { PrecacheButton } from "@/app/components/precache-button";
 
 export default async function PlaylistPage({
   params,
@@ -143,6 +144,10 @@ export default async function PlaylistPage({
               Editar Lista
             </Link>
           )}
+          <PrecacheButton
+            slugs={pl.songs.map((s) => s.slug)}
+            storageKey={`playlist:${pl.id}`}
+          />
         </div>
       </header>
 

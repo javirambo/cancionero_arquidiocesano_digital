@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { SignOutButton } from "./sign-out-button";
 import { HeroContent } from "@/app/components/home-hero";
+import { InstallPwaButton } from "@/app/components/install-pwa-button";
+import { PrecacheButton } from "@/app/components/precache-button";
 
 export const metadata = {
   title: "Perfil · Cancionero Arquidiocesano",
@@ -37,6 +39,8 @@ export default async function PerfilPage() {
           </p>
           <GoogleSignInButton />
         </section>
+
+        <InstallPwaButton />
       </main>
     );
   }
@@ -198,7 +202,16 @@ export default async function PerfilPage() {
       </section>
 
       <section className="rounded-2xl border border-border bg-sidebar p-6">
-        <h2 className="text-lg">Mis favoritos</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg">Mis favoritos</h2>
+          {favSongs.length > 0 && (
+            <PrecacheButton
+              slugs={favSongs.map((s) => s.slug)}
+              storageKey="favoritos"
+              label="Descargar favoritos para offline"
+            />
+          )}
+        </div>
         {favRows.length === 0 ? (
           <p className="mt-2 text-sm normal-case text-muted-foreground">
             Todavía no marcaste ningún favorito.
@@ -266,6 +279,8 @@ export default async function PerfilPage() {
           </div>
         )}
       </section>
+
+      <InstallPwaButton />
     </main>
   );
 }
