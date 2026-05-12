@@ -32,6 +32,7 @@ export type AdminSongDetail = {
   tempo_bpm: number | null;
   youtube_url: string | null;
   author_id: string | null;
+  author2_id: string | null;
   category_ids: string[];
   review_notes: string | null;
   submitted_at: string | null;
@@ -57,6 +58,13 @@ function firstName(rel: Named): string | null {
   if (!rel) return null;
   if (Array.isArray(rel)) return rel[0]?.name ?? null;
   return rel.name ?? null;
+}
+
+function joinAuthors(a: Named, b: Named): string | null {
+  const n1 = firstName(a);
+  const n2 = firstName(b);
+  const parts = [n1, n2].filter((x): x is string => Boolean(x));
+  return parts.length === 0 ? null : parts.join(", ");
 }
 
 type SongCategoryRel =
@@ -88,7 +96,7 @@ export async function listSongsForAdmin(
   let query = supabase
     .from("songs")
     .select(
-      "id, number, title, slug, status, updated_at, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id)"
+      "id, number, title, slug, status, updated_at, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
     )
     .order("updated_at", { ascending: false })
     .limit(200);
@@ -104,7 +112,10 @@ export async function listSongsForAdmin(
   if (status !== "todas") query = query.eq("status", status);
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    console.error("[listSongsForAdmin] supabase error", error);
+    throw new Error(error.message);
+  }
   return (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
     const files = (row.song_files as { id: string }[] | null) ?? [];
@@ -116,7 +127,7 @@ export async function listSongsForAdmin(
       slug: row.slug as string,
       status: row.status as SongStatus,
       category: cats.length > 0 ? cats.join(", ") : null,
-      author: firstName(row.authors as Named),
+      author: joinAuthors(row.author1 as Named, row.author2 as Named),
       updated_at: row.updated_at as string,
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
@@ -132,7 +143,7 @@ export async function getSongForAdmin(
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, status, body, original_key, tempo_bpm, youtube_url, author_id, review_notes, submitted_at, reviewed_at, song_categories(category_id)"
+      "id, number, title, slug, status, body, original_key, tempo_bpm, youtube_url, author_id, author2_id, review_notes, submitted_at, reviewed_at, song_categories(category_id)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -150,6 +161,7 @@ export async function getSongForAdmin(
     tempo_bpm: (data.tempo_bpm as number | null) ?? null,
     youtube_url: (data.youtube_url as string | null) ?? null,
     author_id: (data.author_id as string | null) ?? null,
+    author2_id: (data.author2_id as string | null) ?? null,
     category_ids: cats.map((c) => c.category_id),
     review_notes: (data.review_notes as string | null) ?? null,
     submitted_at: (data.submitted_at as string | null) ?? null,

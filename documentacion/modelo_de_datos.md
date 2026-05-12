@@ -122,7 +122,8 @@ El `body` también soporta directivas ChordPro de estribillo: las líneas que se
 | `number`            | int         | número de canción (búsqueda CU-01); UNIQUE NULLS NOT DISTINCT            |
 | `title`             | text        | NOT NULL                                                                 |
 | `slug`              | text        | NOT NULL, UNIQUE                                                         |
-| `author_id`         | uuid        | FK → `authors.id`, ON DELETE SET NULL                                    |
+| `author_id`         | uuid        | FK → `authors.id`, ON DELETE SET NULL — autor principal (opcional)       |
+| `author2_id`        | uuid        | FK → `authors.id`, ON DELETE SET NULL — autor secundario (opcional)      |
 | `body`              | text        | NOT NULL — letra con acordes en notación ChordPro                        |
 | `original_key`      | text        | tonalidad original (ej. "G", "Em")                                       |
 | `tempo_bpm`         | int         |                                                                          |
@@ -143,7 +144,7 @@ El `body` también soporta directivas ChordPro de estribillo: las líneas que se
 - `title`, `body` con `pg_trgm` (búsqueda por título y fragmento de letra — CU-01).
 - `tsvector` generado de `title || body` para full-text search.
 - `number` UNIQUE.
-- `author_id`, `status`.
+- `author_id`, `author2_id`, `status`.
 
 > Las categorías litúrgicas se modelan vía `song_categories` (N:M). Una canción puede pertenecer a varias (Entrada y Salida, Comunión y Mariana, etc.).
 

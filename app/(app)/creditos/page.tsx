@@ -51,12 +51,9 @@ export default async function CreditosPage() {
     getFeedbackCardBgUrl(),
   ]);
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-16">
       <HeroContent parishName={parishName} />
-      <header className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Información
-        </p>
+      <header className="flex flex-col">
         <h1 className="text-3xl leading-tight">Créditos</h1>
       </header>
 
@@ -88,7 +85,7 @@ export default async function CreditosPage() {
         {feedbackBgUrl && (
           <div
             aria-hidden
-            className="absolute inset-0 bg-sidebar/75"
+            className="absolute inset-0 bg-sidebar/50"
           />
         )}
         <div className="relative flex flex-col gap-3">
@@ -102,12 +99,12 @@ export default async function CreditosPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-2xl leading-tight">Atribuciones</h2>
-        <p className="text-base leading-7 text-foreground">
+      <section className="flex flex-col gap-2 normal-case">
+        <h2 className="text-xl leading-tight">Atribuciones</h2>
+        <p className="text-sm leading-6 text-foreground">
           Esta aplicación utiliza software y recursos de código abierto:
         </p>
-        <ul className="flex list-disc flex-col gap-2 pl-6 text-base leading-7 text-foreground">
+        <ul className="flex list-disc flex-col gap-1 pl-6 text-sm leading-6 text-foreground">
           <li>
             Tipografía{" "}
             <a

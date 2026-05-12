@@ -17,6 +17,7 @@ export type SongFormState = {
   title: string;
   number: string;
   author_id: string;
+  author2_id: string;
   category_ids: string[];
   youtube_url: string;
   tempo_bpm: string;
@@ -29,6 +30,7 @@ function toFormState(song: AdminSongDetail): SongFormState {
     title: song.title,
     number: song.number !== null ? String(song.number) : "",
     author_id: song.author_id ?? "",
+    author2_id: song.author2_id ?? "",
     category_ids: [...song.category_ids],
     youtube_url: song.youtube_url ?? "",
     tempo_bpm: song.tempo_bpm !== null ? String(song.tempo_bpm) : "",
@@ -62,6 +64,13 @@ export function SongForm({
     setForm((prev) => ({ ...prev, author_id: author.id }));
   }
 
+  function handleAuthor2Created(author: AuthorOption) {
+    setAuthorOptions((prev) =>
+      [...prev, author].sort((a, b) => a.name.localeCompare(b.name))
+    );
+    setForm((prev) => ({ ...prev, author2_id: author.id }));
+  }
+
   function update<K extends keyof SongFormState>(key: K, value: SongFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -85,6 +94,7 @@ export function SongForm({
       title: form.title.trim(),
       number: numberVal,
       author_id: form.author_id || null,
+      author2_id: form.author2_id || null,
       youtube_url: form.youtube_url.trim() || null,
       tempo_bpm: tempoVal,
       original_key: form.original_key.trim() || null,
@@ -147,6 +157,7 @@ export function SongForm({
         authors={authorOptions}
         categories={categories}
         onAuthorCreated={handleAuthorCreated}
+        onAuthor2Created={handleAuthor2Created}
       />
 
       <LyricsSection form={form} update={update} />

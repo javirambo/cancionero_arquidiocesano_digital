@@ -17,58 +17,15 @@ export function MetadataSection({
   authors,
   categories,
   onAuthorCreated,
+  onAuthor2Created,
 }: {
   form: SongFormState;
   update: <K extends keyof SongFormState>(key: K, value: SongFormState[K]) => void;
   authors: AuthorOption[];
   categories: CategoryOption[];
   onAuthorCreated: (author: AuthorOption) => void;
+  onAuthor2Created: (author: AuthorOption) => void;
 }) {
-  const [creatingAuthor, setCreatingAuthor] = useState(false);
-  const [newAuthorName, setNewAuthorName] = useState("");
-  const [authorError, setAuthorError] = useState<string | null>(null);
-  const [savingAuthor, setSavingAuthor] = useState(false);
-
-  function handleAuthorSelectChange(value: string) {
-    if (value === NEW_AUTHOR_VALUE) {
-      setCreatingAuthor(true);
-      setAuthorError(null);
-      setNewAuthorName("");
-      return;
-    }
-    update("author_id", value);
-  }
-
-  function cancelCreateAuthor() {
-    setCreatingAuthor(false);
-    setNewAuthorName("");
-    setAuthorError(null);
-  }
-
-  async function saveNewAuthor() {
-    const name = newAuthorName.trim();
-    if (!name) {
-      setAuthorError("Ingresá un nombre.");
-      return;
-    }
-    setSavingAuthor(true);
-    setAuthorError(null);
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("authors")
-      .insert({ name })
-      .select("id, name")
-      .single();
-    setSavingAuthor(false);
-    if (error || !data) {
-      setAuthorError(error?.message ?? "No se pudo crear el autor.");
-      return;
-    }
-    onAuthorCreated({ id: data.id as string, name: data.name as string });
-    setCreatingAuthor(false);
-    setNewAuthorName("");
-  }
-
   return (
     <Accordion title="Metadatos" defaultOpen>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -100,64 +57,21 @@ export function MetadataSection({
           />
         </Field>
 
-        <Field label="Autor">
-          <select
-            value={form.author_id}
-            onChange={(e) => handleAuthorSelectChange(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">— Sin autor —</option>
-            <option value={NEW_AUTHOR_VALUE}>+ Nuevo autor…</option>
-            {authors.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-          {creatingAuthor && (
-            <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-2">
-              <input
-                type="text"
-                autoFocus
-                value={newAuthorName}
-                onChange={(e) => setNewAuthorName(e.target.value)}
-                placeholder="Nombre del autor"
-                className={inputClass}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void saveNewAuthor();
-                  } else if (e.key === "Escape") {
-                    e.preventDefault();
-                    cancelCreateAuthor();
-                  }
-                }}
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => void saveNewAuthor()}
-                  disabled={savingAuthor}
-                  className="rounded-full border border-primary bg-primary px-4 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                >
-                  {savingAuthor ? "Guardando…" : "Guardar"}
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelCreateAuthor}
-                  className="rounded-full border border-border px-4 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
-                >
-                  Cancelar
-                </button>
-              </div>
-              {authorError && (
-                <span className="text-xs text-destructive normal-case">
-                  {authorError}
-                </span>
-              )}
-            </div>
-          )}
-        </Field>
+        <AuthorPicker
+          label="Autor 1"
+          value={form.author_id}
+          authors={authors}
+          onChange={(id) => update("author_id", id)}
+          onAuthorCreated={onAuthorCreated}
+        />
+
+        <AuthorPicker
+          label="Autor 2"
+          value={form.author2_id}
+          authors={authors}
+          onChange={(id) => update("author2_id", id)}
+          onAuthorCreated={onAuthor2Created}
+        />
 
         <Field label="Categorías litúrgicas" hint="Pueden ser varias. Tocá para seleccionar." full>
           <div className="flex flex-wrap gap-2">
@@ -212,6 +126,124 @@ export function MetadataSection({
         </Field>
       </div>
     </Accordion>
+  );
+}
+
+function AuthorPicker({
+  label,
+  value,
+  authors,
+  onChange,
+  onAuthorCreated,
+}: {
+  label: string;
+  value: string;
+  authors: AuthorOption[];
+  onChange: (id: string) => void;
+  onAuthorCreated: (author: AuthorOption) => void;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  function handleSelectChange(v: string) {
+    if (v === NEW_AUTHOR_VALUE) {
+      setCreating(true);
+      setErr(null);
+      setNewName("");
+      return;
+    }
+    onChange(v);
+  }
+
+  function cancel() {
+    setCreating(false);
+    setNewName("");
+    setErr(null);
+  }
+
+  async function save() {
+    const name = newName.trim();
+    if (!name) {
+      setErr("Ingresá un nombre.");
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("authors")
+      .insert({ name })
+      .select("id, name")
+      .single();
+    setSaving(false);
+    if (error || !data) {
+      setErr(error?.message ?? "No se pudo crear el autor.");
+      return;
+    }
+    onAuthorCreated({ id: data.id as string, name: data.name as string });
+    setCreating(false);
+    setNewName("");
+  }
+
+  return (
+    <Field label={label}>
+      <select
+        value={value}
+        onChange={(e) => handleSelectChange(e.target.value)}
+        className={inputClass}
+      >
+        <option value="">— Sin autor —</option>
+        <option value={NEW_AUTHOR_VALUE}>+ Nuevo autor…</option>
+        {authors.map((a) => (
+          <option key={a.id} value={a.id}>
+            {a.name}
+          </option>
+        ))}
+      </select>
+      {creating && (
+        <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-2">
+          <input
+            type="text"
+            autoFocus
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Nombre del autor"
+            className={inputClass}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void save();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                cancel();
+              }
+            }}
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving}
+              className="rounded-full border border-primary bg-primary px-4 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              {saving ? "Guardando…" : "Guardar"}
+            </button>
+            <button
+              type="button"
+              onClick={cancel}
+              className="rounded-full border border-border px-4 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+            >
+              Cancelar
+            </button>
+          </div>
+          {err && (
+            <span className="text-xs text-destructive normal-case">{err}</span>
+          )}
+        </div>
+      )}
+    </Field>
   );
 }
 
