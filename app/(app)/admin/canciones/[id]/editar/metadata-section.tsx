@@ -41,10 +41,12 @@ export function MetadataSection({
 
         <Field label="Número en cancionero">
           <input
-            type="number"
+            type="text"
             value={form.number}
-            onChange={(e) => update("number", e.target.value)}
-            className={inputClass}
+            readOnly
+            disabled
+            title="Autogenerado"
+            className={`${inputClass} cursor-not-allowed opacity-60`}
           />
         </Field>
 
