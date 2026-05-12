@@ -24,6 +24,13 @@ function firstName(rel: Named): string | null {
   return rel.name ?? null;
 }
 
+function joinAuthors(a: Named, b: Named): string | null {
+  const n1 = firstName(a);
+  const n2 = firstName(b);
+  const parts = [n1, n2].filter((x): x is string => Boolean(x));
+  return parts.length === 0 ? null : parts.join(", ");
+}
+
 type ParishRel =
   | { id: string; name: string; slug: string }
   | { id: string; name: string; slug: string }[]
@@ -352,7 +359,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
   const { data: items, error: iErr } = await supabase
     .from("playlist_songs")
     .select(
-      "position, created_at, songs(id, number, title, slug, body, youtube_url, song_categories(categories(name)), authors(name), song_files(id))"
+      "position, created_at, songs(id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id))"
     )
     .eq("playlist_id", id)
     .order("position", { ascending: true });
@@ -369,7 +376,8 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
     body: string | null;
     youtube_url: string | null;
     song_categories: SongCategoryRow[] | null;
-    authors: Named;
+    author1: Named;
+    author2: Named;
     song_files: { id: string }[] | null;
   };
 
@@ -396,7 +404,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
         title: s.title,
         slug: s.slug,
         category: cats.length > 0 ? cats.join(", ") : null,
-        author: firstName(s.authors),
+        author: joinAuthors(s.author1, s.author2),
         hasChords: /\[[^\]]+\]/.test(body),
         hasYoutube: Boolean(s.youtube_url),
         hasFiles: files.length > 0,

@@ -131,7 +131,7 @@ async function loadFromDb(userId: string): Promise<FavoriteEntry[]> {
 
   const [songsRes, playlistsRes, parishesRes] = await Promise.all([
     songIds.length
-      ? supabase.from("songs").select("id, title, slug, number, authors(name)").in("id", songIds)
+      ? supabase.from("songs").select("id, title, slug, number, author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name)").in("id", songIds)
       : Promise.resolve({ data: [] as SongRow[] }),
     playlistIds.length
       ? supabase
@@ -164,7 +164,8 @@ type SongRow = {
   title: string;
   slug: string;
   number: number | null;
-  authors: { name: string } | { name: string }[] | null;
+  author1: { name: string } | { name: string }[] | null;
+  author2: { name: string } | { name: string }[] | null;
 };
 
 type PlaylistRow = {
@@ -185,13 +186,15 @@ function buildEntry(
   if (row.target_kind === "song") {
     const s = songs.get(row.target_id);
     if (!s) return null;
-    const authorRel = Array.isArray(s.authors) ? s.authors[0] : s.authors;
+    const n1 = (Array.isArray(s.author1) ? s.author1[0] : s.author1)?.name;
+    const n2 = (Array.isArray(s.author2) ? s.author2[0] : s.author2)?.name;
+    const subtitle = [n1, n2].filter(Boolean).join(", ") || undefined;
     return {
       kind: "song",
       id: s.id,
       title: s.title,
       href: `/canciones/${s.slug}`,
-      subtitle: authorRel?.name,
+      subtitle,
       number: s.number,
       added_at,
     };
