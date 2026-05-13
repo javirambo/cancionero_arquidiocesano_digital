@@ -165,6 +165,41 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   };
 }
 
+// Trae un set acotado de canciones publicadas por sus IDs con todos los campos
+// necesarios para renderizar la vista detalle. Conserva el orden de `ids`.
+// Usado por el pager de playlist para precargar canciones adyacentes (CU-05).
+export async function getSongsByIds(ids: string[]): Promise<Song[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("songs")
+    .select(
+      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
+    )
+    .eq("status", "published")
+    .in("id", ids);
+  if (error) throw error;
+  const byId = new Map((data ?? []).map((r) => [r.id as string, r]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((row): row is NonNullable<typeof row> => row !== undefined)
+    .map((row) => {
+      const files = (row.song_files as { id: string }[] | null) ?? [];
+      return {
+        id: row.id as string,
+        number: row.number as number | null,
+        title: row.title as string,
+        slug: row.slug as string,
+        body: row.body as string,
+        original_key: row.original_key as string | null,
+        youtube_url: row.youtube_url as string | null,
+        categories: categoryNames(row.song_categories as SongCategoryRel),
+        author: joinAuthors(row.author1 as Named, row.author2 as Named),
+        hasFiles: files.length > 0,
+      };
+    });
+}
+
 export async function listSongsWithCapabilities(
   q: string = "",
   limit = 100,

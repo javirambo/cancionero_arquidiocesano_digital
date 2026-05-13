@@ -19,8 +19,8 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-07   | Visualizar novedades / festividad del día            | —         | ✅     |
 | CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | ✅     |
 | CU-09   | Descargar archivos de la canción                     | RF7       | ✅     |
-| CU-10   | Descargar canción para imprimir                      | RF14      | ✅ Vista `/imprimir` con CSS print + auto-shrink en una hoja A4 (mínimo 9pt). |
-| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. |
+| CU-10   | Descargar canción para imprimir                      | RF14      | ✅     |
+| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳     |
 | CU-12   | Descargar QR de la página actual                     | RF13      | ✅     |
 | CU-13   | Login con Google                                     | RF16      | ✅     |
 | CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
@@ -29,13 +29,12 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-17   | ABM de playlist                                      | RF2       | ✅     |
 | CU-18   | ABM de usuario                                       | RF9       | ✅     |
 | CU-19   | ABM de parroquia                                     | RF10      | ✅     |
-| CU-20   | Gestionar permisos (tal vez nunca se necesite)       | RF21      | ⏳ Solo si necesitamos granularidad por permiso atómico; hoy los permisos están hardcodeados en RLS por rol y puede ser suficiente. |
+| CU-20   | Gestionar permisos o roles                           | RF21      | ✅     |
 | CU-21   | Gestionar anuncios                                   | RF19      | ✅     |
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      | ✅     |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
-| CU-25   | Gestión de categorías litúrgicas                     | RF22      | ⚠️ Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.                                                                                                  |
-| CU-26   | ABM de festividades litúrgicas                       | RF23      | ❌ Deprecado — fusionado en CU-21 (anuncios con `kind` litúrgico).                                                                                                                                                                                              |
+| CU-25   | Gestión de categorías litúrgicas                     | RF22      | ✅     |
 
 ---
 
@@ -336,6 +335,7 @@ Rol global con permisos plenos.
   - 4a. El usuario cancela el diálogo de impresión: queda en la vista, con un botón "Imprimir" para reintentar y "← Volver" para ir a la canción.
 - **Postcondiciones:** Ninguna persistente.
 - **Notas técnicas:** No se genera PDF server-side; se usa CSS print + `window.print()` del navegador. La vista vive en el route group `(print)` para no heredar el chrome del sitio (header/footer/toolbar).
+  - Vista `/imprimir` con CSS print + auto-shrink en una hoja A4 (mínimo 9pt).
 
 ---
 
@@ -346,12 +346,14 @@ Rol global con permisos plenos.
 - **Precondiciones:** La playlist tiene al menos una canción.
 - **Disparador:** El usuario elige "Descargar cancionero" desde la vista de playlist.
 - **Flujo principal:**
-  1. El usuario elige opciones (con/sin acordes, tamaño A4, índice sí/no).
-  2. El sistema arma un PDF concatenando cada canción con portada (nombre de parroquia) e índice.
+  1. El usuario elige opciones (con/sin acordes, tamaño A4, índice sí/no, respetar numeración si/no).
+  2. El sistema arma un PDF concatenando cada canción con portada (nombre de parroquia) e índice, usando numeración original o enumerando desde 1.
   3. El navegador descarga el archivo.
 - **Flujos alternativos:**
   - 2a. Una canción no se puede renderizar: se omite y se reporta en el índice como faltante.
 - **Postcondiciones:** Ninguna persistente.
+  - ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. 
+  - Hacer menu con opciones antes de renderizar.
 
 ---
 
@@ -785,6 +787,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
   2. **Buscar:** abre un overlay/diálogo con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01.
   3. **Mis favoritos:** abre el diálogo popup de CU-22.
   4. **Menú:** abre el menú desplegable con encabezado de perfil read-only (avatar + nombre + email, o "Invitado" + botón "Iniciá sesión") y los items de navegación y configuración.
+- NOTA: Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.      
 - **Flujos alternativos:**
   - **Buscar sin término:** el overlay muestra accesos rápidos (parroquias destacadas, últimas playlists, etc.).
 - **Postcondiciones:** Ninguna persistente; las acciones derivadas siguen sus propios CU.
@@ -816,48 +819,3 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 - **Si en el futuro se necesita ABM:** ver pantalla bajo `/admin/categorias`. Hoy se descarta para evitar tooling de bajo uso.
 
 ---
-
-## CU-26: ABM de festividades litúrgicas (DEPRECADO — fusionado en CU-21)
-
-> **Nota:** la migración 0018 eliminó la tabla `liturgical_events`. Las festividades litúrgicas ahora son **anuncios** con `kind in ('solemnidad','fiesta','memoria','tiempo')` (ver CU-21; `'otro'` se removió en migración 0019). El ABM se hace desde `/admin/anuncios`. La sección que sigue queda como referencia histórica.
-
-- **RF:** RF23
-- **Actor primario:** Administrador.
-- **Precondiciones:** Sesión con rol admin.
-- **Disparador:** acceso a `/admin/eventos-liturgicos`.
-- **Flujo principal:**
-  1. El admin lista las festividades cargadas en `liturgical_events` ordenadas por `event_date`. Filtros básicos: año, tipo (`solemnidad`, `fiesta`, `memoria`, `tiempo`, `otro`).
-  2. Crea/edita/elimina entradas con: `name`, `slug` (autogenerado), `event_date` (fecha concreta), `kind`, `description`, `playlist_id` opcional (sugerencia de repertorio para esa fecha).
-  3. El sistema valida unicidad de `slug` y que `event_date` sea válida.
-  4. Persiste los cambios.
-- **Comportamiento en home (CU-07):** la festividad cargada en `liturgical_events` para `event_date = hoy` tiene **prioridad** sobre la festividad calculada por la librería `romcal`. Esto permite controlar nombre, descripción y playlist asociada en español argentino.
-- **Flujos alternativos:**
-  - 3a (slug duplicado): el sistema sugiere uno alternativo con sufijo numérico.
-  - Baja con playlist asociada: la FK `liturgical_events.playlist_id` es `ON DELETE SET NULL`, por lo que borrar la playlist no elimina el evento.
-- **Postcondiciones:** Evento persistido en `liturgical_events`.
-
-### CU-26.1: Importación automática del calendario litúrgico
-
-Para evitar carga manual año tras año, el sistema ofrece una **importación masiva** desde una fuente externa.
-
-- **Fuentes posibles** (a evaluar al implementar):
-  - **Conferencia Episcopal Argentina** ([episcopado.org](https://episcopado.org) — sección liturgia): publica el calendario en HTML. Requiere scraping.
-  - **Vaticano** ([vatican.va](https://www.vatican.va)): calendario universal en HTML, también scraping.
-  - **divinumofficium.com**: calendario tradicional, HTML.
-  - **iCal feeds litúrgicos** (catholic-resources.org, universalis.com): formato `.ics` parseable.
-  - **romcal** (librería ya instalada): generación local sin red, pero sin locale español. Puede combinarse con un mapa de traducción y servir como base, sobreescribiendo los nombres con scraping si se prefiere.
-- **Disparador:** botón **"Importar calendario {año}"** en `/admin/eventos-liturgicos`.
-- **Flujo:**
-  1. El admin elige el año (default: año en curso).
-  2. El sistema obtiene el calendario desde la fuente configurada (server-side; el scraping se hace en un endpoint Next.js, no desde el browser).
-  3. Se previsualizan las entradas que se van a crear, marcando duplicados con respecto a lo ya cargado (mismo `slug` o misma `event_date`).
-  4. El admin confirma. Las entradas se insertan con `on conflict do nothing` para no pisar ediciones manuales.
-  5. Al finalizar se muestra un resumen: *N creadas, M omitidas (duplicadas), K errores*.
-- **Flujos alternativos:**
-  - La fuente externa cae o cambia su formato → el sistema marca el error y permite reintentar; las entradas ya existentes no se tocan.
-- **Postcondiciones:** Múltiples filas en `liturgical_events`. La carga manual sigue siendo posible para corregir nombres/descripciones.
-
-> **Nota:** la elección de la fuente y el parser específico se decidirá al implementar el CU. El scraping de sitios oficiales requiere respetar `robots.txt` y aplicar caching agresivo (los calendarios cambian anualmente, no diariamente).
-
----
-
