@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-type SongItem = { song_id: string; position: number };
+type SongItem = {
+  song_id: string;
+  position: number;
+  key_override?: string | null;
+};
 
 export async function PUT(
   request: NextRequest,
@@ -37,9 +41,13 @@ export async function PUT(
     ) {
       return NextResponse.json({ error: "invalid-song-item" }, { status: 400 });
     }
+    const ko = (raw as SongItem).key_override;
+    const keyOverride =
+      typeof ko === "string" && ko.trim().length > 0 ? ko.trim() : null;
     songs.push({
       song_id: (raw as SongItem).song_id,
       position: (raw as SongItem).position,
+      key_override: keyOverride,
     });
   }
 
@@ -63,6 +71,7 @@ export async function PUT(
     playlist_id: playlistId,
     song_id: s.song_id,
     position: s.position,
+    key_override: s.key_override ?? null,
   }));
   const { error: insError } = await supabase.from("playlist_songs").insert(rows);
   if (insError) {

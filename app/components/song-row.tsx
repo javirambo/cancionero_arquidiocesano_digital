@@ -39,9 +39,12 @@ type Props = {
     playlistId: string;
     canManage?: boolean; // false: "Quitar de esta playlist" deshabilitado
   };
+  // Render gris no clickeable (ej. canción no publicada dentro de una playlist).
+  disabled?: boolean;
+  disabledReason?: string;
 };
 
-export function SongRow({ index, song, playlistContext }: Props) {
+export function SongRow({ index, song, playlistContext, disabled, disabledReason }: Props) {
   const href = playlistContext
     ? `/canciones/${song.slug}?pl=${playlistContext.playlistId}`
     : `/canciones/${song.slug}`;
@@ -58,6 +61,29 @@ export function SongRow({ index, song, playlistContext }: Props) {
   const subtitle =
     song.author ??
     (song.number !== null ? `N° ${song.number}` : undefined);
+
+  if (disabled) {
+    return (
+      <li
+        className="group flex items-center gap-3 py-3 pl-3 pr-5 text-muted-foreground"
+        title={disabledReason}
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 italic">
+          <span className="truncate text-lg">
+            {titleLine}
+            {disabledReason && (
+              <span className="ml-2 text-xs uppercase tracking-wide normal-case not-italic">
+                ({disabledReason})
+              </span>
+            )}
+          </span>
+          {song.author && (
+            <span className="truncate text-xs normal-case">{song.author}</span>
+          )}
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li className="group flex items-center gap-3 py-3 pl-3 pr-5 transition-colors hover:bg-sidebar">

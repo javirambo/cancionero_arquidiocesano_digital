@@ -19,12 +19,21 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DragHandleIcon, TrashIcon, CloseIcon } from "@/app/components/icons";
+import {
+  hasAnyChord,
+  semitonesBetween,
+  transposeChord,
+} from "@/lib/chordpro";
 
 type SongInPlaylist = {
   song_id: string;
   position: number;
   number: number | null;
   title: string;
+  body: string;
+  original_key: string | null;
+  key_override: string | null;
+  status: string;
 };
 
 type SongCandidate = {
@@ -108,12 +117,25 @@ export function PlaylistSongsEditor({
           position: nextPosition,
           number: c.number,
           title: c.title,
+          body: "",
+          original_key: null,
+          key_override: null,
+          status: "published",
         },
       ];
     });
     setDirty(true);
     setQuery("");
     setResults([]);
+  }
+
+  function setSongKeyOverride(songId: string, keyOverride: string | null) {
+    setSongs((prev) =>
+      prev.map((s) =>
+        s.song_id === songId ? { ...s, key_override: keyOverride } : s
+      )
+    );
+    setDirty(true);
   }
 
   function removeSong(songId: string) {
@@ -141,7 +163,11 @@ export function PlaylistSongsEditor({
     setSaving(true);
     setError(null);
     const payload = {
-      songs: songs.map((s, i) => ({ song_id: s.song_id, position: i + 1 })),
+      songs: songs.map((s, i) => ({
+        song_id: s.song_id,
+        position: i + 1,
+        key_override: s.key_override,
+      })),
     };
     try {
       const res = await fetch(`/api/playlists/${playlistId}/songs`, {
@@ -252,6 +278,7 @@ export function PlaylistSongsEditor({
                   key={s.song_id}
                   song={s}
                   onRemove={() => removeSong(s.song_id)}
+                  onKeyOverrideChange={(ko) => setSongKeyOverride(s.song_id, ko)}
                 />
               ))}
             </ul>
@@ -278,9 +305,11 @@ export function PlaylistSongsEditor({
 function SortableSongRow({
   song,
   onRemove,
+  onKeyOverrideChange,
 }: {
   song: SongInPlaylist;
   onRemove: () => void;
+  onKeyOverrideChange: (keyOverride: string | null) => void;
 }) {
   const {
     attributes,
@@ -296,6 +325,31 @@ function SortableSongRow({
     transition,
     opacity: isDragging ? 0.6 : 1,
   };
+
+  const isUnpublished = song.status !== "published";
+  const canTranspose =
+    !isUnpublished && Boolean(song.original_key) && hasAnyChord(song.body);
+  const semitones =
+    canTranspose && song.original_key
+      ? semitonesBetween(song.original_key, song.key_override ?? song.original_key) ?? 0
+      : 0;
+
+  function changeBy(delta: number) {
+    if (!song.original_key) return;
+    let next = semitones + delta;
+    if (next > 6) next = -5;
+    if (next < -5) next = 6;
+    if (next === 0) {
+      onKeyOverrideChange(null);
+      return;
+    }
+    const newKey = transposeChord(song.original_key, next, "auto");
+    onKeyOverrideChange(newKey);
+  }
+
+  function resetKey() {
+    onKeyOverrideChange(null);
+  }
 
   return (
     <li
@@ -313,9 +367,55 @@ function SortableSongRow({
       >
         <DragHandleIcon />
       </button>
-      <span className="min-w-0 flex-1 truncate text-base text-primary">
+      <span
+        className={`min-w-0 flex-1 truncate text-base ${
+          isUnpublished ? "text-muted-foreground italic" : "text-primary"
+        }`}
+        title={isUnpublished ? "Canción no publicada" : undefined}
+      >
         {song.number !== null ? `${song.number} · ${song.title}` : song.title}
+        {isUnpublished && (
+          <span className="ml-2 text-xs uppercase tracking-wide normal-case">
+            (no publicada)
+          </span>
+        )}
       </span>
+      {canTranspose && (
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => changeBy(-1)}
+            aria-label="Bajar un semitono"
+            title="Bajar un semitono"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white"
+          >
+            <span className="text-sm font-semibold leading-none">♪−</span>
+          </button>
+          <button
+            type="button"
+            onClick={resetKey}
+            disabled={semitones === 0}
+            aria-label={
+              semitones === 0 ? "Tono original" : "Restablecer tono original"
+            }
+            title={
+              semitones === 0 ? "Tono original" : "Restablecer tono original"
+            }
+            className="min-w-10 rounded-full px-1 text-center text-xs normal-case text-muted-foreground transition-colors enabled:hover:text-primary disabled:cursor-default disabled:opacity-60"
+          >
+            {song.key_override ?? song.original_key}
+          </button>
+          <button
+            type="button"
+            onClick={() => changeBy(1)}
+            aria-label="Subir un semitono"
+            title="Subir un semitono"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-primary text-primary transition-colors hover:bg-primary hover:text-white"
+          >
+            <span className="text-sm font-semibold leading-none">♪+</span>
+          </button>
+        </div>
+      )}
       <button
         type="button"
         onClick={onRemove}

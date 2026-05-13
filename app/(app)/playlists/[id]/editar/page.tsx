@@ -138,6 +138,10 @@ export default async function EditarPlaylistPage({
             position: s.position,
             number: s.number,
             title: s.title,
+            body: s.body,
+            original_key: s.original_key,
+            key_override: s.key_override,
+            status: s.status,
           }))}
         />
       </AccordionSection>
