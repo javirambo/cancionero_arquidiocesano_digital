@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   detectSystem,
   hasAnyChord,
@@ -64,6 +64,43 @@ export function SongView({
   >(null);
   const [semitones, setSemitones] = useState(0);
   const { scale: letterScale, adjust: adjustLetterScale } = useLetterScale();
+
+  const [autoScrollOpen, setAutoScrollOpen] = useState(false);
+  const [scrollSpeed, setScrollSpeed] = useState(4);
+  const scrollSpeedRef = useRef(scrollSpeed);
+  const rafRef = useRef<number | null>(null);
+  useEffect(() => {
+    scrollSpeedRef.current = scrollSpeed;
+  }, [scrollSpeed]);
+
+  useEffect(() => {
+    if (!autoScrollOpen) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
+    }
+    let acc = 0;
+    const step = () => {
+      acc += scrollSpeedRef.current * 0.03;
+      if (acc >= 1) {
+        const px = Math.floor(acc);
+        window.scrollBy(0, px);
+        acc -= px;
+      }
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [autoScrollOpen]);
+
+  const toggleAutoScroll = () => setAutoScrollOpen((v) => !v);
   const detected = useMemo<"latin" | "english">(
     () => detectSystem(lines),
     [lines]
@@ -205,6 +242,42 @@ export function SongView({
           >
             <span className="text-base font-semibold leading-none">A+</span>
           </button>
+          <button
+            type="button"
+            onClick={toggleAutoScroll}
+            aria-pressed={autoScrollOpen}
+            aria-label={
+              autoScrollOpen
+                ? "Detener desplazamiento automático"
+                : "Iniciar desplazamiento automático"
+            }
+            title={
+              autoScrollOpen
+                ? "Detener desplazamiento automático"
+                : "Desplazamiento automático"
+            }
+            className={`flex h-10 w-10 items-center justify-center rounded-full border border-primary transition-colors ${
+              autoScrollOpen
+                ? "bg-primary text-white hover:bg-primary-hover"
+                : "text-primary hover:bg-primary hover:text-white"
+            }`}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8" />
+              <path d="M12 17v4" />
+            </svg>
+          </button>
           <PlayMenu
             songId={songId}
             songTitle={songTitle}
@@ -320,6 +393,31 @@ export function SongView({
           )
         )}
       </div>
+
+      {autoScrollOpen && (
+        <div
+          role="dialog"
+          aria-label="Velocidad de desplazamiento"
+          className="fixed bottom-4 right-4 z-30 flex items-center gap-3 rounded-xl border border-primary bg-sidebar px-4 py-3 shadow-lg"
+        >
+          <span className="text-xs font-semibold text-muted-foreground">
+            Velocidad
+          </span>
+          <input
+            type="range"
+            min={1}
+            max={7}
+            step={1}
+            value={scrollSpeed}
+            onChange={(e) => setScrollSpeed(Number(e.target.value))}
+            aria-label="Velocidad de desplazamiento"
+            className="accent-primary"
+          />
+          <span className="w-4 text-center text-sm font-semibold text-primary">
+            {scrollSpeed}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
