@@ -12,7 +12,8 @@ export type AnnouncementKind =
   | "solemnidad"
   | "fiesta"
   | "memoria"
-  | "tiempo";
+  | "tiempo"
+  | "indicaciones";
 
 export type AnnouncementFormData = {
   id?: string;
@@ -21,7 +22,13 @@ export type AnnouncementFormData = {
   priority: number;
   featured: boolean;
   kind: AnnouncementKind;
-  target_kind: "none" | "song" | "playlist" | "parish" | "external";
+  target_kind:
+    | "none"
+    | "song"
+    | "playlist"
+    | "parish"
+    | "external"
+    | "document";
   target_id: string | null;
   target_url: string;
   target_label: string;
@@ -67,6 +74,7 @@ export function AnuncioForm({
   parishes,
   mode,
   allowGlobal = true,
+  hasDocument = false,
 }: {
   initial?: AnnouncementFormData;
   parishes: ParishOption[];
@@ -76,6 +84,7 @@ export function AnuncioForm({
    * scope="selected" y se oculta el radio "Todas las parroquias".
    */
   allowGlobal?: boolean;
+  hasDocument?: boolean;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<AnnouncementFormData>(() => {
@@ -186,7 +195,7 @@ export function AnuncioForm({
   }
 
   function validate(): string | null {
-    if (!form.title.trim()) return "El título es obligatorio.";
+    if (!form.title.trim()) return "El título del anuncio es obligatorio.";
     if (form.scope === "selected" && form.parish_ids.length === 0) {
       return "Elegí al menos una parroquia destinataria.";
     }
@@ -208,12 +217,11 @@ export function AnuncioForm({
     return null;
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function persist(): Promise<string | null> {
     const v = validate();
     if (v) {
       setError(v);
-      return;
+      return null;
     }
     setSaving(true);
     setError(null);
@@ -247,7 +255,7 @@ export function AnuncioForm({
       if (insErr) {
         setError(insErr.message);
         setSaving(false);
-        return;
+        return null;
       }
       announcementId = data.id;
     } else {
@@ -258,9 +266,8 @@ export function AnuncioForm({
       if (updErr) {
         setError(updErr.message);
         setSaving(false);
-        return;
+        return null;
       }
-      // Limpio destinatarios anteriores para reinsertar.
       const { error: delErr } = await supabase
         .from("announcement_parishes")
         .delete()
@@ -268,7 +275,7 @@ export function AnuncioForm({
       if (delErr) {
         setError(delErr.message);
         setSaving(false);
-        return;
+        return null;
       }
     }
 
@@ -283,22 +290,41 @@ export function AnuncioForm({
       if (linkErr) {
         setError(linkErr.message);
         setSaving(false);
-        return;
+        return null;
       }
     }
 
     if (announcementId) {
       try {
-        await replaceSchedulesWith(supabase, "announcement", announcementId, form.schedules);
+        await replaceSchedulesWith(
+          supabase,
+          "announcement",
+          announcementId,
+          form.schedules
+        );
       } catch (err) {
         setError((err as Error).message);
         setSaving(false);
-        return;
+        return null;
       }
     }
 
+    setSaving(false);
+    return announcementId ?? null;
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const id = await persist();
+    if (!id) return;
     router.push("/admin/anuncios");
     router.refresh();
+  }
+
+  async function handleOpenDocument() {
+    const id = form.id ?? (await persist());
+    if (!id) return;
+    router.push(`/admin/anuncios/${id}/documento`);
   }
 
   async function handleDelete() {
@@ -379,6 +405,7 @@ export function AnuncioForm({
               <option value="fiesta">Fiesta</option>
               <option value="memoria">Memoria</option>
               <option value="tiempo">Tiempo litúrgico</option>
+              <option value="indicaciones">Indicaciones</option>
             </select>
           </Field>
         </div>
@@ -583,6 +610,19 @@ export function AnuncioForm({
               />
             </Field>
           )}
+
+          {form.target_kind === "document" && (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleOpenDocument}
+                disabled={saving}
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-primary bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                {hasDocument ? "Editar documento" : "Crear documento"}
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -630,6 +670,7 @@ const TARGET_KIND_OPTIONS: {
   { value: "playlist", label: "Lista" },
   { value: "parish", label: "Parroquia" },
   { value: "external", label: "Link externo" },
+  { value: "document", label: "Documento" },
 ];
 
 function TargetKindDropdown({

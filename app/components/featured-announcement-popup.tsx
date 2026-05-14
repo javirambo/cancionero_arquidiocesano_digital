@@ -11,6 +11,7 @@ const KIND_LABEL: Record<string, string> = {
   fiesta: "Fiesta",
   memoria: "Memoria",
   tiempo: "Tiempo litúrgico",
+  indicaciones: "Indicaciones",
 };
 
 const CTA_LABEL: Record<string, string> = {
@@ -18,6 +19,7 @@ const CTA_LABEL: Record<string, string> = {
   playlist: "Ir a la lista",
   parish: "Ir a la parroquia",
   external: "Abrir enlace",
+  document: "Abrir indicaciones",
 };
 
 export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {

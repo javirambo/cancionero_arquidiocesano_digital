@@ -7,6 +7,7 @@ const KIND_LABEL: Record<string, string> = {
   fiesta: "Fiesta",
   memoria: "Memoria",
   tiempo: "Tiempo litúrgico",
+  indicaciones: "Indicaciones",
 };
 
 export function AnnouncementCard({ item }: { item: Featured }) {

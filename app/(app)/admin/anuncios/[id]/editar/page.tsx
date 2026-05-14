@@ -35,7 +35,7 @@ export default async function EditarAnuncioPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [annRes, apRes, parishes, access, schedules] = await Promise.all([
+  const [annRes, apRes, parishes, access, schedules, docRes] = await Promise.all([
     supabase
       .from("announcements")
       .select("id, title, body, kind, priority, featured, target_kind, target_id, target_url, image_path")
@@ -45,6 +45,11 @@ export default async function EditarAnuncioPage({
     listScopedParishes(),
     getAdminAccess(),
     loadSchedulesForEntity("announcement", id),
+    supabase
+      .from("announcement_documents")
+      .select("announcement_id")
+      .eq("announcement_id", id)
+      .maybeSingle(),
   ]);
 
   if (!annRes.data) notFound();
@@ -99,6 +104,7 @@ export default async function EditarAnuncioPage({
         initial={initial}
         parishes={parishes}
         allowGlobal={access.isAdmin || access.isEditor}
+        hasDocument={Boolean(docRes.data)}
       />
     </main>
   );

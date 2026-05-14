@@ -575,6 +575,8 @@ async function resolveAnnouncementHrefs(
       if (slug) href = `/parroquias/${slug}`;
     } else if (r.target_kind === "external" && r.target_url) {
       href = r.target_url;
+    } else if (r.target_kind === "document") {
+      href = `/anuncios/${r.id}`;
     }
     return {
       title: r.title,

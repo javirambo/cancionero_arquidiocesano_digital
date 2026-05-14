@@ -22,13 +22,13 @@ Para eso usamos un documento con  las parroquias totales.
 [ ] Poner el logo del arzobispo,
     Logo de comision.
 
-[ ] Hacer Anuncios Popups (destacados con mas fuerza)
+[X] Hacer Anuncios Popups (destacados con mas fuerza)
     Que aparezcan siempre luego de un F5
     Encima de toda pantalla
     Que tengan un X para cerrar
     Para listas, anuncios, indicaciones (nuevo)
 
-[ ] Nuevo: anuncios pero con Indicaciones
+[X] Nuevo: anuncios pero con Indicaciones
     Es un anuncio pero direcciona a una pagina o documento enriquecido.
     Se comporta igual que un anuncio.
 
@@ -43,4 +43,4 @@ Orden en Home:
     - Salmos responsoriales
     - Ordinario de la misa
     - Avisos parroquiales.
-    
+
