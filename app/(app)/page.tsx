@@ -4,6 +4,7 @@ import {
   listLiturgicalAnnouncements,
   listPublicCategories,
   listSongsPaged,
+  loadFeaturedAnnouncementPopup,
 } from "@/lib/songs";
 import {
   listArchdiocesanPlaylists,
@@ -13,6 +14,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { GoogleSignInButton } from "@/app/components/google-sign-in-button";
 import { AnnouncementCard } from "@/app/components/announcement-card";
+import { FeaturedAnnouncementPopup } from "@/app/components/featured-announcement-popup";
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
 import { HomeHero } from "@/app/components/home-hero";
@@ -74,6 +76,7 @@ export default async function Home() {
     songsResult,
     novedades,
     songCategories,
+    featuredPopup,
   ] = await Promise.all([
     primaryParish
       ? listPlaylistsForParish(primaryParish.id, {
@@ -96,10 +99,12 @@ export default async function Home() {
     listSongsPaged(1, SONGS_PAGE_SIZE),
     listCommonAnnouncements(PREVIEW),
     listPublicCategories(),
+    loadFeaturedAnnouncementPopup(),
   ]);
 
   return (
     <div className="flex flex-1 flex-col">
+      {featuredPopup && <FeaturedAnnouncementPopup item={featuredPopup} />}
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12">
         <HomeHero parishName={primaryParish?.name ?? null} />
 

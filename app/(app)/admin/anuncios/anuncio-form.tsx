@@ -19,6 +19,7 @@ export type AnnouncementFormData = {
   title: string;
   body: string;
   priority: number;
+  featured: boolean;
   kind: AnnouncementKind;
   target_kind: "none" | "song" | "playlist" | "parish" | "external";
   target_id: string | null;
@@ -36,6 +37,7 @@ const empty: AnnouncementFormData = {
   title: "",
   body: "",
   priority: 0,
+  featured: false,
   kind: null,
   target_kind: "none",
   target_id: null,
@@ -98,6 +100,11 @@ export function AnuncioForm({
   const [targetSearching, setTargetSearching] = useState(false);
   const [targetResults, setTargetResults] = useState<SearchHit[] | null>(null);
 
+  // Listas precargadas para target_kind = "playlist" | "parish".
+  // Las parroquias ya vienen como prop; las playlists se cargan al elegir el tipo.
+  const [playlistList, setPlaylistList] = useState<SearchHit[] | null>(null);
+  const [playlistLoading, setPlaylistLoading] = useState(false);
+
   function update<K extends keyof AnnouncementFormData>(
     key: K,
     value: AnnouncementFormData[K]
@@ -117,13 +124,9 @@ export function AnuncioForm({
     });
   }
 
-  // Buscar recursos cuando cambia targetQuery (con debounce simple).
+  // Búsqueda remota solo para `song` (las canciones pueden ser cientos).
   useEffect(() => {
-    if (
-      form.target_kind === "none" ||
-      form.target_kind === "external" ||
-      targetQuery.trim().length < 2
-    ) {
+    if (form.target_kind !== "song" || targetQuery.trim().length < 2) {
       setTargetResults(null);
       return;
     }
@@ -135,15 +138,38 @@ export function AnuncioForm({
           q: targetQuery.trim(),
         });
         const res = (data ?? {}) as SearchResponse;
-        if (form.target_kind === "song") setTargetResults(res.songs ?? []);
-        else if (form.target_kind === "playlist") setTargetResults(res.playlists ?? []);
-        else if (form.target_kind === "parish") setTargetResults(res.parishes ?? []);
+        setTargetResults(res.songs ?? []);
       } finally {
         setTargetSearching(false);
       }
     }, 300);
     return () => clearTimeout(handle);
   }, [targetQuery, form.target_kind]);
+
+  // Precarga de playlists cuando se elige target_kind = "playlist".
+  useEffect(() => {
+    if (form.target_kind !== "playlist" || playlistList !== null) return;
+    let cancelled = false;
+    setPlaylistLoading(true);
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("playlists")
+        .select("id, name")
+        .eq("visibility", "public")
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      const items = (data ?? []).map((r) => ({
+        id: r.id as string,
+        name: r.name as string,
+      }));
+      setPlaylistList(items);
+      setPlaylistLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [form.target_kind, playlistList]);
 
   function pickTarget(hit: SearchHit) {
     const label = hit.title ?? hit.name ?? hit.slug ?? hit.id;
@@ -197,6 +223,7 @@ export function AnuncioForm({
       title: form.title.trim(),
       body: form.body.trim() || null,
       priority: form.priority,
+      featured: form.featured,
       kind: form.kind,
       target_kind: form.target_kind,
       target_id:
@@ -308,35 +335,53 @@ export function AnuncioForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Cuerpo" hint="Texto opcional que aparece debajo del título" full>
-          <textarea
-            rows={3}
-            value={form.body}
-            onChange={(e) => update("body", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Prioridad" hint="Mayor número aparece primero">
-          <input
-            type="number"
-            value={form.priority}
-            onChange={(e) => update("priority", Number(e.target.value) || 0)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Tipo" hint="Festividad litúrgica (opcional). Si no aplica, dejá 'Anuncio'.">
-          <select
-            value={form.kind ?? ""}
-            onChange={(e) => update("kind", (e.target.value || null) as AnnouncementKind)}
-            className={inputClass}
-          >
-            <option value="">Anuncio</option>
-            <option value="solemnidad">Solemnidad</option>
-            <option value="fiesta">Fiesta</option>
-            <option value="memoria">Memoria</option>
-            <option value="tiempo">Tiempo litúrgico</option>
-          </select>
-        </Field>
+        <div className="flex flex-col gap-1 normal-case sm:col-span-2">
+          <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+            Cuerpo
+          </span>
+          <BodyEditor value={form.body} onChange={(v) => update("body", v)} />
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span>Texto opcional. Resaltá con</span>
+            <span><strong>**negrita**</strong></span>
+            <span><em>*cursiva*</em></span>
+            <span><u>__subrayado__</u></span>
+            <span className="font-semibold text-primary"># Título</span>
+            <span className="font-semibold text-secondary">## Subtítulo</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-[1fr_1fr_2fr] items-start gap-3 sm:col-span-2">
+          <Field label="Prioridad" hint="Mayor número primero">
+            <input
+              type="number"
+              value={form.priority}
+              onChange={(e) => update("priority", Number(e.target.value) || 0)}
+              className={`${inputClass} w-full min-w-0`}
+            />
+          </Field>
+          <Field label="Destacado" hint="Sobre toda la pantalla">
+            <label className="flex h-[38px] items-center gap-2 text-sm normal-case">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => update("featured", e.target.checked)}
+              />
+              <span>Destacado</span>
+            </label>
+          </Field>
+          <Field label="Tipo" hint="Festividad litúrgica (opcional).">
+            <select
+              value={form.kind ?? ""}
+              onChange={(e) => update("kind", (e.target.value || null) as AnnouncementKind)}
+              className={`${inputClass} w-full min-w-0`}
+            >
+              <option value="">Anuncio</option>
+              <option value="solemnidad">Solemnidad</option>
+              <option value="fiesta">Fiesta</option>
+              <option value="memoria">Memoria</option>
+              <option value="tiempo">Tiempo litúrgico</option>
+            </select>
+          </Field>
+        </div>
         <ImageUploadField
           value={form.image_path}
           onChange={(path) => update("image_path", path)}
@@ -470,13 +515,13 @@ export function AnuncioForm({
                     Cambiar
                   </button>
                 </div>
-              ) : (
+              ) : form.target_kind === "song" ? (
                 <>
                   <input
                     type="text"
                     value={targetQuery}
                     onChange={(e) => setTargetQuery(e.target.value)}
-                    placeholder={`Buscar ${form.target_kind === "song" ? "canción" : form.target_kind === "playlist" ? "playlist" : "parroquia"}…`}
+                    placeholder="Buscar canción…"
                     className={inputClass}
                   />
                   {targetSearching && (
@@ -512,6 +557,17 @@ export function AnuncioForm({
                     </p>
                   )}
                 </>
+              ) : (
+                <PrefetchedTargetPicker
+                  kind={form.target_kind}
+                  items={
+                    form.target_kind === "parish"
+                      ? parishes.map((p) => ({ id: p.id, name: p.name, slug: p.slug }))
+                      : playlistList ?? []
+                  }
+                  loading={form.target_kind === "playlist" && playlistLoading}
+                  onPick={pickTarget}
+                />
               )}
             </div>
           )}
@@ -532,18 +588,18 @@ export function AnuncioForm({
 
       {error && <p className="text-sm normal-case text-destructive">{error}</p>}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <button
           type="submit"
           disabled={saving || deleting}
-          className="rounded-full border border-primary bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          className="rounded-full border border-primary bg-primary px-3 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60 sm:px-5 sm:text-sm"
         >
           {saving ? "Guardando…" : mode === "create" ? "Crear" : "Guardar"}
         </button>
         <button
           type="button"
           onClick={() => router.push("/admin/anuncios")}
-          className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+          className="rounded-full border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:px-5 sm:text-sm"
         >
           Cancelar
         </button>
@@ -552,7 +608,7 @@ export function AnuncioForm({
             type="button"
             onClick={handleDelete}
             disabled={saving || deleting}
-            className="ml-auto rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
+            className="ml-auto rounded-full border border-destructive px-3 py-2 text-xs font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60 sm:px-5 sm:text-sm"
           >
             {deleting ? "Eliminando…" : "Eliminar"}
           </button>
@@ -647,6 +703,176 @@ function TargetKindDropdown({
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+function PrefetchedTargetPicker({
+  kind,
+  items,
+  loading,
+  onPick,
+}: {
+  kind: "playlist" | "parish";
+  items: SearchHit[];
+  loading: boolean;
+  onPick: (hit: SearchHit) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((it) => {
+        const name = (it.name ?? it.title ?? "").toLowerCase();
+        const slug = (it.slug ?? "").toLowerCase();
+        return name.includes(q) || slug.includes(q);
+      })
+    : items;
+  const placeholder = kind === "playlist" ? "Filtrar listas…" : "Filtrar parroquias…";
+
+  return (
+    <>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={placeholder}
+        className={inputClass}
+      />
+      <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-background">
+        {loading ? (
+          <p className="px-3 py-2 text-xs normal-case text-muted-foreground">
+            Cargando…
+          </p>
+        ) : filtered.length === 0 ? (
+          <p className="px-3 py-2 text-xs normal-case text-muted-foreground">
+            {items.length === 0 ? "No hay opciones." : "Sin coincidencias."}
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {filtered.map((hit) => (
+              <li key={hit.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(hit)}
+                  className="flex w-full flex-col gap-0.5 px-3 py-2 text-left normal-case hover:bg-sidebar"
+                >
+                  <span className="text-sm text-primary">
+                    {hit.name ?? hit.title ?? hit.slug ?? hit.id}
+                  </span>
+                  {hit.slug && (
+                    <span className="text-xs text-muted-foreground">
+                      {hit.slug}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <p className="text-xs normal-case text-muted-foreground">
+        {loading ? "" : `${filtered.length} de ${items.length}`}
+      </p>
+    </>
+  );
+}
+
+function BodyEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function wrap(prefix: string, suffix: string) {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = value.slice(start, end) || "texto";
+    const next =
+      value.slice(0, start) + prefix + selected + suffix + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const cursorStart = start + prefix.length;
+      const cursorEnd = cursorStart + selected.length;
+      el.setSelectionRange(cursorStart, cursorEnd);
+    });
+  }
+
+  function prefixLine(marker: string) {
+    const el = textareaRef.current;
+    if (!el) return;
+    const pos = el.selectionStart;
+    const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
+    const existing = value.slice(lineStart);
+    const cleaned = existing.replace(/^#{1,2} /, "");
+    const next = value.slice(0, lineStart) + marker + cleaned;
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const delta = next.length - value.length;
+      el.setSelectionRange(pos + delta, pos + delta);
+    });
+  }
+
+  const btnClass =
+    "rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold hover:border-primary hover:text-primary";
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap gap-1">
+        <button
+          type="button"
+          onClick={() => wrap("**", "**")}
+          className={btnClass}
+          title="Negrita"
+        >
+          <strong>B</strong>
+        </button>
+        <button
+          type="button"
+          onClick={() => wrap("*", "*")}
+          className={btnClass}
+          title="Cursiva"
+        >
+          <em>I</em>
+        </button>
+        <button
+          type="button"
+          onClick={() => wrap("__", "__")}
+          className={btnClass}
+          title="Subrayado"
+        >
+          <u>U</u>
+        </button>
+        <button
+          type="button"
+          onClick={() => prefixLine("# ")}
+          className={`${btnClass} text-primary`}
+          title="Título"
+        >
+          <strong>T</strong>
+        </button>
+        <button
+          type="button"
+          onClick={() => prefixLine("## ")}
+          className={`${btnClass} text-secondary`}
+          title="Subtítulo"
+        >
+          <strong>S</strong>
+        </button>
+      </div>
+      <textarea
+        ref={textareaRef}
+        rows={3}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+      />
     </div>
   );
 }

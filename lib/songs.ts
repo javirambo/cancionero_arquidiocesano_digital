@@ -517,6 +517,7 @@ export type Featured = {
   target_id: string | null;
   target_url: string | null;
   image_path: string | null;
+  featured: boolean;
   // URL ya resuelta a la que debe navegar el banner si es clickeable.
   // Null cuando target_kind === 'none' o no se pudo resolver.
   href: string | null;
@@ -532,6 +533,7 @@ type AnnouncementRow = {
   target_url: string | null;
   image_path: string | null;
   priority: number;
+  featured: boolean;
   created_at: string;
 };
 
@@ -582,6 +584,7 @@ async function resolveAnnouncementHrefs(
       target_id: r.target_id,
       target_url: r.target_url,
       image_path: r.image_path,
+      featured: r.featured,
       href,
     };
   });
@@ -646,7 +649,7 @@ async function listAnnouncementsByKindFilter(
   const supabase = await createClient();
   let query = supabase
     .from("announcements")
-    .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, created_at")
+    .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at")
     .order("created_at", { ascending: false });
   if (kindFilter === "null") query = query.is("kind", null);
   else query = query.not("kind", "is", null);
@@ -690,7 +693,7 @@ export async function listAnnouncementsForParish(
   const { data, error } = await supabase
     .from("announcements")
     .select(
-      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, created_at"
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
     )
     .in("id", ids)
     .order("priority", { ascending: false })
@@ -702,6 +705,29 @@ export async function listAnnouncementsForParish(
   const rows = limit ? visibles.slice(0, limit) : visibles;
   const items = await resolveAnnouncementHrefs(rows);
   return { items, total: visibles.length };
+}
+
+// Devuelve el anuncio destacado (featured = true) de mayor prioridad que el
+// usuario debería ver en la Home. Aplica filtros de parroquia y vigencia.
+export async function loadFeaturedAnnouncementPopup(): Promise<Featured | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
+    )
+    .eq("featured", true)
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  if (all.length === 0) return null;
+  const byParish = await filterAnnouncementsByParish(all);
+  const sched = await loadSchedules("announcement", byParish.map((r) => r.id));
+  const visibles = byParish.filter((r) => isVisibleNow(sched.get(r.id)));
+  if (visibles.length === 0) return null;
+  const items = await resolveAnnouncementHrefs(visibles.slice(0, 1));
+  return items[0] ?? null;
 }
 
 // Compat: la home anterior llamaba listActiveFeatured (5 items, kind null).
