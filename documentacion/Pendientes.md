@@ -35,27 +35,27 @@ Para eso usamos un documento con  las parroquias totales.
 
 [X] Que se vean todas las listas y anuncios de todas las parroquias para los invitados.
 
-- Como ver /parroquias?
-- mostrar todas ordenadas por cercania (son 300)
-- y poner un buscador arriba.
-- Como ver /parroquias/una_parroquia?
-- invitados: poner contactos de Coordinador parroquiales.
-- Coordinador parroquiales: poner contactos de editor o admin.
-OJO: "Esta parroquia todavía no tiene un administrador parroquial asignado. Puede contactarse con javierrambaldo@gmail.com para solicitarlo."
-->>> cambiar administrador por Coordinador
+[ ] Como ver /parroquias?
+    - mostrar todas ordenadas por cercania (son 300)
+    - y poner un buscador arriba.
+
+[ ] Como ver /parroquias/una_parroquia?
+    - invitados: poner contactos de Coordinador parroquiales.
+    - Coordinador parroquiales: poner contactos de editor o admin.
+    OJO: "Esta parroquia todavía no tiene un administrador parroquial asignado. Puede contactarse con javierrambaldo@gmail.com para solicitarlo."
+    ->>> cambiar administrador por Coordinador
 
 
-- el Coordinador parroquial ya no puede crear canciones en draft, solo el editor o admin.
-- las parroquias solo las crea el admin, sacar estados.
+[ ] el Coordinador parroquial ya no puede crear canciones en draft, solo el editor o admin.
 
+[ ] las parroquias solo las crea el admin, sacar estados.
 
 [ ] Agregar salmos responsoriales (ver antifonas)
     Agregar ordinario de la misa
     (pueden ser playlists)
 
-Orden en Home:
+[ ] Orden en Home:
     - Cantoral (ver si lista completa o buscador + link a listado completo)
     - Salmos responsoriales
     - Ordinario de la misa
     - Avisos parroquiales.
-
