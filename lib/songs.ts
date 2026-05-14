@@ -592,56 +592,13 @@ async function resolveAnnouncementHrefs(
   });
 }
 
-// Parroquias asociadas al usuario actual (principal en `users.parish_id` +
-// asociadas vía `parish_members`). Devuelve set vacío si no hay sesión.
-async function getCurrentUserParishIds(): Promise<Set<string>> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return new Set();
-  const [profileRes, membersRes] = await Promise.all([
-    supabase.from("users").select("parish_id").eq("id", user.id).maybeSingle(),
-    supabase.from("parish_members").select("parish_id").eq("user_id", user.id),
-  ]);
-  const ids = new Set<string>();
-  const primary = (profileRes.data?.parish_id as string | null) ?? null;
-  if (primary) ids.add(primary);
-  for (const m of membersRes.data ?? []) {
-    if (m.parish_id) ids.add(m.parish_id as string);
-  }
-  return ids;
-}
-
-// Filtra anuncios por parroquia: un anuncio es visible si NO tiene filas en
-// `announcement_parishes` (es global/arquidiocesano) o si intersecta con las
-// parroquias del usuario actual.
+// Antes filtraba anuncios scoped a parroquias del usuario. Ahora todos los
+// anuncios son visibles para todos los usuarios (incluso invitados), así que
+// es un pass-through. Se mantiene la función para no tocar los callers.
 async function filterAnnouncementsByParish<T extends { id: string }>(
   rows: T[]
 ): Promise<T[]> {
-  if (rows.length === 0) return rows;
-  const supabase = await createClient();
-  const { data: links } = await supabase
-    .from("announcement_parishes")
-    .select("announcement_id, parish_id")
-    .in(
-      "announcement_id",
-      rows.map((r) => r.id)
-    );
-  const byAnn = new Map<string, Set<string>>();
-  for (const l of links ?? []) {
-    const annId = l.announcement_id as string;
-    const parId = l.parish_id as string;
-    if (!byAnn.has(annId)) byAnn.set(annId, new Set());
-    byAnn.get(annId)!.add(parId);
-  }
-  const userParishes = await getCurrentUserParishIds();
-  return rows.filter((r) => {
-    const scoped = byAnn.get(r.id);
-    if (!scoped || scoped.size === 0) return true; // global
-    for (const p of scoped) if (userParishes.has(p)) return true;
-    return false;
-  });
+  return rows;
 }
 
 async function listAnnouncementsByKindFilter(

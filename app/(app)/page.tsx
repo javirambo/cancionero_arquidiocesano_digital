@@ -7,6 +7,7 @@ import {
   loadFeaturedAnnouncementPopup,
 } from "@/lib/songs";
 import {
+  listAllPublicPlaylists,
   listArchdiocesanPlaylists,
   listPlaylistsForParish,
   type PlaylistSummary,
@@ -94,7 +95,9 @@ export default async function Home() {
         }).then((items) => ({ parish: par, items }))
       )
     ),
-    listArchdiocesanPlaylists({ limit: PREVIEW }),
+    user
+      ? listArchdiocesanPlaylists({ limit: PREVIEW })
+      : listAllPublicPlaylists().then((list) => list.slice(0, PLAYLIST_HOME_LIMIT)),
     listLiturgicalAnnouncements(PREVIEW),
     listSongsPaged(1, SONGS_PAGE_SIZE),
     listCommonAnnouncements(PREVIEW),
