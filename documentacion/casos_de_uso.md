@@ -46,7 +46,7 @@ Hay dos dimensiones que conviven: **roles globales** (catálogo `roles`, asignad
 
 Asamblea o fiel cualquiera. No tiene cuenta. **Caso de uso central:** escanear un QR pegado en un banco de la iglesia y ver la playlist de la celebración.
 
-- **Puede:** buscar (CU-01), ver canciones (CU-02), reproducir YouTube (CU-04), ver playlists arquidiocesanas y públicas (CU-05), ver parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD.
+- **Puede:** buscar (CU-01), ver canciones (CU-02), reproducir YouTube (CU-04), ver **todas las parroquias** (CU-06) — sin filtro por `status` (mig. 0035 abrió la lectura), entrar a la página de cualquier parroquia y ver sus listas y anuncios públicos, ver **playlists arquidiocesanas** en la home y en `/playlists`, ver **anuncios globales** en la home (CU-07), modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD.
 - **NO puede:** ver acordes ni transponer (la UI de transposición se oculta — CU-03), crear/editar nada, asociarse a parroquias.
 - **Migración al loguearse:** al hacer su primer login (CU-13), los favoritos guardados en `localStorage` se transfieren a `favorites` en BD.
 
@@ -63,7 +63,7 @@ Rol global default al loguearse por primera vez (CU-13, CU-18.1). Es el "fiel" q
   - Favoritos persistidos en BD (CU-15, CU-22).
   - Vincularse a N parroquias y elegir una principal con ⭐ (CU-14).
   - **Crear playlists personales** (`parish_id = NULL`) — esté o no asociado a una parroquia. Las puede compartir por URL.
-- **Ve:** sus playlists personales + las de las parroquias en que es miembro + las arquidiocesanas + las públicas accedidas por URL.
+- **Ve en la home:** anuncios globales + anuncios scoped a sus `parish_members`, y playlists de sus parroquias asociadas + arquidiocesanas (con dedupe). En `/playlists`: sus playlists personales + las de sus parroquias + arquidiocesanas. Las listas/anuncios de otras parroquias no aparecen en la home pero se pueden ver entrando a `/parroquias/{slug}`. Las playlists con visibilidad `unlisted` o `public` también se ven accediendo por URL directa.
 - **NO puede:** crear canciones, crear playlists de parroquia, crear anuncios, crear parroquias.
 
 ### 4. ⛪ *coordinator* (Coordinador parroquial)
@@ -260,13 +260,15 @@ Rol global con permisos plenos.
 - **Precondiciones:** Existe contenido marcado como "novedad" o "festividad" para la fecha actual.
 - **Disparador:** El usuario abre la home `/`.
 - **Flujo principal:**
-  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
+  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo','indicaciones')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
   2. *(Pausado)* Cálculo automático con `romcal` cuando no hay festividad cargada — se moverá a una página dedicada "¿Qué hay hoy de nuevo?" en una iteración posterior.
   3. El sistema muestra los **anuncios comunes vigentes** (`announcements` con `kind is null` cuya vigencia en `entity_schedules` matchee el momento actual) en la sección "Novedades", ordenados por `priority desc`. Cada anuncio se muestra una sola vez (sin duplicados aunque el usuario esté en varias parroquias destinatarias). Si tiene atajo (`target_kind` ≠ `'none'`), el banner enlaza al recurso.
-  4. **Visibilidad de anuncios:**
-     - **Anónimo:** ve únicamente anuncios **globales** (sin filas en `announcement_parishes`).
-     - **Autenticado:** ve los globales + los anuncios cuyas parroquias destinatarias intersectan con sus `parish_members`.
-  5. El usuario navega al contenido de su interés.
+  4. **Visibilidad de anuncios y listas en la home (filtro de audiencia, client-side):**
+     - **Anónimo:** ve únicamente anuncios **globales** (sin filas en `announcement_parishes`) y playlists **arquidiocesanas**. Las listas/anuncios de una parroquia específica solo se ven entrando a `/parroquias/{slug}`.
+     - **Autenticado (member o superior):** ve los anuncios globales + los anuncios scoped a alguna de sus `parish_members`. Idem para listas: las de sus parroquias asociadas + arquidiocesanas (con dedupe).
+     - **RLS:** la base de datos abre la lectura a todos (mig. 0035) para que la página de parroquia funcione para invitados. El filtro de audiencia es responsabilidad de los loaders de la home y `/novedades`.
+  5. **Popup destacado:** si existe un anuncio con `featured=true` que aplique a la audiencia y esté vigente, se muestra como **modal fullscreen** sobre la home al cargar la página (con botón X y cierre por backdrop/Esc). Si hay varios, gana el de mayor `priority`. El popup también aparece en el grid normal.
+  6. El usuario navega al contenido de su interés.
 - **Flujos alternativos:**
   - 1a. Sin festividad ni anuncios: la home muestra el tiempo litúrgico calculado y acceso al buscador y al catálogo.
 - **Postcondiciones:** Ninguna persistente.
@@ -682,12 +684,15 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ### Modelo
 
 - **Vigencia:** se evalúa con `entity_schedules` (`entity_type='announcement'`) en hora AR. Sin reglas → siempre vigente.
-- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo`) para festividades litúrgicas que la home muestra en el bloque "Festividad de hoy".
-- **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo.
+- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo` / `indicaciones`) para festividades litúrgicas o indicaciones que la home muestra en el bloque "Festividad de hoy".
+- **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none','document')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo. Si `target_kind='document'`, enlaza a `/anuncios/{id}` donde se renderiza el documento rich asociado (`announcement_documents`).
+- **Destacado (`featured`):** si `true`, el anuncio se muestra como **popup fullscreen** sobre la home en cada carga (con X para cerrar y CTA al atajo si lo tiene). Sigue apareciendo también en el grid normal. Si hay varios destacados aplicables, gana el de mayor `priority`.
 - **Destinatarios:** tabla N–N `announcement_parishes(announcement_id, parish_id)`.
-  - Sin filas → **anuncio global** (lo ven todos: anónimos y autenticados).
-  - Con filas → **anuncio dirigido**: lo ven únicamente los usuarios autenticados asociados (vía `parish_members`) a alguna de esas parroquias. Los anónimos **no** lo ven.
+  - Sin filas → **anuncio global** (en la home lo ven todos, anónimos y autenticados).
+  - Con filas → **anuncio dirigido a parroquias específicas**: en la home solo lo ven los autenticados asociados (vía `parish_members`) a alguna de esas parroquias. En la **página de la parroquia** (`/parroquias/{slug}`) lo ve cualquier visitante.
+  - El filtro por audiencia se aplica client-side en los loaders. La RLS (mig. 0035) habilita lectura abierta para soportar la página de parroquia y `/anuncios/{id}`.
 - **Deduplicación:** un mismo anuncio se muestra una sola vez al usuario, aunque esté asociado a múltiples parroquias destinatarias.
+- **Documento asociado (target_kind='document'):** en el form, al elegir el atajo "Documento" aparece el botón **"Crear documento"** / **"Editar documento"**. Si el anuncio aún no fue persistido, al hacer click el form valida + guarda el anuncio y navega al editor `/admin/anuncios/{id}/documento`. El editor es **TipTap** (StarterKit + Underline + Link) y soporta pegado preservando formato desde Word/Docs/web. Al guardar, hace `upsert` en `announcement_documents`. La vista pública `/anuncios/{id}` sanea el HTML con **DOMPurify** antes de renderizar.
 
 ### Flujo principal — Crear
 

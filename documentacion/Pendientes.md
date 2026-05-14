@@ -31,8 +31,23 @@ Para eso usamos un documento con  las parroquias totales.
 [X] Nuevo: anuncios pero con Indicaciones
     Es un anuncio pero direcciona a una pagina o documento enriquecido.
     Se comporta igual que un anuncio.
+- PREGUNTA: los invitados tambien ven la indicacion? o solo los admin parroquiales?
 
-[ ] Que se vean todas las listas y anuncios de todas las parroquias para los invitados.
+[X] Que se vean todas las listas y anuncios de todas las parroquias para los invitados.
+
+- Como ver /parroquias?
+- mostrar todas ordenadas por cercania (son 300)
+- y poner un buscador arriba.
+- Como ver /parroquias/una_parroquia?
+- invitados: poner contactos de Coordinador parroquiales.
+- Coordinador parroquiales: poner contactos de editor o admin.
+OJO: "Esta parroquia todavía no tiene un administrador parroquial asignado. Puede contactarse con javierrambaldo@gmail.com para solicitarlo."
+->>> cambiar administrador por Coordinador
+
+
+- el Coordinador parroquial ya no puede crear canciones en draft, solo el editor o admin.
+- las parroquias solo las crea el admin, sacar estados.
+
 
 [ ] Agregar salmos responsoriales (ver antifonas)
     Agregar ordinario de la misa

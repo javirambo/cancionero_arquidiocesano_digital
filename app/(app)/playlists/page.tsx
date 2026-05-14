@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  listAllPublicPlaylists,
+  listArchdiocesanPlaylists,
   listMyPlaylistsSections,
 } from "@/lib/playlists";
 import { PlaylistCard } from "./playlist-card";
@@ -20,7 +20,7 @@ export default async function PlaylistsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const all = await listAllPublicPlaylists();
+    const archdiocesan = await listArchdiocesanPlaylists();
     return (
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
         <header className="flex flex-col gap-2">
@@ -30,14 +30,14 @@ export default async function PlaylistsPage() {
             favoritos en la nube, vincular tu parroquia y acceder a tus listas.
           </p>
           <p className="text-base normal-case text-muted-foreground">
-            Listas públicas de la arquidiócesis y de todas las parroquias.
+            Listas de cantos arquidiocesanos.
           </p>
         </header>
 
-        {all.length > 0 ? (
+        {archdiocesan.length > 0 ? (
           <section className="flex flex-col gap-3">
             <ul className="grid gap-3 sm:grid-cols-2">
-              {all.map((p) => (
+              {archdiocesan.map((p) => (
                 <PlaylistCard
                   key={p.id}
                   playlist={{
@@ -47,7 +47,7 @@ export default async function PlaylistsPage() {
                     image_path: p.image_path,
                     parish: p.parish,
                   }}
-                  badge={p.parish ? undefined : "De la Arquidiócesis"}
+                  badge="De la Arquidiócesis"
                 />
               ))}
             </ul>
@@ -55,7 +55,7 @@ export default async function PlaylistsPage() {
         ) : (
           <section className="rounded-2xl border border-border bg-sidebar p-6">
             <p className="text-sm normal-case text-muted-foreground">
-              Todavía no hay playlists disponibles.
+              Todavía no hay playlists arquidiocesanas disponibles.
             </p>
           </section>
         )}
