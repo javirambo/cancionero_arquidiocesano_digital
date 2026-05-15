@@ -35,6 +35,8 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
 | CU-25   | Gestión de categorías litúrgicas                     | RF22      | ✅     |
+| CU-26   | Pagina de creditos y de privacidad                   |           | ✅     |
+
 
 ---
 
@@ -824,3 +826,24 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 - **Si en el futuro se necesita ABM:** ver pantalla bajo `/admin/categorias`. Hoy se descarta para evitar tooling de bajo uso.
 
 ---
+
+## CU-26 - Pagina de creditos y privacidad
+
+- Asi quedan los emails cuando se acceden a las paginas /creditos o /privacidad:
+  
+  Setting                 Origen        Uso
+  --------------------------------------------------------------------
+  legal_contact_emails    Setting       /privacidad
+  credits_contact_emails  Setting       /creditos
+
+
+- Contactos de roles: esto se ve en /parroquias
+- siempre desde DB vía parish_members y get_users_by_global_role.
+
+  Visitante	          Personas            Si vacío
+  --------------------------------------------------------------------
+  Admin	                —                   —
+  Editor              Admins              (mensaje "no hay contactos")
+  Coord de la parro   Editores + Admins   (mensaje)
+  Member común        Coords de la parro  Editores (fallback DB)
+  Invitado            Coords de la parro  Sección oculta

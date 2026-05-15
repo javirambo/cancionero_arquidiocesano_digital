@@ -35,20 +35,28 @@ Para eso usamos un documento con  las parroquias totales.
 
 [X] Que se vean todas las listas y anuncios de todas las parroquias para los invitados.
 
-[ ] Como ver /parroquias?
-    - mostrar todas ordenadas por cercania (son 300)
-    - y poner un buscador arriba.
+[X] Como ver /parroquias?
+    - invitado: mostrar todas ordenadas por cercania (son 300)
+        Buscar 🔍    
+        ...lista de parroquias...
+    - member: en grupos de Mis parroquias y Otras parroquias con > y acordeon para achicar. 
+        Mis parroquias 🔍     >
+        ...lista de parroquias...
+        Otras parroquias 🔍   >
+        ...lista de parroquias...
+        Y una lupa al lado para buscar o filtrar
 
-[ ] Como ver /parroquias/una_parroquia?
+[x] Como ver /parroquias/una_parroquia?
     - invitados: poner contactos de Coordinador parroquiales.
+    - member: ve contactos de coordinador
     - Coordinador parroquiales: poner contactos de editor o admin.
-    OJO: "Esta parroquia todavía no tiene un administrador parroquial asignado. Puede contactarse con javierrambaldo@gmail.com para solicitarlo."
-    ->>> cambiar administrador por Coordinador
-
+    - admin: no ve contactos
 
 [ ] el Coordinador parroquial ya no puede crear canciones en draft, solo el editor o admin.
 
 [ ] las parroquias solo las crea el admin, sacar estados.
+    - sacar agregar de http://localhost:4000/parroquias
+    - sacar EDITAR de http://localhost:4000/parroquias/parroquia-maria-auxiliadora
 
 [ ] Agregar salmos responsoriales (ver antifonas)
     Agregar ordinario de la misa
@@ -59,3 +67,8 @@ Para eso usamos un documento con  las parroquias totales.
     - Salmos responsoriales
     - Ordinario de la misa
     - Avisos parroquiales.
+
+[ ] quitar No apagar pantalla, y hacer que todo usuario la tenga activa.
+    luego vemos como activar/desactivar
+
+[ ] quitar modo oscuro del menu solamente (luego vemos como activarlo)
