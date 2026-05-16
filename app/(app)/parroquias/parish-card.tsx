@@ -64,14 +64,14 @@ export function ParishCard({
 
   return (
     <li
-      className={`flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-5 transition-all duration-300 ease-in-out hover:border-primary ${visualClass}`}
+      className={`flex h-full flex-col gap-2 rounded-xl border border-border bg-card p-5 transition-all duration-300 ease-in-out hover:border-primary ${visualClass}`}
     >
       <div className="flex items-start gap-2">
         <Link
           href={`/parroquias/${parish.slug}`}
           className="flex min-w-0 flex-1 flex-col gap-1"
         >
-          <span className="text-lg text-primary">{parish.name}</span>
+          <span className="text-lg text-song-title">{parish.name}</span>
           {(parish.address || parish.city) && (
             <span className="text-xs normal-case text-muted-foreground">
               {[parish.address, parish.city].filter(Boolean).join(" · ")}

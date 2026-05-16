@@ -21,39 +21,65 @@ La escala tipográfica está basada en las utilidades de Tailwind CSS y sigue un
 
 ## Paleta de colores
 
-Valores actuales tomados de [`app/globals.css`](../app/globals.css). Tentativos hasta que la Comisión apruebe la paleta final.
-
-### Colores semánticos
-
-| Token              | Hex       | Muestra                                                            | Uso                                                  |
-|--------------------|-----------|--------------------------------------------------------------------|------------------------------------------------------|
-| `primary`          | `#8b1a1a` | ![#8b1a1a](https://placehold.co/16x16/8b1a1a/8b1a1a.png)           | Rojo litúrgico — títulos en mayúscula, acción principal |
-| `primary-hover`    | `#6f1414` | ![#6f1414](https://placehold.co/16x16/6f1414/6f1414.png)           | Estado hover de la acción principal                  |
-| `secondary`        | `#c9a227` | ![#c9a227](https://placehold.co/16x16/c9a227/c9a227.png)           | Dorado litúrgico (tentativo)                         |
-| `brand-dark`       | `#2a0a0a` | ![#2a0a0a](https://placehold.co/16x16/2a0a0a/2a0a0a.png)           | Variante oscura de marca                             |
-| `success`          | `#2f7d3a` | ![#2f7d3a](https://placehold.co/16x16/2f7d3a/2f7d3a.png)           | Confirmaciones / estados positivos                   |
-| `warning`          | `#c08a00` | ![#c08a00](https://placehold.co/16x16/c08a00/c08a00.png)           | Advertencias                                         |
-| `destructive`      | `#b00020` | ![#b00020](https://placehold.co/16x16/b00020/b00020.png)           | Borrado / errores críticos                           |
+Valores actuales tomados de [`app/globals.css`](../app/globals.css). Paleta aprobada en fase 2 (2026-05).
 
 ### Tema Light (por defecto)
 
-| Token              | Hex       | Muestra                                                            | Uso                                  |
-|--------------------|-----------|--------------------------------------------------------------------|--------------------------------------|
-| `background`       | `#fafaf7` | ![#fafaf7](https://placehold.co/16x16/fafaf7/fafaf7.png)           | Fondo de página (casi blanco, cálido) |
-| `foreground`       | `#111111` | ![#111111](https://placehold.co/16x16/111111/111111.png)           | Texto principal                       |
-| `sidebar`          | `#f1ede5` | ![#f1ede5](https://placehold.co/16x16/f1ede5/f1ede5.png)           | Header, footer y paneles laterales    |
-| `border`           | `#e2dccd` | ![#e2dccd](https://placehold.co/16x16/e2dccd/e2dccd.png)           | Bordes de tarjetas, separadores       |
-| `muted-foreground` | `#5b5b5b` | ![#5b5b5b](https://placehold.co/16x16/5b5b5b/5b5b5b.png)           | Texto secundario, metadata            |
+| Token (Tailwind)   | Hex       | Muestra                                                            | Uso                                                                       |
+|--------------------|-----------|--------------------------------------------------------------------|---------------------------------------------------------------------------|
+| `background`       | `#eaf0fa` | ![#eaf0fa](https://placehold.co/16x16/eaf0fa/eaf0fa.png)           | Fondo general de toda la app                                              |
+| `sidebar`          | `#bfd0ea` | ![#bfd0ea](https://placehold.co/16x16/bfd0ea/bfd0ea.png)           | Encabezado, pie y barra de menú de acciones de la vista de canción       |
+| `primary`          | `#1f3f73` | ![#1f3f73](https://placehold.co/16x16/1f3f73/1f3f73.png)           | Iconos y botones (acción principal). Clases: `bg-primary`, `text-primary`, `border-primary`. |
+| `primary-hover`    | `#16305a` | ![#16305a](https://placehold.co/16x16/16305a/16305a.png)           | Hover de iconos y botones                                                 |
+| `page-title`       | `#436baf` | ![#436baf](https://placehold.co/16x16/436baf/436baf.png)           | Títulos de páginas. Clase: `text-page-title`.                             |
+| `shortcut`         | `#6f91c7` | ![#6f91c7](https://placehold.co/16x16/6f91c7/6f91c7.png)           | Atajos / categorías destacadas (ej. botones de categoría de cantos en la home). Clases: `bg-shortcut`, `border-shortcut`, `text-shortcut`. |
+| `song-title`       | `#8b1a1a` | ![#8b1a1a](https://placehold.co/16x16/8b1a1a/8b1a1a.png)           | Títulos de canciones, de tarjetas y de playlists. Clases: `text-song-title`, `border-song-title`. También el corazón de favoritos. |
+| `secondary`        | `#b49a55` | ![#b49a55](https://placehold.co/16x16/b49a55/b49a55.png)           | Acentos, subtítulos, número y categorías en vista de canción              |
+| `foreground`       | `#30343b` | ![#30343b](https://placehold.co/16x16/30343b/30343b.png)           | Texto normal                                                              |
+| `card`             | `#ffffff` | ![#ffffff](https://placehold.co/16x16/ffffff/ffffff.png)           | Fondo de tarjetas. Clase: `bg-card`.                                      |
+| `muted-foreground` | `#5b6473` | ![#5b6473](https://placehold.co/16x16/5b6473/5b6473.png)           | Texto secundario, metadata                                                |
+| `border`           | `#c5d2e6` | ![#c5d2e6](https://placehold.co/16x16/c5d2e6/c5d2e6.png)           | Bordes de tarjetas, separadores                                           |
 
-### Tema Dark (`prefers-color-scheme: dark`)
+> **Nota sobre la convención:** en este proyecto Tailwind `primary` = color de acción (iconos y botones azul `#1f3f73`), no el rojo histórico. El rojo litúrgico de los títulos de canción usa el token aparte `song-title` (`text-song-title`). Esto es porque la mayoría de los componentes ya estaban escritos con `bg-primary`/`text-primary` para botones, y mantener esa semántica reduce el cambio.
 
-| Token              | Hex       | Muestra                                                            | Uso                                  |
-|--------------------|-----------|--------------------------------------------------------------------|--------------------------------------|
-| `background`       | `#2d2420` | ![#2d2420](https://placehold.co/16x16/2d2420/2d2420.png)           | Fondo de página                       |
-| `foreground`       | `#f4efe6` | ![#f4efe6](https://placehold.co/16x16/f4efe6/f4efe6.png)           | Texto principal                       |
-| `sidebar`          | `#614f47` | ![#614f47](https://placehold.co/16x16/614f47/614f47.png)           | Header, footer y paneles laterales    |
-| `border`           | `#2b2722` | ![#2b2722](https://placehold.co/16x16/2b2722/2b2722.png)           | Bordes de tarjetas, separadores       |
-| `muted-foreground` | `#a39b8b` | ![#a39b8b](https://placehold.co/16x16/a39b8b/a39b8b.png)           | Texto secundario, metadata            |
+### Tema Dark (`data-theme="dark"`)
+
+Derivado automáticamente de la paleta light: se invierte la luminosidad del fondo y del texto, y se aclaran los acentos para mantener contraste sobre fondo oscuro.
+
+| Token (Tailwind)   | Hex       | Muestra                                                            | Uso                                                                       |
+|--------------------|-----------|--------------------------------------------------------------------|---------------------------------------------------------------------------|
+| `background`       | `#0f1626` | ![#0f1626](https://placehold.co/16x16/0f1626/0f1626.png)           | Fondo general                                                             |
+| `sidebar`          | `#1a2540` | ![#1a2540](https://placehold.co/16x16/1a2540/1a2540.png)           | Encabezado, pie y barra de menú de acciones                               |
+| `primary`          | `#6b8fcc` | ![#6b8fcc](https://placehold.co/16x16/6b8fcc/6b8fcc.png)           | Iconos y botones                                                          |
+| `primary-hover`    | `#8aa9e0` | ![#8aa9e0](https://placehold.co/16x16/8aa9e0/8aa9e0.png)           | Hover de iconos y botones                                                 |
+| `page-title`       | `#8aa9e0` | ![#8aa9e0](https://placehold.co/16x16/8aa9e0/8aa9e0.png)           | Títulos de páginas                                                        |
+| `shortcut`         | `#8aa9e0` | ![#8aa9e0](https://placehold.co/16x16/8aa9e0/8aa9e0.png)           | Atajos / categorías destacadas                                            |
+| `song-title`       | `#d96a6a` | ![#d96a6a](https://placehold.co/16x16/d96a6a/d96a6a.png)           | Títulos de canciones, de tarjetas y de playlists                          |
+| `secondary`        | `#d4ba75` | ![#d4ba75](https://placehold.co/16x16/d4ba75/d4ba75.png)           | Acentos, subtítulos                                                       |
+| `foreground`       | `#e4e7ef` | ![#e4e7ef](https://placehold.co/16x16/e4e7ef/e4e7ef.png)           | Texto normal                                                              |
+| `card`             | `#1a2540` | ![#1a2540](https://placehold.co/16x16/1a2540/1a2540.png)           | Fondo de tarjetas (igual al sidebar)                                      |
+| `muted-foreground` | `#9aa6bd` | ![#9aa6bd](https://placehold.co/16x16/9aa6bd/9aa6bd.png)           | Texto secundario, metadata                                                |
+| `border`           | `#2b3a5c` | ![#2b3a5c](https://placehold.co/16x16/2b3a5c/2b3a5c.png)           | Bordes de tarjetas, separadores                                           |
+
+### Colores de estado (light y dark)
+
+| Token (Tailwind)            | Hex       | Muestra                                                            | Uso                                                  |
+|-----------------------------|-----------|--------------------------------------------------------------------|------------------------------------------------------|
+| `primary-foreground`        | `#ffffff` | ![#ffffff](https://placehold.co/16x16/ffffff/ffffff.png)           | Texto/icono sobre fondo `primary`                    |
+| `success`                   | `#2f7d3a` | ![#2f7d3a](https://placehold.co/16x16/2f7d3a/2f7d3a.png)           | Confirmaciones / estados positivos                   |
+| `warning`                   | `#c08a00` | ![#c08a00](https://placehold.co/16x16/c08a00/c08a00.png)           | Advertencias                                         |
+| `destructive`               | `#b00020` | ![#b00020](https://placehold.co/16x16/b00020/b00020.png)           | Borrado / errores críticos                           |
+| `destructive-foreground`    | `#ffffff` | ![#ffffff](https://placehold.co/16x16/ffffff/ffffff.png)           | Texto/icono sobre fondo `destructive`                |
+
+### Vista de canción — asignación específica
+
+| Elemento                                  | Token (Tailwind) | Hex (light) |
+|-------------------------------------------|------------------|-------------|
+| Título de la canción                      | `song-title`     | `#8b1a1a`   |
+| Número y categorías                       | `secondary`      | `#b49a55`   |
+| Encabezado, pie y barra menú de acciones  | `sidebar`        | `#bfd0ea`   |
+| Iconos del menú de acciones               | `primary`        | `#1f3f73`   |
+| Borde lateral del estribillo              | `song-title`     | `#8b1a1a`   |
 
 
 ## Iconografía

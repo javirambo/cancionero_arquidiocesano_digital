@@ -78,7 +78,7 @@ export function HeroContent({ parishName }: { parishName: string | null }) {
       <p className="text-sm uppercase tracking-[0.2em] text-secondary">
         Evangelizar a través de la música
       </p>
-      <h1 className="text-4xl leading-tight sm:text-5xl">
+      <h1 className="text-4xl leading-tight text-primary sm:text-5xl">
         Cancionero Arquidiocesano
       </h1>
       <p className="max-w-2xl text-lg leading-8 text-muted-foreground normal-case">

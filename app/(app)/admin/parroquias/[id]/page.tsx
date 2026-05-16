@@ -43,7 +43,7 @@ export default async function EditarParroquiaPage({
           </svg>
           Parroquias
         </Link>
-        <h1 className="text-2xl">{parish.name}</h1>
+        <h1 className="text-2xl text-page-title">{parish.name}</h1>
       </header>
       <ParroquiaForm
         mode="edit"

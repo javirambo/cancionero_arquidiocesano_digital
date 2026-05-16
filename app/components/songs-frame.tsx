@@ -24,12 +24,19 @@ export function SongsFrame({
   initialTotal,
   pageSize,
   categories = [],
+  showSeeAll = true,
+  lockedCategorySlugs,
 }: {
   initialItems: Item[];
   initialTotal: number;
   pageSize: number;
   categories?: PublicCategoryOption[];
+  showSeeAll?: boolean;
+  /** Cuando viene definido, el filtro queda fijado por la URL: se ocultan el
+   *  botón embudo y el chip removible, y todas las queries usan estos slugs. */
+  lockedCategorySlugs?: string[];
 }) {
+  const isLocked = lockedCategorySlugs !== undefined;
   const [items, setItems] = useState<Item[]>(initialItems);
   const [total, setTotal] = useState<number>(initialTotal);
   const [page, setPage] = useState<number>(1);
@@ -37,7 +44,9 @@ export function SongsFrame({
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
+  const [categorySlugs, setCategorySlugs] = useState<string[]>(
+    lockedCategorySlugs ?? []
+  );
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -153,13 +162,15 @@ export function SongsFrame({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl">Cantos</h2>
-        <Link
-          href="/canciones"
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          Ver catálogo →
-        </Link>
+        <h2 className="text-xl text-page-title">Cantos</h2>
+        {showSeeAll && (
+          <Link
+            href="/canciones"
+            className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
+          >
+            Ver catálogo →
+          </Link>
+        )}
       </div>
       <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
         <div className="flex flex-wrap items-center gap-3">
@@ -194,7 +205,7 @@ export function SongsFrame({
               </button>
             </>
           )}
-          {categories.length > 0 && (
+          {categories.length > 0 && !isLocked && (
             <button
               type="button"
               onClick={() => setFilterOpen((v) => !v)}
@@ -245,7 +256,7 @@ export function SongsFrame({
         </div>
       )}
 
-      {!filterOpen && activeCategories.length > 0 && (
+      {!filterOpen && !isLocked && activeCategories.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-xs normal-case text-muted-foreground">
           <span>Filtrado por:</span>
           {activeCategories.map((c) => (

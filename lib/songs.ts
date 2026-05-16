@@ -67,13 +67,14 @@ export type PublicCategoryOption = {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
 };
 
 export async function listPublicCategories(): Promise<PublicCategoryOption[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, slug")
+    .select("id, name, slug, description")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw error;

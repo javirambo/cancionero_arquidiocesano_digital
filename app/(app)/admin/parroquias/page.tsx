@@ -18,7 +18,7 @@ export default async function AdminParroquiasPage() {
     <main className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl">Parroquias</h1>
+          <h1 className="text-2xl text-page-title">Parroquias</h1>
           <Link
             href="/admin/parroquias/nueva"
             className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"

@@ -34,14 +34,14 @@ export default async function PrivacidadPage() {
         <p className="text-xs uppercase tracking-[0.2em] text-secondary">
           Información legal
         </p>
-        <h1 className="text-3xl leading-tight">Política de Privacidad</h1>
+        <h1 className="text-3xl leading-tight text-page-title">Política de Privacidad</h1>
         <p className="text-sm text-muted-foreground normal-case">
           Última actualización: 29 de abril de 2026
         </p>
       </header>
 
       <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-xl text-primary">Responsable</h2>
+        <h2 className="text-xl text-page-title">Responsable</h2>
         <p className="text-base leading-7 text-foreground">
           El responsable del tratamiento de los datos personales recogidos a
           través del Sitio es el Arzobispado de Rosario, con domicilio
@@ -57,7 +57,7 @@ export default async function PrivacidadPage() {
       </section>
 
       <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-xl text-primary">Datos recopilados</h2>
+        <h2 className="text-xl text-page-title">Datos recopilados</h2>
         <p className="text-base leading-7 text-foreground">
           Cuando el Usuario inicia sesión mediante su cuenta de Google, el Sitio
           recopila y almacena exclusivamente los siguientes datos:
@@ -74,7 +74,7 @@ export default async function PrivacidadPage() {
       </section>
 
       <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-xl text-primary">Finalidad del tratamiento</h2>
+        <h2 className="text-xl text-page-title">Finalidad del tratamiento</h2>
         <p className="text-base leading-7 text-foreground">
           Los datos del Usuario se utilizan únicamente para identificarlo dentro
           del Sitio y permitirle el acceso a sus contenidos personales, tales
@@ -84,7 +84,7 @@ export default async function PrivacidadPage() {
       </section>
 
       <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-xl text-primary">Terceros</h2>
+        <h2 className="text-xl text-page-title">Terceros</h2>
         <p className="text-base leading-7 text-foreground">
           Para la prestación del servicio, el Sitio se apoya en los siguientes
           proveedores tecnológicos:
@@ -110,7 +110,7 @@ export default async function PrivacidadPage() {
       </section>
 
       <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-xl text-primary">Menores de edad</h2>
+        <h2 className="text-xl text-page-title">Menores de edad</h2>
         <p className="text-base leading-7 text-foreground">
           El Sitio puede ser utilizado por menores de edad en contexto pastoral.
           En caso de que un menor inicie sesión con su cuenta de Google, se
@@ -121,7 +121,7 @@ export default async function PrivacidadPage() {
       </section>
 
       <section className="flex flex-col gap-3 normal-case">
-        <h2 className="text-xl text-primary">Derechos del Usuario</h2>
+        <h2 className="text-xl text-page-title">Derechos del Usuario</h2>
         <p className="text-base leading-7 text-foreground">
           De conformidad con la Ley argentina N.° 25.326 de Protección de los
           Datos Personales, el Usuario tiene derecho a acceder a sus datos, a

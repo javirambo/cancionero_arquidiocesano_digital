@@ -84,7 +84,7 @@ export default async function PlaylistPage({
       </Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl">{pl.name}</h1>
+          <h1 className="text-3xl text-page-title">{pl.name}</h1>
           {pl.is_archdiocesan && (
             <span className="text-xs uppercase tracking-wide text-secondary">
               De la Arquidiócesis

@@ -123,7 +123,7 @@ export default async function Home() {
           if (merged.length === 0) return null;
           return (
             <PlaylistsSection
-              heading="Listas"
+              heading="Selección parroquial"
               playlists={merged.slice(0, PLAYLIST_HOME_LIMIT)}
               seeAllHref="/playlists"
             />
@@ -133,12 +133,15 @@ export default async function Home() {
         {/* Anuncios litúrgicos */}
         {liturgical.items.length > 0 && (
           <AnnouncementsSection
-            heading="Festividades y tiempos litúrgicos"
+            heading="Avisos"
             items={liturgical.items}
             total={liturgical.total}
             seeAllHref="/novedades"
           />
         )}
+
+        {/* Atajos a categorías de cantos */}
+        <SongCategoryShortcuts />
 
         {/* Canciones */}
         <SongsFrame
@@ -146,6 +149,7 @@ export default async function Home() {
           initialTotal={songsResult.total}
           pageSize={SONGS_PAGE_SIZE}
           categories={songCategories}
+          showSeeAll={false}
         />
 
         {/* Novedades */}
@@ -165,7 +169,7 @@ export default async function Home() {
             aria-labelledby="invitado-heading"
             className="rounded-2xl border border-border bg-sidebar p-8"
           >
-            <h2 id="invitado-heading" className="text-2xl">
+            <h2 id="invitado-heading" className="text-2xl text-page-title">
               Iniciá sesión
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
@@ -191,15 +195,7 @@ function PlaylistsSection({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl">{heading}</h2>
-        <Link
-          href={seeAllHref}
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          Ver todas →
-        </Link>
-      </div>
+      <h2 className="text-xl text-page-title">{heading}</h2>
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {playlists.map((p) => (
           <PlaylistCard
@@ -233,17 +229,7 @@ function AnnouncementsSection({
   const list = items as import("@/lib/songs").Featured[];
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl">{heading}</h2>
-        {total > list.length && (
-          <Link
-            href={seeAllHref}
-            className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-          >
-            Ver todas →
-          </Link>
-        )}
-      </div>
+      <h2 className="text-xl text-page-title">{heading}</h2>
       <ul className="grid gap-3">
         {list.map((item, i) => (
           <li key={i}>
@@ -252,6 +238,29 @@ function AnnouncementsSection({
         ))}
       </ul>
     </section>
+  );
+}
+
+function SongCategoryShortcuts() {
+  const shortcuts: Array<{ label: string; href: string }> = [
+    { label: "Ordinario de la Misa", href: "/canciones?cat=ordinario-de-la-misa" },
+    { label: "Salmo responsorial", href: "/canciones?cat=salmo-responsorial" },
+    { label: "Cantos para la Misa", href: "/canciones?cat=cantos-para-la-misa" },
+    { label: "Adoración y oración", href: "/canciones?cat=adoracion-y-oracion" },
+  ];
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {shortcuts.map((s) => (
+        <li key={s.href}>
+          <Link
+            href={s.href}
+            className="flex h-full items-center justify-center rounded-xl border border-shortcut bg-shortcut px-4 py-4 text-center text-base uppercase text-white transition-opacity hover:opacity-90"
+          >
+            {s.label}
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 

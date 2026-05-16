@@ -59,7 +59,7 @@ export default async function ParroquiaPlaylistsPage({
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             {parish.name}
           </p>
-          <h1 className="text-2xl">Playlists</h1>
+          <h1 className="text-2xl text-page-title">Playlists</h1>
         </div>
         {canCreate && (
           <Link

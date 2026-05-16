@@ -19,7 +19,7 @@ export default async function NuevoAnuncioPage() {
         >
           ← Volver
         </Link>
-        <h1 className="text-2xl">Nuevo anuncio</h1>
+        <h1 className="text-2xl text-page-title">Nuevo anuncio</h1>
       </header>
 
       <AnuncioForm mode="create" parishes={parishes} allowGlobal={allowGlobal} />

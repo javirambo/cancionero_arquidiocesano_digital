@@ -167,7 +167,7 @@ Abba Padre, venga tu Reino
                 block.inChorus ? (
                   <div
                     key={i}
-                    className="my-2 border-l-[3px] border-primary pl-2 font-bold"
+                    className="my-2 border-l-[3px] border-song-title pl-2 font-bold"
                   >
                     {block.lines.map((line, j) => (
                       <LineView key={j} line={line} />

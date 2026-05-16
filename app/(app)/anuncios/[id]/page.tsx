@@ -44,7 +44,7 @@ export default async function AnuncioDocumentoPage({
         >
           ← Volver al inicio
         </Link>
-        <h1 className="text-3xl text-primary">{annRes.data.title}</h1>
+        <h1 className="text-3xl text-song-title">{annRes.data.title}</h1>
       </header>
 
       <article

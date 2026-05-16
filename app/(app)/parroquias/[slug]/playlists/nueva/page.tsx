@@ -70,7 +70,7 @@ export default async function NuevaPlaylistPage({
         </svg>
         Playlists
       </Link>
-      <h1 className="text-2xl">Nueva lista en {parish.name}</h1>
+      <h1 className="text-2xl text-page-title">Nueva lista en {parish.name}</h1>
       <PlaylistForm
         mode="create"
         parishSlug={parish.slug}

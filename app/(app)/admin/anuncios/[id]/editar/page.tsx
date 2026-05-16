@@ -96,7 +96,7 @@ export default async function EditarAnuncioPage({
         >
           ← Volver
         </Link>
-        <h1 className="text-2xl">Editar anuncio</h1>
+        <h1 className="text-2xl text-page-title">Editar anuncio</h1>
       </header>
 
       <AnuncioForm

@@ -56,7 +56,7 @@ export default async function EditarCancionPage({
         <span className="text-xs uppercase tracking-[0.2em] text-secondary">
           Editar canto
         </span>
-        <h1 className="text-2xl">{song.title}</h1>
+        <h1 className="text-2xl text-page-title">{song.title}</h1>
       </header>
 
       <ReviewActions

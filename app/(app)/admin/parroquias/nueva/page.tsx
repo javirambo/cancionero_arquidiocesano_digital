@@ -28,7 +28,7 @@ export default async function NuevaParroquiaPage() {
           </svg>
           Parroquias
         </Link>
-        <h1 className="text-2xl">Nueva parroquia</h1>
+        <h1 className="text-2xl text-page-title">Nueva parroquia</h1>
       </header>
       <ParroquiaForm mode="create" />
     </main>

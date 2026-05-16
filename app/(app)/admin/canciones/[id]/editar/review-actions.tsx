@@ -275,7 +275,7 @@ export function ReviewActions({
             onClick={(e) => e.stopPropagation()}
             className="flex w-full max-w-lg flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-background p-6 shadow-2xl"
           >
-            <h2 className="text-xl">Rechazar canción</h2>
+            <h2 className="text-xl text-page-title">Rechazar canción</h2>
             <p className="text-sm normal-case text-muted-foreground">
               Explicá al coordinador qué cambios necesita la canción antes de
               poder publicarse. Estas notas son obligatorias.

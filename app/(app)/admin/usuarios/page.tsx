@@ -25,7 +25,7 @@ export default async function AdminUsuariosPage() {
   return (
     <main className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl">Usuarios</h1>
+        <h1 className="text-2xl text-page-title">Usuarios</h1>
         <p className="text-sm normal-case text-muted-foreground">
           Asignación de roles globales y membresías por parroquia. El alta de
           usuarios sigue siendo automática vía OAuth.

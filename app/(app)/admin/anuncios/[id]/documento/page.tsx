@@ -37,7 +37,7 @@ export default async function EditarDocumentoAnuncioPage({
         >
           ← Volver al anuncio
         </Link>
-        <h1 className="text-2xl">Documento de “{annRes.data.title}”</h1>
+        <h1 className="text-2xl text-page-title">Documento de “{annRes.data.title}”</h1>
         <p className="text-sm normal-case text-muted-foreground">
           Editor enriquecido. Podés pegar contenido desde Word, Google Docs u otra
           página manteniendo el formato.

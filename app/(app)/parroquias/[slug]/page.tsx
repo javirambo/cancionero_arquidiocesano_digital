@@ -153,7 +153,7 @@ export default async function ParroquiaPage({
           Parroquia
         </p>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-3xl">{parish.name}</h1>
+          <h1 className="text-3xl text-page-title">{parish.name}</h1>
           {canEdit && (
             <Link
               href={`/admin/parroquias/${parish.id}`}

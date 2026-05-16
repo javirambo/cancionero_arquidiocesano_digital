@@ -56,7 +56,7 @@ export function InstallSections({
               onClick={() => setOpenId(open ? null : s.id)}
               className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left"
             >
-              <h2 className="text-xl">{s.title}</h2>
+              <h2 className="text-xl text-page-title">{s.title}</h2>
               <span
                 aria-hidden="true"
                 className={`text-muted-foreground transition-transform ${

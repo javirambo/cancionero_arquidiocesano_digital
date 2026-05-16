@@ -254,7 +254,7 @@ function Panel({
             <p className="text-xs uppercase tracking-[0.2em] text-secondary">
               {song.number !== null ? `Nº ${song.number}` : "Canto"}
             </p>
-            <h1 className="text-3xl leading-tight">
+            <h1 className="text-3xl leading-tight text-song-title">
               <span className="relative inline-block">
                 {song.title}
                 {isCurrent && <FavoriteHeartInline songId={song.id} />}

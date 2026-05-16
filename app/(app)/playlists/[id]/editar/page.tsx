@@ -104,7 +104,7 @@ export default async function EditarPlaylistPage({
         </svg>
         Volver a la playlist
       </Link>
-      <h1 className="text-2xl">Editar: {pl.name}</h1>
+      <h1 className="text-2xl text-page-title">Editar: {pl.name}</h1>
 
       <AccordionSection title="Datos" defaultOpen={false}>
         <PlaylistForm

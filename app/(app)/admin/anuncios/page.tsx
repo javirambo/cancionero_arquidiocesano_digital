@@ -76,7 +76,7 @@ export default async function AdminAnunciosPage() {
     <main className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl">Anuncios</h1>
+          <h1 className="text-2xl text-page-title">Anuncios</h1>
           <Link
             href="/admin/anuncios/nuevo"
             className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
@@ -151,7 +151,7 @@ function Group({
                 href={`/admin/anuncios/${a.id}/editar`}
                 className="flex flex-col gap-0.5"
               >
-                <span className="text-base text-primary">{a.title}</span>
+                <span className="text-base text-song-title">{a.title}</span>
                 {reglas.length > 0 ? (
                   <ul className="flex flex-col gap-0.5">
                     {reglas.map((r, i) => (

@@ -93,7 +93,7 @@ export function SongRow({ index, song, playlistContext, disabled, disabledReason
         className="flex min-w-0 flex-1 flex-col gap-0.5"
         prefetch={false}
       >
-        <span className="truncate text-lg text-primary">{titleLine}</span>
+        <span className="truncate text-lg text-song-title">{titleLine}</span>
           <span className="flex items-center gap-2 text-muted-foreground">
             {song.author && (
               <span className="truncate text-xs normal-case">
@@ -117,7 +117,7 @@ export function SongRow({ index, song, playlistContext, disabled, disabledReason
                 </span>
               )}
               {fav && (
-                <span title="En tus favoritos" className="text-primary">
+                <span title="En tus favoritos" className="text-song-title">
                   <HeartIcon filled />
                 </span>
               )}

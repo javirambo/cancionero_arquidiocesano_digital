@@ -74,7 +74,7 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
                 {kindLabel}
               </span>
             )}
-            <h2 className="text-2xl text-primary sm:text-3xl">{item.title}</h2>
+            <h2 className="text-2xl text-song-title sm:text-3xl">{item.title}</h2>
             {item.body && (
               <SimpleMarkdown
                 text={item.body}
