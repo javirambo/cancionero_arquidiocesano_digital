@@ -63,25 +63,6 @@ export default async function PlaylistPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
-      <Link
-        href="/playlists"
-        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        Volver a las listas
-      </Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl text-page-title">{pl.name}</h1>

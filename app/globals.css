@@ -15,7 +15,7 @@
   --color-primary-foreground: #ffffff;
 
   /* Acentos y subtítulos (dorado) */
-  --color-secondary: #b49a55;
+  --color-secondary: #c9a226;
 
   /* Títulos de canciones, tarjetas y playlists (rojo litúrgico). Aplicar
      explícitamente con `text-song-title` o `border-song-title`. */
@@ -35,31 +35,32 @@
   --color-destructive-foreground: #ffffff;
 
   /* Tema light (por defecto) */
-  --theme-background: #f1f5fd;
-  --theme-foreground: #30343b;
-  --theme-sidebar: #a4c4f5;          /* encabezado, pie, barra menú acciones */
-  --theme-card: #ffffff;             /* fondo de tarjetas */
-  --theme-border: #c5d2e6;
-  --theme-muted-foreground: #5b6473;
+  --theme-background: #fafaf7;       /* FONDO GENERAL (crema) */
+  --theme-foreground: #30343b;       /* TEXTO */
+  --theme-sidebar: #bfd0ea;          /* FONDO SUAVE — encabezado, pie, barra menú acciones */
+  --theme-card: #ffffff;             /* TARJETAS */
+  --theme-border: #e3ddce;           /* FONDO SUAVE como borde */
+  --theme-muted-foreground: #6c717a; /* TEXTO SECUNDARIO */
 }
 
 /* Tema dark: se activa explícitamente con data-theme="dark" en <html>.
-   Por defecto el tema es light, sin importar la preferencia del SO. */
+   Por defecto el tema es light, sin importar la preferencia del SO.
+   Derivado de la paleta light: fondos oscuros, azules aclarados. */
 :root[data-theme="dark"] {
-  --color-primary: #6b8fcc;
+  --color-primary: #6f91c8;          /* SECUNDARIO aclarado para fondo oscuro */
   --color-primary-hover: #8aa9e0;
-  --color-secondary: #d4ba75;
+  --color-secondary: #d4ba75;        /* ACENTO aclarado */
   --color-song-title: #d96a6a;
   --color-song-title-hover: #c25555;
   --color-page-title: #8aa9e0;
-  --color-shortcut: #8aa9e0;
+  --color-shortcut: #6f91c8;
 
-  --theme-background: #0f1626;
-  --theme-foreground: #e4e7ef;
-  --theme-sidebar: #1a2540;
-  --theme-card: #1a2540;
-  --theme-border: #2b3a5c;
-  --theme-muted-foreground: #9aa6bd;
+  --theme-background: #1a1f29;       /* derivado oscuro de TEXTO */
+  --theme-foreground: #eaf0fa;       /* FONDO SECCIÓN como texto claro */
+  --theme-sidebar: #1f3f73;          /* ENCABEZADOS azul oscuro */
+  --theme-card: #2a3142;
+  --theme-border: #3a4358;
+  --theme-muted-foreground: #9aa3b3;
 }
 
 @theme inline {

@@ -62,7 +62,7 @@ export default async function AdminHomePage() {
               className="flex h-full items-center gap-4 rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary"
             >
               <div className="flex flex-1 flex-col gap-2">
-                <span className="text-lg text-song-title">{s.titulo}</span>
+                <span className="text-lg text-page-title">{s.titulo}</span>
                 <span className="text-sm leading-6 text-muted-foreground normal-case">
                   {s.descripcion}
                 </span>

@@ -104,7 +104,7 @@ export default async function AdminCancionesPage({
                   className="flex min-w-0 flex-1 flex-col gap-0.5"
                   prefetch={false}
                 >
-                  <span className="truncate text-lg text-primary">
+                  <span className="truncate text-lg text-song-title">
                     {titleLine}
                   </span>
                     <span className="flex items-center gap-2 text-muted-foreground">

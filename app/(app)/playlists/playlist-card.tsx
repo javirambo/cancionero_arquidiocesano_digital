@@ -31,7 +31,7 @@ export function PlaylistCard({ playlist, badge }: Props) {
         imagePath={playlist.image_path ?? null}
         href={`/playlists/${playlist.id}`}
       >
-        <span className="text-base text-song-title pr-10">{playlist.name}</span>
+        <span className="text-base text-page-title pr-10">{playlist.name}</span>
         {playlist.parish && !badge && (
           <span className="text-sm normal-case text-secondary">
             {playlist.parish.name}

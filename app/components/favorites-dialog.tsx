@@ -162,7 +162,7 @@ export function FavoritesDialog({ open, onClose }: Props) {
         className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
       >
         <header className="flex items-center gap-3 border-b border-border px-5 py-3">
-          <span className="text-primary">
+          <span className="text-song-title">
             <HeartIcon filled />
           </span>
           <h2 className="flex-1 text-lg">Mis favoritos</h2>
@@ -188,7 +188,7 @@ export function FavoritesDialog({ open, onClose }: Props) {
           ) : (
             GROUP_ORDER.filter((k) => grouped[k].length > 0).map((kind) => (
               <section key={kind}>
-                <h3 className="border-b border-border bg-sidebar px-5 py-2 text-xs uppercase tracking-[0.2em] text-secondary">
+                <h3 className="border-b border-border bg-sidebar px-5 py-2 text-xs uppercase tracking-[0.2em] text-primary">
                   {GROUP_LABELS[kind]}
                 </h3>
                 <ul className="divide-y divide-border">
@@ -202,7 +202,7 @@ export function FavoritesDialog({ open, onClose }: Props) {
                         onClick={onClose}
                         className="flex flex-1 items-baseline gap-3"
                       >
-                        <span className="flex-1 truncate text-base text-primary">
+                        <span className="flex-1 truncate text-base text-song-title">
                           {f.kind === "song" && f.number != null
                             ? `${f.number} · ${f.title}`
                             : f.title}
@@ -213,7 +213,7 @@ export function FavoritesDialog({ open, onClose }: Props) {
                         onClick={() => remove(f.kind, f.id)}
                         title="Quitar de favoritos"
                         aria-label="Quitar de favoritos"
-                        className="text-primary hover:text-primary-hover"
+                        className="text-song-title hover:text-song-title-hover"
                       >
                         <HeartIcon filled />
                       </button>

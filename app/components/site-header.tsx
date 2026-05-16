@@ -321,7 +321,7 @@ export function SiteHeader() {
             label="Favoritos"
             onClick={() => setFavOpen(true)}
             icon={
-              <span className={favorites.length > 0 ? "text-primary" : undefined}>
+              <span className={favorites.length > 0 ? "text-song-title" : undefined}>
                 <HeartIcon filled={favorites.length > 0} />
               </span>
             }

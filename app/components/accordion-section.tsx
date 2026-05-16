@@ -28,7 +28,7 @@ export function AccordionSection({ title, defaultOpen = false, children }: Props
         >
           <ChevronRightIcon />
         </span>
-        <span className="text-xs uppercase tracking-[0.2em] text-secondary">
+        <span className="text-xs uppercase tracking-[0.2em] text-primary">
           {title}
         </span>
       </button>

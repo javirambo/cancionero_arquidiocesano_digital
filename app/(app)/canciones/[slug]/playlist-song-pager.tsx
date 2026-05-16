@@ -270,7 +270,7 @@ function Panel({
                 {song.categories.map((c) => (
                   <span
                     key={c}
-                    className="rounded-full border border-border bg-sidebar px-2 py-px text-[10px] uppercase tracking-wide text-secondary"
+                    className="rounded-full border border-border bg-sidebar px-2 py-px text-[10px] uppercase tracking-wide text-primary"
                   >
                     {c}
                   </span>
