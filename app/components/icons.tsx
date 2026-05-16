@@ -272,6 +272,19 @@ export function BellIcon(): ReactElement {
   );
 }
 
+export function BibleIcon(): ReactElement {
+  // Libro cerrado (tapa rectangular con lomo a la izquierda) y una cruz
+  // pequeña centrada en la tapa. Usado para "Orientaciones litúrgicas".
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <rect x="5" y="3" width="14" height="18" rx="1.5" />
+      <path d="M7.5 3v18" />
+      <path d="M13 8.5v5" />
+      <path d="M11 11h4" />
+    </svg>
+  );
+}
+
 export function ExternalLinkIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true">

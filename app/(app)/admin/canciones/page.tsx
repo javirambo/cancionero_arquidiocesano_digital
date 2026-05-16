@@ -44,7 +44,7 @@ export default async function AdminCancionesPage({
     <main className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl">Cantos</h1>
+          <h1 className="text-2xl text-page-title">Cantos</h1>
           <Link
             href="/admin/canciones/nueva"
             className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
@@ -104,7 +104,7 @@ export default async function AdminCancionesPage({
                   className="flex min-w-0 flex-1 flex-col gap-0.5"
                   prefetch={false}
                 >
-                  <span className="truncate text-lg text-primary">
+                  <span className="truncate text-lg text-song-title">
                     {titleLine}
                   </span>
                     <span className="flex items-center gap-2 text-muted-foreground">

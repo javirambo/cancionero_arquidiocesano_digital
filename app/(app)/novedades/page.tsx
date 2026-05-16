@@ -1,3 +1,7 @@
+// NOTA (fase 2, 2026-05): esta página queda sin enlace desde el menú principal.
+// El item del menú "Orientaciones litúrgicas" ahora apunta a
+// /orientaciones-liturgicas (página nueva, placeholder). /novedades sigue
+// accesible escribiendo la URL directa por si necesitamos volver a usarla.
 import {
   listCommonAnnouncements,
   listLiturgicalAnnouncements,
@@ -5,7 +9,7 @@ import {
 import { AnnouncementCard } from "@/app/components/announcement-card";
 
 export const metadata = {
-  title: "Novedades · Cancionero Arquidiocesano",
+  title: "Avisos · Cancionero Arquidiocesano",
 };
 
 export default async function NovedadesPage() {
@@ -19,7 +23,7 @@ export default async function NovedadesPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-4 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl">Novedades</h1>
+        <h1 className="text-3xl text-page-title">Avisos</h1>
         <p className="text-base normal-case text-muted-foreground">
           Festividades, tiempos litúrgicos y avisos vigentes en la
           Arquidiócesis.
@@ -27,8 +31,8 @@ export default async function NovedadesPage() {
       </header>
 
       {empty && (
-        <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
-          No hay novedades vigentes en este momento.
+        <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
+          No hay avisos vigentes en este momento.
         </p>
       )}
 

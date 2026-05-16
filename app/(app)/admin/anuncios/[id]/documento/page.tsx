@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DocumentEditor } from "./document-editor";
@@ -31,13 +30,7 @@ export default async function EditarDocumentoAnuncioPage({
   return (
     <main className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <Link
-          href={`/admin/anuncios/${id}/editar`}
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          ← Volver al anuncio
-        </Link>
-        <h1 className="text-2xl">Documento de “{annRes.data.title}”</h1>
+        <h1 className="text-2xl text-page-title">Documento de “{annRes.data.title}”</h1>
         <p className="text-sm normal-case text-muted-foreground">
           Editor enriquecido. Podés pegar contenido desde Word, Google Docs u otra
           página manteniendo el formato.

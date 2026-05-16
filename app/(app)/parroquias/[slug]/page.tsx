@@ -129,31 +129,12 @@ export default async function ParroquiaPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
-      <Link
-        href="/parroquias"
-        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        Volver a parroquias
-      </Link>
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.2em] text-secondary">
           Parroquia
         </p>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-3xl">{parish.name}</h1>
+          <h1 className="text-3xl text-page-title">{parish.name}</h1>
           {canEdit && (
             <Link
               href={`/admin/parroquias/${parish.id}`}
@@ -190,7 +171,7 @@ export default async function ParroquiaPage({
           )}
         </div>
         {previewPlaylists.length === 0 ? (
-          <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+          <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
             Esta parroquia todavía no publicó playlists.
           </p>
         ) : (
@@ -199,7 +180,7 @@ export default async function ParroquiaPage({
               <li key={p.id}>
                 <Link
                   href={`/playlists/${p.id}`}
-                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary"
+                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary"
                 >
                   <span className="text-lg text-primary">{p.name}</span>
                   {p.relation === "archdiocesan" && (
@@ -261,7 +242,7 @@ export default async function ParroquiaPage({
             </p>
           </div>
           {contacts.length === 0 ? (
-            <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+            <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
               No hay contactos disponibles.
             </p>
           ) : (
@@ -272,7 +253,7 @@ export default async function ParroquiaPage({
                 return (
                   <li
                     key={c.user_id}
-                    className="flex items-center gap-4 rounded-xl border border-border bg-background p-5"
+                    className="flex items-center gap-4 rounded-xl border border-border bg-card p-5"
                   >
                     {c.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element

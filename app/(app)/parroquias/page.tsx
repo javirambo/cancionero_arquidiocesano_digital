@@ -57,11 +57,12 @@ export default async function ParroquiasPage() {
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-wrap items-start gap-4">
         <div className="flex flex-1 flex-col gap-2">
-          <h1 className="text-3xl">Parroquias</h1>
+          <h1 className="text-3xl text-page-title">Mi Parroquia</h1>
           {user ? (
             <p className="text-base normal-case text-muted-foreground">
-              Comunidades de la Arquidiócesis con sus repertorios. Asociate con
-              [+] y marcá tu principal con la estrella.
+              Comunidades de la Arquidiócesis. Dentro de cada parroquia
+              encontrarás sus repertorios. Asociate con [+] y marcá tu
+              principal con la estrella.
             </p>
           ) : (
             <div className="flex flex-col gap-1">
@@ -71,7 +72,8 @@ export default async function ParroquiasPage() {
                 listas.
               </p>
               <p className="text-base normal-case text-muted-foreground">
-                Comunidades de la Arquidiócesis con sus repertorios.
+                Comunidades de la Arquidiócesis. Dentro de cada parroquia
+                encontrarás sus repertorios.
               </p>
             </div>
           )}
@@ -87,7 +89,7 @@ export default async function ParroquiasPage() {
       </header>
 
       {parishes.length === 0 ? (
-        <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+        <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
           Todavía no hay parroquias publicadas.
         </p>
       ) : (

@@ -64,7 +64,7 @@ export function InstallPwaButton() {
   // Caso 1: hay prompt nativo disponible (Chrome/Android/desktop reciente).
   if (deferredPrompt) {
     return (
-      <section className="rounded-2xl border border-border bg-sidebar p-6">
+      <section className="rounded-2xl border border-border bg-background p-6">
         <h2 className="text-lg">Instalar app</h2>
         <p className="mt-2 text-sm normal-case text-muted-foreground">
           Instalá el cancionero como app en tu dispositivo para acceder más

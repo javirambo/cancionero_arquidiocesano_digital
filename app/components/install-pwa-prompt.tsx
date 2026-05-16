@@ -47,7 +47,7 @@ export function InstallPwaPrompt() {
 
   if (installed) {
     return (
-      <div className="rounded-2xl border border-border bg-sidebar px-4 py-3 text-sm normal-case text-muted-foreground">
+      <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm normal-case text-muted-foreground">
         ✓ La app ya está instalada en este dispositivo.
       </div>
     );

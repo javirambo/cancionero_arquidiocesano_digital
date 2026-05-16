@@ -18,7 +18,7 @@ export function PlaylistView({ playlist }: Props) {
   return (
     <>
       {sorted.length === 0 ? (
-        <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+        <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
           Esta playlist todavía no tiene canciones.
         </p>
       ) : (

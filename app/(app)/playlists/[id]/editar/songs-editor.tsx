@@ -196,7 +196,7 @@ export function PlaylistSongsEditor({
       {/* Buscador para agregar */}
       <div className="rounded-xl border border-border bg-sidebar p-4">
         <label className="flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-[0.15em] text-secondary normal-case">
+          <span className="text-xs uppercase tracking-[0.15em] text-primary normal-case">
             Agregar canción
           </span>
           <div className="relative flex w-full items-center">

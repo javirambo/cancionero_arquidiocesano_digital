@@ -227,7 +227,7 @@ export function ParishList({
           />
         </div>
         {othersFiltered.length === 0 ? (
-          <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+          <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
             Sin coincidencias.
           </p>
         ) : (
@@ -269,7 +269,7 @@ export function ParishList({
                 />
               )}
               {mineFiltered.length === 0 ? (
-                <p className="rounded-xl border border-border bg-sidebar p-4 text-sm normal-case text-muted-foreground">
+                <p className="rounded-xl border border-border bg-background p-4 text-sm normal-case text-muted-foreground">
                   Sin coincidencias.
                 </p>
               ) : (
@@ -305,7 +305,7 @@ export function ParishList({
                 />
               )}
               {othersFiltered.length === 0 ? (
-                <p className="rounded-xl border border-border bg-sidebar p-4 text-sm normal-case text-muted-foreground">
+                <p className="rounded-xl border border-border bg-background p-4 text-sm normal-case text-muted-foreground">
                   Sin coincidencias.
                 </p>
               ) : (

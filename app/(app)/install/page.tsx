@@ -33,7 +33,7 @@ export default async function InstallPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl">Instalar la app</h1>
+        <h1 className="text-3xl text-page-title">Instalar la app</h1>
         <p className="text-base normal-case text-muted-foreground">
           Instalá el cancionero como app en tu dispositivo para acceder más
           rápido y usarlo sin conexión durante la misa.
@@ -116,8 +116,8 @@ export default async function InstallPage() {
       />
 
       {favoriteSlugs.length > 0 && (
-        <section className="rounded-2xl border border-border bg-sidebar p-6">
-          <h2 className="text-xl">Mis favoritos offline</h2>
+        <section className="rounded-2xl border border-border bg-background p-6">
+          <h2 className="text-xl text-page-title">Mis favoritos offline</h2>
           <p className="mt-2 text-sm normal-case text-muted-foreground">
             Descargá tus canciones favoritas para tenerlas disponibles sin
             conexión.

@@ -31,7 +31,7 @@ export function PlaylistCard({ playlist, badge }: Props) {
         imagePath={playlist.image_path ?? null}
         href={`/playlists/${playlist.id}`}
       >
-        <span className="text-base text-primary pr-10">{playlist.name}</span>
+        <span className="text-base text-page-title pr-10">{playlist.name}</span>
         {playlist.parish && !badge && (
           <span className="text-sm normal-case text-secondary">
             {playlist.parish.name}
@@ -61,7 +61,7 @@ export function PlaylistCard({ playlist, badge }: Props) {
           });
         }}
         className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-colors hover:border-border ${
-          fav ? "text-primary" : "text-muted-foreground hover:text-primary"
+          fav ? "text-song-title" : "text-muted-foreground hover:text-song-title"
         }`}
       >
         <HeartIcon filled={fav} />

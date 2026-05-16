@@ -18,6 +18,8 @@ import { FeaturedAnnouncementPopup } from "@/app/components/featured-announcemen
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
 import { HomeHero } from "@/app/components/home-hero";
+import { HelpHint } from "@/app/components/help-hint";
+import type { PublicCategoryOption } from "@/lib/songs";
 
 const PREVIEW = 3;
 const PLAYLIST_HOME_LIMIT = 4;
@@ -106,7 +108,7 @@ export default async function Home() {
     <div className="flex flex-1 flex-col">
       {featuredPopup && <FeaturedAnnouncementPopup item={featuredPopup} />}
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12">
-        <HomeHero parishName={primaryParish?.name ?? null} />
+        <HomeHero />
 
         {/* Playlists: una sola sección mezclada, dedupe, máximo 4. */}
         {(() => {
@@ -123,22 +125,33 @@ export default async function Home() {
           if (merged.length === 0) return null;
           return (
             <PlaylistsSection
-              heading="Listas"
+              heading="Selección parroquial"
               playlists={merged.slice(0, PLAYLIST_HOME_LIMIT)}
               seeAllHref="/playlists"
             />
           );
         })()}
 
-        {/* Anuncios litúrgicos */}
-        {liturgical.items.length > 0 && (
-          <AnnouncementsSection
-            heading="Festividades y tiempos litúrgicos"
-            items={liturgical.items}
-            total={liturgical.total}
-            seeAllHref="/novedades"
-          />
-        )}
+        {/* Anuncios litúrgicos. En la home excluimos kind=indicaciones
+            salvo que el anuncio esté destacado (featured=true); el resto
+            de indicaciones vive en /orientaciones-liturgicas. */}
+        {(() => {
+          const items = liturgical.items.filter(
+            (it) => it.kind !== "indicaciones" || it.featured
+          );
+          if (items.length === 0) return null;
+          return (
+            <AnnouncementsSection
+              heading="Avisos"
+              items={items}
+              total={items.length}
+              seeAllHref="/novedades"
+            />
+          );
+        })()}
+
+        {/* Atajos a categorías de cantos */}
+        <SongCategoryShortcuts categories={songCategories} />
 
         {/* Canciones */}
         <SongsFrame
@@ -146,12 +159,13 @@ export default async function Home() {
           initialTotal={songsResult.total}
           pageSize={SONGS_PAGE_SIZE}
           categories={songCategories}
+          showSeeAll={false}
         />
 
         {/* Novedades */}
         {novedades.items.length > 0 && (
           <AnnouncementsSection
-            heading="Novedades"
+            heading="Avisos"
             items={novedades.items}
             total={novedades.total}
             seeAllHref="/novedades"
@@ -163,14 +177,14 @@ export default async function Home() {
         {!user && (
           <section
             aria-labelledby="invitado-heading"
-            className="rounded-2xl border border-border bg-sidebar p-8"
+            className="rounded-2xl border border-border bg-background p-8"
           >
-            <h2 id="invitado-heading" className="text-2xl">
+            <h2 id="invitado-heading" className="text-2xl text-page-title">
               Iniciá sesión
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
-              Asociate a parroquias, guardá tus favoritos en la nube y creá tus
-              propias playlists.
+              Asociate a parroquias, sincroniza con tus otros dispositivos
+              celulares y computadoras, y creá tus propias listas de cantos.
             </p>
             <GoogleSignInButton />
           </section>
@@ -191,15 +205,7 @@ function PlaylistsSection({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl">{heading}</h2>
-        <Link
-          href={seeAllHref}
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          Ver todas →
-        </Link>
-      </div>
+      <h2 className="text-xl text-page-title">{heading}</h2>
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {playlists.map((p) => (
           <PlaylistCard
@@ -233,17 +239,7 @@ function AnnouncementsSection({
   const list = items as import("@/lib/songs").Featured[];
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl">{heading}</h2>
-        {total > list.length && (
-          <Link
-            href={seeAllHref}
-            className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-          >
-            Ver todas →
-          </Link>
-        )}
-      </div>
+      <h2 className="text-xl text-page-title">{heading}</h2>
       <ul className="grid gap-3">
         {list.map((item, i) => (
           <li key={i}>
@@ -252,6 +248,48 @@ function AnnouncementsSection({
         ))}
       </ul>
     </section>
+  );
+}
+
+const SHORTCUT_SLUGS = [
+  "ordinario-de-la-misa",
+  "salmo-responsorial",
+  "cantos-para-la-misa",
+  "adoracion-y-oracion",
+];
+
+function SongCategoryShortcuts({
+  categories,
+}: {
+  categories: PublicCategoryOption[];
+}) {
+  const shortcuts = SHORTCUT_SLUGS.map((slug) =>
+    categories.find((c) => c.slug === slug)
+  ).filter((c): c is PublicCategoryOption => Boolean(c));
+
+  if (shortcuts.length === 0) return null;
+
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {shortcuts.map((c) => (
+        <li key={c.slug} className="relative">
+          <Link
+            href={`/canciones?cat=${c.slug}`}
+            title={c.description ?? undefined}
+            className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-base uppercase text-page-title transition-opacity hover:opacity-90"
+          >
+            {c.name}
+          </Link>
+          {c.description && (
+            <span className="absolute right-2 top-2 text-page-title sm:hidden">
+              <HelpHint label={`Descripción de ${c.name}`}>
+                {c.description}
+              </HelpHint>
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

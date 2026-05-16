@@ -25,7 +25,7 @@ export function AnnouncementCard({ item }: { item: Featured }) {
           {kindLabel}
         </span>
       )}
-      <p className="text-base text-primary">{item.title}</p>
+      <p className="text-base text-page-title">{item.title}</p>
       {item.body && (
         <SimpleMarkdown
           text={item.body}

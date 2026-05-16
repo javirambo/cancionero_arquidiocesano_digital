@@ -7,12 +7,26 @@
  */
 
 :root {
-  /* Marca / acción */
-  --color-primary: #8b1a1a;          /* rojo litúrgico para títulos en mayúscula */
-  --color-primary-hover: #6f1414;
+  /* Acción principal (iconos y botones). En Tailwind: bg-primary, text-primary,
+     border-primary, etc. Mantenemos el nombre `primary` por compatibilidad con
+     las clases ya escritas en componentes. */
+  --color-primary: #1f3f73;
+  --color-primary-hover: #16305a;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #c9a227;        /* dorado litúrgico, tentativo */
-  --color-brand-dark: #2a0a0a;
+
+  /* Acentos y subtítulos (dorado) */
+  --color-secondary: #c9a226;
+
+  /* Títulos de canciones, tarjetas y playlists (rojo litúrgico). Aplicar
+     explícitamente con `text-song-title` o `border-song-title`. */
+  --color-song-title: #8b1a1a;
+  --color-song-title-hover: #6f1414;
+
+  /* Títulos de páginas (azul medio) */
+  --color-page-title: #436baf;
+
+  /* Atajos / categorías destacadas (azul claro) */
+  --color-shortcut: #6f91c7;
 
   /* Estado */
   --color-success: #2f7d3a;
@@ -21,40 +35,53 @@
   --color-destructive-foreground: #ffffff;
 
   /* Tema light (por defecto) */
-  --theme-background: #fafaf7;       /* casi blanco, cálido */
-  --theme-foreground: #111111;       /* texto principal en negro */
-  --theme-sidebar: #f1ede5;
-  --theme-border: #e2dccd;
-  --theme-muted-foreground: #5b5b5b;
+  --theme-background: #fafaf7;       /* FONDO GENERAL (crema) */
+  --theme-foreground: #30343b;       /* TEXTO */
+  --theme-sidebar: #d5e2f5;          /* FONDO SUAVE — encabezado, pie, barra menú acciones */
+  --theme-card: #ffffff;             /* TARJETAS */
+  --theme-border: #e3ddce;           /* FONDO SUAVE como borde */
+  --theme-muted-foreground: #6c717a; /* TEXTO SECUNDARIO */
 }
 
 /* Tema dark: se activa explícitamente con data-theme="dark" en <html>.
-   Por defecto el tema es light, sin importar la preferencia del SO. */
+   Por defecto el tema es light, sin importar la preferencia del SO.
+   Derivado de la paleta light: fondos oscuros, azules aclarados. */
 :root[data-theme="dark"] {
-  --color-primary: #ab4e4e;
+  --color-primary: #6f91c8;          /* SECUNDARIO aclarado para fondo oscuro */
+  --color-primary-hover: #8aa9e0;
+  --color-secondary: #d4ba75;        /* ACENTO aclarado */
+  --color-song-title: #d96a6a;
+  --color-song-title-hover: #c25555;
+  --color-page-title: #8aa9e0;
+  --color-shortcut: #6f91c8;
 
-  --theme-background: #2d2420;
-  --theme-foreground: #f4efe6;
-  --theme-sidebar: #402d25;
-  --theme-border: #564735;
-  --theme-muted-foreground: #a39b8b;
+  --theme-background: #1a1f29;       /* derivado oscuro de TEXTO */
+  --theme-foreground: #eaf0fa;       /* FONDO SECCIÓN como texto claro */
+  --theme-sidebar: #1f3f73;          /* ENCABEZADOS azul oscuro */
+  --theme-card: #2a3142;
+  --theme-border: #3a4358;
+  --theme-muted-foreground: #9aa3b3;
 }
 
 @theme inline {
   /* Colores expuestos como utilidades Tailwind (bg-primary, text-foreground, etc.) */
   --color-primary: var(--color-primary);
   --color-primary-hover: var(--color-primary-hover);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: var(--color-primary-foreground);
   --color-secondary: var(--color-secondary);
-  --color-brand-dark: var(--color-brand-dark);
+  --color-song-title: var(--color-song-title);
+  --color-song-title-hover: var(--color-song-title-hover);
+  --color-page-title: var(--color-page-title);
+  --color-shortcut: var(--color-shortcut);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-destructive: var(--color-destructive);
-  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground: var(--color-destructive-foreground);
 
   --color-background: var(--theme-background);
   --color-foreground: var(--theme-foreground);
   --color-sidebar: var(--theme-sidebar);
+  --color-card: var(--theme-card);
   --color-border: var(--theme-border);
   --color-muted-foreground: var(--theme-muted-foreground);
 
@@ -63,9 +90,10 @@
   --font-sans: var(--font-cardo), Cambria, Georgia, serif;
 }
 
-/* Títulos en mayúscula y rojo según §10.1 de la documentación. */
+/* Mayúscula y tracking ligero para todos los headings. El color NO se
+   setea globalmente: cada componente elige `text-primary` (canciones,
+   tarjetas, playlists) o `text-page-title` (títulos de página). */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
@@ -117,7 +145,7 @@ select {
 }
 
 /* Documentos rich (editor TipTap y render público de announcement_documents). */
-.rich-doc h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; color: var(--color-primary); margin: 1rem 0 0.5rem; }
+.rich-doc h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; color: var(--color-page-title); margin: 1rem 0 0.5rem; }
 .rich-doc h2 { font-size: 1.4rem; line-height: 1.3; font-weight: 600; color: var(--color-secondary); margin: 1rem 0 0.5rem; }
 .rich-doc h3 { font-size: 1.15rem; line-height: 1.3; font-weight: 600; margin: 0.75rem 0 0.5rem; }
 .rich-doc p  { margin: 0.5rem 0; line-height: 1.7; }

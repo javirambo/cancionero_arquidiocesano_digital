@@ -24,7 +24,7 @@ export default async function PlaylistsPage() {
     return (
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl">Playlists</h1>
+          <h1 className="text-3xl text-page-title">Mis listas</h1>
           <p className="text-base italic normal-case text-muted-foreground">
             Estás navegando como invitado. Iniciá sesión para guardar tus
             favoritos en la nube, vincular tu parroquia y acceder a tus listas.
@@ -53,7 +53,7 @@ export default async function PlaylistsPage() {
             </ul>
           </section>
         ) : (
-          <section className="rounded-2xl border border-border bg-sidebar p-6">
+          <section className="rounded-2xl border border-border bg-background p-6">
             <p className="text-sm normal-case text-muted-foreground">
               Todavía no hay playlists arquidiocesanas disponibles.
             </p>
@@ -130,11 +130,11 @@ export default async function PlaylistsPage() {
             Playlists
           </p>
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-3xl">Mis Listas</h1>
+            <h1 className="text-3xl text-page-title">Mis listas</h1>
             <NewPlaylistButton options={newOptions} />
           </div>
         </header>
-        <section className="rounded-2xl border border-border bg-sidebar p-6">
+        <section className="rounded-2xl border border-border bg-background p-6">
           <p className="text-sm normal-case text-muted-foreground">
             Todavía no tenés listas. Vinculá tu parroquia o creá una lista
             personal desde el menú &quot;…&quot; de cualquier canto.
@@ -148,7 +148,7 @@ export default async function PlaylistsPage() {
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-3xl">Mis Listas</h1>
+          <h1 className="text-3xl text-page-title">Mis listas</h1>
           <NewPlaylistButton options={newOptions} />
         </div>
         <p className="text-base normal-case text-muted-foreground">

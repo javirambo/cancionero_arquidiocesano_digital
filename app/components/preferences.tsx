@@ -49,6 +49,17 @@ async function loadFromDb(userId: string): Promise<Preferences> {
   return { ...DEFAULTS, ...raw };
 }
 
+// El invitado persiste `showChords` en localStorage (CU-02.2/CU-03).
+// `keepScreenOn` queda solo para autenticados.
+const GUEST_SHOW_CHORDS_KEY = "prefs:showChords";
+
+function loadGuestPrefs(): Preferences {
+  if (typeof window === "undefined") return DEFAULTS;
+  const raw = window.localStorage.getItem(GUEST_SHOW_CHORDS_KEY);
+  if (raw === null) return DEFAULTS;
+  return { ...DEFAULTS, showChords: raw === "true" };
+}
+
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const { user } = useSession();
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS);
@@ -56,7 +67,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) {
-      setPrefs(DEFAULTS);
+      setPrefs(loadGuestPrefs());
       setLoading(false);
       return;
     }
@@ -69,9 +80,14 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const setPreference = useCallback<Ctx["setPreference"]>(
     async (key, value) => {
-      if (!user) return;
       const next = { ...prefs, [key]: value };
       setPrefs(next);
+      if (!user) {
+        if (key === "showChords" && typeof window !== "undefined") {
+          window.localStorage.setItem(GUEST_SHOW_CHORDS_KEY, String(value));
+        }
+        return;
+      }
       const supabase = createClient();
       await supabase
         .from("users")

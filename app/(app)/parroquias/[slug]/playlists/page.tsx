@@ -59,7 +59,7 @@ export default async function ParroquiaPlaylistsPage({
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             {parish.name}
           </p>
-          <h1 className="text-2xl">Playlists</h1>
+          <h1 className="text-2xl text-page-title">Playlists</h1>
         </div>
         {canCreate && (
           <Link
@@ -72,7 +72,7 @@ export default async function ParroquiaPlaylistsPage({
       </header>
 
       {playlists.length === 0 ? (
-        <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+        <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
           Esta parroquia todavía no tiene playlists.
         </p>
       ) : (

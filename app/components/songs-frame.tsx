@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type {
   PublicCategoryOption,
   SongCapabilities,
@@ -24,22 +24,31 @@ export function SongsFrame({
   initialTotal,
   pageSize,
   categories = [],
+  showSeeAll = true,
+  showHeading = true,
+  lockedCategorySlugs,
 }: {
   initialItems: Item[];
   initialTotal: number;
   pageSize: number;
   categories?: PublicCategoryOption[];
+  showSeeAll?: boolean;
+  showHeading?: boolean;
+  /** Cuando viene definido, el filtro queda fijado por la URL: se ocultan el
+   *  botón embudo y el chip removible, y todas las queries usan estos slugs. */
+  lockedCategorySlugs?: string[];
 }) {
+  const isLocked = lockedCategorySlugs !== undefined;
   const [items, setItems] = useState<Item[]>(initialItems);
   const [total, setTotal] = useState<number>(initialTotal);
   const [page, setPage] = useState<number>(1);
   const [mode, setMode] = useState<Mode>("paged");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
+  const [categorySlugs, setCategorySlugs] = useState<string[]>(
+    lockedCategorySlugs ?? []
+  );
   const [pending, startTransition] = useTransition();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   if (
     initialTotal === 0 &&
@@ -99,35 +108,23 @@ export function SongsFrame({
     });
   }
 
-  // Debounce de la búsqueda.
+  // Debounce de la búsqueda. El input siempre está visible; cuando hay un
+  // término dispara búsqueda, cuando se vacía vuelve al modo paginado.
   useEffect(() => {
-    if (!searchOpen) return;
     const term = query.trim();
     if (!term) {
-      // Volver a paginado solo si veníamos de búsqueda.
       if (mode === "search") fetchPage(1);
       return;
     }
     const handle = setTimeout(() => fetchSearch(term), 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, searchOpen]);
-
-  function openSearch() {
-    setSearchOpen(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  }
-
-  function closeSearch() {
-    setSearchOpen(false);
-    setQuery("");
-    if (mode === "search") fetchPage(1);
-  }
+  }, [query]);
 
   function applyCategories(next: string[]) {
     setCategorySlugs(next);
     const term = query.trim();
-    if (term && searchOpen) {
+    if (term) {
       fetchSearch(term, next);
     } else {
       fetchPage(1, next);
@@ -152,16 +149,45 @@ export function SongsFrame({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl">Cantos</h2>
-        <Link
-          href="/canciones"
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          Ver catálogo →
-        </Link>
+      {showHeading && (
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl text-page-title">Cantos</h2>
+          {showSeeAll && (
+            <Link
+              href="/canciones"
+              className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
+            >
+              Ver catálogo →
+            </Link>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+        <span className="text-muted-foreground">
+          <SearchIcon />
+        </span>
+        <input
+          type="search"
+          inputMode="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por número, título o letra…"
+          className="flex-1 bg-transparent text-sm normal-case outline-none placeholder:text-muted-foreground"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label="Limpiar"
+            className="text-muted-foreground hover:text-primary"
+          >
+            <CloseIcon />
+          </button>
+        )}
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
+
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs normal-case text-muted-foreground">
             {mode === "paged"
@@ -194,7 +220,7 @@ export function SongsFrame({
               </button>
             </>
           )}
-          {categories.length > 0 && (
+          {categories.length > 0 && !isLocked && (
             <button
               type="button"
               onClick={() => setFilterOpen((v) => !v)}
@@ -209,16 +235,6 @@ export function SongsFrame({
               </span>
             </button>
           )}
-          <button
-            type="button"
-            onClick={searchOpen ? closeSearch : openSearch}
-            aria-label={searchOpen ? "Cerrar búsqueda" : "Buscar"}
-            className={arrowEnabled}
-          >
-            <span className="scale-150">
-              {searchOpen ? <CloseIcon /> : <SearchIcon />}
-            </span>
-          </button>
         </div>
       </div>
 
@@ -234,8 +250,8 @@ export function SongsFrame({
                 aria-pressed={selected}
                 className={
                   selected
-                    ? "rounded-full border border-primary bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground"
-                    : "rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+                    ? "rounded-full border border-primary bg-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground"
+                    : "rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
                 }
               >
                 {c.name}
@@ -245,7 +261,7 @@ export function SongsFrame({
         </div>
       )}
 
-      {!filterOpen && activeCategories.length > 0 && (
+      {!filterOpen && !isLocked && activeCategories.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-xs normal-case text-muted-foreground">
           <span>Filtrado por:</span>
           {activeCategories.map((c) => (
@@ -253,7 +269,7 @@ export function SongsFrame({
               key={c.id}
               type="button"
               onClick={() => removeCategory(c.slug)}
-              className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground"
+              className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground"
               aria-label={`Quitar filtro ${c.name}`}
             >
               {c.name}
@@ -262,33 +278,6 @@ export function SongsFrame({
               </span>
             </button>
           ))}
-        </div>
-      )}
-
-      {searchOpen && (
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-          <span className="text-muted-foreground">
-            <SearchIcon />
-          </span>
-          <input
-            ref={inputRef}
-            type="search"
-            inputMode="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por número, título o letra…"
-            className="flex-1 bg-transparent text-sm normal-case outline-none placeholder:text-muted-foreground"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Limpiar"
-              className="text-muted-foreground hover:text-primary"
-            >
-              <CloseIcon />
-            </button>
-          )}
         </div>
       )}
 

@@ -48,7 +48,7 @@ export default async function AdminHomePage() {
   return (
     <main className="flex flex-col gap-6">
       <header>
-        <h1 className="text-2xl">Administración</h1>
+        <h1 className="text-2xl text-page-title">Administración</h1>
         <p className="mt-1 text-sm normal-case text-muted-foreground">
           Elegí la sección que querés gestionar.
         </p>
@@ -59,10 +59,10 @@ export default async function AdminHomePage() {
           <li key={s.href}>
             <Link
               href={s.href}
-              className="flex h-full items-center gap-4 rounded-xl border border-border bg-background p-6 transition-colors hover:border-primary"
+              className="flex h-full items-center gap-4 rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary"
             >
               <div className="flex flex-1 flex-col gap-2">
-                <span className="text-lg text-primary">{s.titulo}</span>
+                <span className="text-lg text-page-title">{s.titulo}</span>
                 <span className="text-sm leading-6 text-muted-foreground normal-case">
                   {s.descripcion}
                 </span>

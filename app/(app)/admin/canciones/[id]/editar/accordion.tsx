@@ -21,7 +21,7 @@ export function Accordion({
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
       >
-        <span className="text-sm uppercase tracking-[0.2em] text-secondary">
+        <span className="text-sm uppercase tracking-[0.2em] text-primary">
           {title}
         </span>
         <span

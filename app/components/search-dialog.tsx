@@ -188,7 +188,7 @@ export function SearchDialog({ open, onClose }: Props) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="border-b border-border bg-sidebar px-5 py-2 text-xs uppercase tracking-[0.2em] text-secondary">
+      <h3 className="border-b border-border bg-sidebar px-5 py-2 text-xs uppercase tracking-[0.2em] text-primary">
         {title}
       </h3>
       <ul className="divide-y divide-border">{children}</ul>
@@ -214,7 +214,7 @@ function ResultLink({
         onClick={onClick}
         className="flex flex-col gap-1 px-5 py-3 transition-colors hover:bg-sidebar"
       >
-        <span className="text-base text-primary">{title}</span>
+        <span className="text-base text-song-title">{title}</span>
         {subtitle && (
           <span className="text-xs normal-case text-muted-foreground">
             {subtitle}
