@@ -13,7 +13,7 @@ import { useFavorites } from "./favorites";
 import { useUserRoles } from "./user-roles";
 import { useWakeLock } from "./wake-lock";
 import { useHomeTitle } from "./home-title-context";
-import { CloseIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
+import { BibleIcon, CloseIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 type MenuItemProps = {
   href?: string;
@@ -184,13 +184,6 @@ const ModoCoroIcon = () => (
   <svg {...iconProps}>
     <rect x="3" y="4" width="18" height="13" rx="2" />
     <path d="M8 21h8M12 17v4" />
-  </svg>
-);
-
-const NovedadesIcon = () => (
-  <svg {...iconProps}>
-    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5L6 16Z" />
-    <path d="M10 19a2 2 0 0 0 4 0" />
   </svg>
 );
 
@@ -381,8 +374,8 @@ export function SiteHeader() {
                   </li>
                   <li>
                     <MenuItem
-                      href="/novedades"
-                      icon={<NovedadesIcon />}
+                      href="/orientaciones-liturgicas"
+                      icon={<BibleIcon />}
                       label="Orientaciones litúrgicas"
                       onSelect={closeMenu}
                     />

@@ -46,7 +46,7 @@ export default async function CancionesPage({
         </h1>
         {!lockedCategories ? (
           <p className="text-base normal-case text-muted-foreground">
-            Catálogo completo del cancionero.
+            Lista completa de todos los cantos.
           </p>
         ) : (
           lockedDescription && (
@@ -64,6 +64,7 @@ export default async function CancionesPage({
         categories={categories}
         lockedCategorySlugs={lockedCategories ? urlCatSlugs : undefined}
         showSeeAll={false}
+        showHeading={false}
       />
     </main>
   );

@@ -126,6 +126,7 @@ Reglas comunes (`baseProps` en `icons.tsx`):
 | Compartir                    | Nodos conectados              | `ShareIcon`      | existe    |
 | QR                           | Cuadro QR                     | `QrIcon`         | existe (hoy embebido en `qr-button.tsx`, mover a `icons.tsx`) |
 | No apagar pantalla           | Pantalla con base             | `ModoCoroIcon`   | existe (inline en `site-header.tsx`) |
+| Orientaciones litúrgicas     | Libro cerrado con una cruz    | `BibleIcon`      | existe    |
 
 ### Botones de formulario
 

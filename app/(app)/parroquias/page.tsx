@@ -60,8 +60,9 @@ export default async function ParroquiasPage() {
           <h1 className="text-3xl text-page-title">Parroquias</h1>
           {user ? (
             <p className="text-base normal-case text-muted-foreground">
-              Comunidades de la Arquidiócesis con sus repertorios. Asociate con
-              [+] y marcá tu principal con la estrella.
+              Comunidades de la Arquidiócesis. Dentro de cada parroquia
+              encontrarás sus repertorios. Asociate con [+] y marcá tu
+              principal con la estrella.
             </p>
           ) : (
             <div className="flex flex-col gap-1">
@@ -71,7 +72,8 @@ export default async function ParroquiasPage() {
                 listas.
               </p>
               <p className="text-base normal-case text-muted-foreground">
-                Comunidades de la Arquidiócesis con sus repertorios.
+                Comunidades de la Arquidiócesis. Dentro de cada parroquia
+                encontrarás sus repertorios.
               </p>
             </div>
           )}

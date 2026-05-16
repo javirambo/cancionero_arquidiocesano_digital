@@ -25,6 +25,7 @@ export function SongsFrame({
   pageSize,
   categories = [],
   showSeeAll = true,
+  showHeading = true,
   lockedCategorySlugs,
 }: {
   initialItems: Item[];
@@ -32,6 +33,7 @@ export function SongsFrame({
   pageSize: number;
   categories?: PublicCategoryOption[];
   showSeeAll?: boolean;
+  showHeading?: boolean;
   /** Cuando viene definido, el filtro queda fijado por la URL: se ocultan el
    *  botón embudo y el chip removible, y todas las queries usan estos slugs. */
   lockedCategorySlugs?: string[];
@@ -147,17 +149,19 @@ export function SongsFrame({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl text-page-title">Cantos</h2>
-        {showSeeAll && (
-          <Link
-            href="/canciones"
-            className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-          >
-            Ver catálogo →
-          </Link>
-        )}
-      </div>
+      {showHeading && (
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl text-page-title">Cantos</h2>
+          {showSeeAll && (
+            <Link
+              href="/canciones"
+              className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
+            >
+              Ver catálogo →
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
         <span className="text-muted-foreground">
