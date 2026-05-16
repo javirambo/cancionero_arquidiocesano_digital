@@ -60,7 +60,7 @@ export default async function ParroquiaPage({
     isAdmin = roleNames.includes("admin");
     isEditor = roleNames.includes("editor");
   }
-  const canEdit = isAdmin || isCoordinatorOfThisParish;
+  const canEdit = isAdmin || isEditor;
 
   // Reglas de "Contacto" (CU-06.2). Todos los contactos salen de DB
   // (parish_members.role='coordinator' o user_roles editor/admin); no

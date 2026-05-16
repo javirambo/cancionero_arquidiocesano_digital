@@ -9,7 +9,6 @@ import type { SongStatus } from "@/lib/songs-admin";
 import { SongStatusBadge } from "../../status-badge";
 
 type Capabilities = {
-  canSubmit: boolean;
   canWithdraw: boolean;
   canApprove: boolean;
   canReject: boolean;
@@ -20,7 +19,6 @@ type Capabilities = {
 
 function capsFor(status: SongStatus, canReview: boolean): Capabilities {
   const base: Capabilities = {
-    canSubmit: false,
     canWithdraw: false,
     canApprove: false,
     canReject: false,
@@ -28,24 +26,18 @@ function capsFor(status: SongStatus, canReview: boolean): Capabilities {
     canArchive: false,
     canUnarchive: false,
   };
-  if (canReview && status === "review") {
+  if (!canReview) return base;
+  if (status === "review") {
     return { ...base, canWithdraw: true, canApprove: true, canReject: true, canArchive: true };
   }
-  if (canReview && status === "published") {
+  if (status === "published") {
     return { ...base, canUnpublish: true, canArchive: true };
   }
-  if (canReview && status === "archived") {
+  if (status === "archived") {
     return { ...base, canUnarchive: true };
   }
   if (status === "draft" || status === "rejected") {
-    return {
-      ...base,
-      canSubmit: true,
-      canArchive: canReview,
-    };
-  }
-  if (status === "review") {
-    return { ...base, canWithdraw: true };
+    return { ...base, canArchive: true };
   }
   return base;
 }
@@ -101,16 +93,8 @@ export function ReviewActions({
     return true;
   }
 
-  async function onSubmit() {
-    if (!confirm("¿Enviar esta canción a revisión del editor?")) return;
-    await call("submit_song_for_review", { p_song_id: songId });
-  }
-
   async function onWithdraw() {
-    const msg = canReview
-      ? "¿Devolver esta canción a borrador?"
-      : "¿Retirar esta canción de revisión y volverla a borrador?";
-    if (!confirm(msg)) return;
+    if (!confirm("¿Devolver esta canción a borrador?")) return;
     await call("withdraw_song_from_review", { p_song_id: songId });
   }
 
@@ -203,24 +187,7 @@ export function ReviewActions({
         </div>
       )}
 
-      {status === "review" && !canReview && (
-        <p className="text-sm normal-case text-muted-foreground">
-          La canción está esperando revisión del editor. Mientras tanto, podés
-          retirarla para seguir editando.
-        </p>
-      )}
-
       <div className="flex flex-wrap gap-2">
-        {caps.canSubmit && (
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={busy}
-            className="rounded-full border border-secondary bg-secondary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
-          >
-            Enviar a revisión
-          </button>
-        )}
         {caps.canApprove && (
           <button
             type="button"
@@ -248,7 +215,7 @@ export function ReviewActions({
             disabled={busy}
             className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
           >
-            {canReview ? "Devolver a borrador" : "Retirar de revisión"}
+            Devolver a borrador
           </button>
         )}
         {caps.canUnpublish && (

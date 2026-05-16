@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminAccess } from "../../access";
 import { ParroquiaForm } from "../parroquia-form";
 
 export default async function EditarParroquiaPage({
@@ -8,6 +9,8 @@ export default async function EditarParroquiaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const access = await getAdminAccess();
+  if (!access.isAdmin && !access.isEditor) redirect("/admin");
   const { id } = await params;
   const supabase = await createClient();
   const { data: parish } = await supabase

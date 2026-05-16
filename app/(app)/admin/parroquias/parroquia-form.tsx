@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slug";
 
-export type ParishStatus = "active" | "pending" | "inactive";
+export type ParishStatus = "active" | "inactive";
 
 export type ParishFormData = {
   id?: string;
@@ -350,7 +350,7 @@ export function ParroquiaForm({
         </Field>
         <Field
           label="Estado"
-          hint="Activa: visible en listados. Pendiente: alta de un member, esperando revisión. Inactiva: dada de baja."
+          hint="Activa: visible en listados. Inactiva: dada de baja (oculta)."
           full
         >
           <select
@@ -368,7 +368,6 @@ export function ParroquiaForm({
             className={inputClass}
           >
             <option value="active">Activa</option>
-            <option value="pending">Pendiente de revisión</option>
             <option value="inactive">Inactiva</option>
           </select>
         </Field>

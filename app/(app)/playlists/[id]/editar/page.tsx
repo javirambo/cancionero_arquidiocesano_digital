@@ -22,7 +22,8 @@ export default async function EditarPlaylistPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/");
 
-  // Permisos: admin o coordinator de la parroquia dueña.
+  // Permisos: admin, editor (para listas de arquidiocesis), coordinator
+  // de la parroquia dueña, o dueño (listas personales).
   const { data: roles } = await supabase
     .from("user_roles")
     .select("roles(name)")
@@ -35,6 +36,7 @@ export default async function EditarPlaylistPage({
     })
     .filter((n): n is string => Boolean(n));
   const isAdmin = roleNames.includes("admin");
+  const isEditor = isAdmin || roleNames.includes("editor");
 
   // Dueño de la lista (relevante para listas personales).
   const { data: ownerRow } = await supabase
@@ -44,7 +46,9 @@ export default async function EditarPlaylistPage({
     .maybeSingle();
   const isOwner = ownerRow?.created_by === user.id;
 
-  let canEdit = isAdmin || isOwner;
+  const isArchdiocesisPlaylist = pl.parish?.slug === "arquidiocesis";
+
+  let canEdit = isAdmin || isOwner || (isEditor && isArchdiocesisPlaylist);
   if (!canEdit && pl.parish) {
     const { data: member } = await supabase
       .from("parish_members")
@@ -70,7 +74,7 @@ export default async function EditarPlaylistPage({
     const { data: parishes } = await supabase
       .from("parishes")
       .select("id, slug, name")
-      .eq("status", "active")
+      .neq("status", "inactive")
       .order("name");
     adminParishOptions = (parishes ?? []) as {
       id: string;
