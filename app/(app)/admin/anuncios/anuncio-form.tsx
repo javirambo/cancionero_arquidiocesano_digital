@@ -416,7 +416,7 @@ export function AnuncioForm({
         />
       </div>
 
-      <section className="rounded-2xl border border-border bg-sidebar p-5">
+      <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
           Vigencia
         </h2>
@@ -431,7 +431,7 @@ export function AnuncioForm({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-sidebar p-5">
+      <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
           Destinatarios
         </h2>
@@ -507,7 +507,7 @@ export function AnuncioForm({
         )}
       </section>
 
-      <section className="rounded-2xl border border-border bg-sidebar p-5">
+      <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
           Atajo (opcional)
         </h2>
@@ -659,7 +659,7 @@ export function AnuncioForm({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
+  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm normal-case";
 
 const TARGET_KIND_OPTIONS: {
   value: AnnouncementFormData["target_kind"];

@@ -116,7 +116,7 @@ export default async function InstallPage() {
       />
 
       {favoriteSlugs.length > 0 && (
-        <section className="rounded-2xl border border-border bg-sidebar p-6">
+        <section className="rounded-2xl border border-border bg-background p-6">
           <h2 className="text-xl text-page-title">Mis favoritos offline</h2>
           <p className="mt-2 text-sm normal-case text-muted-foreground">
             Descargá tus canciones favoritas para tenerlas disponibles sin

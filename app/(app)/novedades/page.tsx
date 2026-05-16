@@ -31,7 +31,7 @@ export default async function NovedadesPage() {
       </header>
 
       {empty && (
-        <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+        <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
           No hay avisos vigentes en este momento.
         </p>
       )}

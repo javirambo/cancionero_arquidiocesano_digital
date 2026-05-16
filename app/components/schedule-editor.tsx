@@ -38,7 +38,7 @@ export function ScheduleEditor({
           {value.map((rule, idx) => (
             <li
               key={idx}
-              className="rounded-lg border border-border bg-background p-4"
+              className="rounded-lg border border-border bg-card p-4"
             >
               <Rule
                 rule={rule}
@@ -218,7 +218,7 @@ function Rule({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
+  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm normal-case";
 
 function Field({
   label,

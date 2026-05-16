@@ -132,15 +132,23 @@ export default async function Home() {
           );
         })()}
 
-        {/* Anuncios litúrgicos */}
-        {liturgical.items.length > 0 && (
-          <AnnouncementsSection
-            heading="Avisos"
-            items={liturgical.items}
-            total={liturgical.total}
-            seeAllHref="/novedades"
-          />
-        )}
+        {/* Anuncios litúrgicos. En la home excluimos kind=indicaciones
+            salvo que el anuncio esté destacado (featured=true); el resto
+            de indicaciones vive en /orientaciones-liturgicas. */}
+        {(() => {
+          const items = liturgical.items.filter(
+            (it) => it.kind !== "indicaciones" || it.featured
+          );
+          if (items.length === 0) return null;
+          return (
+            <AnnouncementsSection
+              heading="Avisos"
+              items={items}
+              total={items.length}
+              seeAllHref="/novedades"
+            />
+          );
+        })()}
 
         {/* Atajos a categorías de cantos */}
         <SongCategoryShortcuts categories={songCategories} />
@@ -157,7 +165,7 @@ export default async function Home() {
         {/* Novedades */}
         {novedades.items.length > 0 && (
           <AnnouncementsSection
-            heading="Novedades"
+            heading="Avisos"
             items={novedades.items}
             total={novedades.total}
             seeAllHref="/novedades"
@@ -169,7 +177,7 @@ export default async function Home() {
         {!user && (
           <section
             aria-labelledby="invitado-heading"
-            className="rounded-2xl border border-border bg-sidebar p-8"
+            className="rounded-2xl border border-border bg-background p-8"
           >
             <h2 id="invitado-heading" className="text-2xl text-page-title">
               Iniciá sesión

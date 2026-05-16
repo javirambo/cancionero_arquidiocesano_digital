@@ -190,7 +190,7 @@ export default async function ParroquiaPage({
           )}
         </div>
         {previewPlaylists.length === 0 ? (
-          <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+          <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
             Esta parroquia todavía no publicó playlists.
           </p>
         ) : (
@@ -199,7 +199,7 @@ export default async function ParroquiaPage({
               <li key={p.id}>
                 <Link
                   href={`/playlists/${p.id}`}
-                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary"
+                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary"
                 >
                   <span className="text-lg text-primary">{p.name}</span>
                   {p.relation === "archdiocesan" && (
@@ -261,7 +261,7 @@ export default async function ParroquiaPage({
             </p>
           </div>
           {contacts.length === 0 ? (
-            <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+            <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
               No hay contactos disponibles.
             </p>
           ) : (
@@ -272,7 +272,7 @@ export default async function ParroquiaPage({
                 return (
                   <li
                     key={c.user_id}
-                    className="flex items-center gap-4 rounded-xl border border-border bg-background p-5"
+                    className="flex items-center gap-4 rounded-xl border border-border bg-card p-5"
                   >
                     {c.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element

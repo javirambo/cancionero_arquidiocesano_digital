@@ -53,7 +53,7 @@ export default async function PlaylistsPage() {
             </ul>
           </section>
         ) : (
-          <section className="rounded-2xl border border-border bg-sidebar p-6">
+          <section className="rounded-2xl border border-border bg-background p-6">
             <p className="text-sm normal-case text-muted-foreground">
               Todavía no hay playlists arquidiocesanas disponibles.
             </p>
@@ -134,7 +134,7 @@ export default async function PlaylistsPage() {
             <NewPlaylistButton options={newOptions} />
           </div>
         </header>
-        <section className="rounded-2xl border border-border bg-sidebar p-6">
+        <section className="rounded-2xl border border-border bg-background p-6">
           <p className="text-sm normal-case text-muted-foreground">
             Todavía no tenés listas. Vinculá tu parroquia o creá una lista
             personal desde el menú &quot;…&quot; de cualquier canto.

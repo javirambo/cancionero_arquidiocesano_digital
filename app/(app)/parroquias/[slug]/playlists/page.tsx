@@ -72,7 +72,7 @@ export default async function ParroquiaPlaylistsPage({
       </header>
 
       {playlists.length === 0 ? (
-        <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+        <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
           Esta parroquia todavía no tiene playlists.
         </p>
       ) : (

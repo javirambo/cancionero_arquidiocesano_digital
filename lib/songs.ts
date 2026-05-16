@@ -647,7 +647,7 @@ async function filterAnnouncementsByAudience<T extends { id: string }>(
 }
 
 async function listAnnouncementsByKindFilter(
-  kindFilter: "null" | "not-null",
+  kindFilter: "null" | "not-null" | { eq: string },
   limit?: number,
   audience?: "home"
 ): Promise<{ items: Featured[]; total: number }> {
@@ -657,7 +657,8 @@ async function listAnnouncementsByKindFilter(
     .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at")
     .order("created_at", { ascending: false });
   if (kindFilter === "null") query = query.is("kind", null);
-  else query = query.not("kind", "is", null);
+  else if (kindFilter === "not-null") query = query.not("kind", "is", null);
+  else query = query.eq("kind", kindFilter.eq);
   const { data, error } = await query;
   if (error) throw error;
   const all = (data ?? []) as AnnouncementRow[];
@@ -681,6 +682,14 @@ export async function listLiturgicalAnnouncements(
   audience?: "home"
 ): Promise<{ items: Featured[]; total: number }> {
   return listAnnouncementsByKindFilter("not-null", limit, audience);
+}
+
+export async function listAnnouncementsByKind(
+  kind: string,
+  limit?: number,
+  audience?: "home"
+): Promise<{ items: Featured[]; total: number }> {
+  return listAnnouncementsByKindFilter({ eq: kind }, limit, audience);
 }
 
 // Anuncios vinculados específicamente a una parroquia (excluye globales).

@@ -48,7 +48,7 @@ export function InstallSections({
         return (
           <section
             key={s.id}
-            className="overflow-hidden rounded-2xl border border-border bg-sidebar"
+            className="overflow-hidden rounded-2xl border border-border bg-background"
           >
             <button
               type="button"

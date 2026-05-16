@@ -35,9 +35,9 @@
   --color-destructive-foreground: #ffffff;
 
   /* Tema light (por defecto) */
-  --theme-background: #eaf0fa;
+  --theme-background: #f1f5fd;
   --theme-foreground: #30343b;
-  --theme-sidebar: #bfd0ea;          /* encabezado, pie, barra menú acciones */
+  --theme-sidebar: #a4c4f5;          /* encabezado, pie, barra menú acciones */
   --theme-card: #ffffff;             /* fondo de tarjetas */
   --theme-border: #c5d2e6;
   --theme-muted-foreground: #5b6473;

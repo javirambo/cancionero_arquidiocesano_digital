@@ -27,8 +27,8 @@ Valores actuales tomados de [`app/globals.css`](../app/globals.css). Paleta apro
 
 | Token (Tailwind)   | Hex       | Muestra                                                            | Uso                                                                       |
 |--------------------|-----------|--------------------------------------------------------------------|---------------------------------------------------------------------------|
-| `background`       | `#eaf0fa` | ![#eaf0fa](https://placehold.co/16x16/eaf0fa/eaf0fa.png)           | Fondo general de toda la app                                              |
-| `sidebar`          | `#bfd0ea` | ![#bfd0ea](https://placehold.co/16x16/bfd0ea/bfd0ea.png)           | Encabezado, pie y barra de menú de acciones de la vista de canción       |
+| `background`       | `#f1f5fd` | ![#f1f5fd](https://placehold.co/16x16/f1f5fd/f1f5fd.png)           | Fondo general de toda la app                                              |
+| `sidebar`          | `#a4c4f5` | ![#a4c4f5](https://placehold.co/16x16/a4c4f5/a4c4f5.png)           | Encabezado, pie y barra de menú de acciones de la vista de canción       |
 | `primary`          | `#1f3f73` | ![#1f3f73](https://placehold.co/16x16/1f3f73/1f3f73.png)           | Iconos y botones (acción principal). Clases: `bg-primary`, `text-primary`, `border-primary`. |
 | `primary-hover`    | `#16305a` | ![#16305a](https://placehold.co/16x16/16305a/16305a.png)           | Hover de iconos y botones                                                 |
 | `page-title`       | `#436baf` | ![#436baf](https://placehold.co/16x16/436baf/436baf.png)           | Títulos de páginas. Clase: `text-page-title`.                             |
@@ -77,7 +77,7 @@ Derivado automáticamente de la paleta light: se invierte la luminosidad del fon
 |-------------------------------------------|------------------|-------------|
 | Título de la canción                      | `song-title`     | `#8b1a1a`   |
 | Número y categorías                       | `secondary`      | `#b49a55`   |
-| Encabezado, pie y barra menú de acciones  | `sidebar`        | `#bfd0ea`   |
+| Encabezado, pie y barra menú de acciones  | `sidebar`        | `#a4c4f5`   |
 | Iconos del menú de acciones               | `primary`        | `#1f3f73`   |
 | Borde lateral del estribillo              | `song-title`     | `#8b1a1a`   |
 

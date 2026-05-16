@@ -250,8 +250,8 @@ export function SongsFrame({
                 aria-pressed={selected}
                 className={
                   selected
-                    ? "rounded-full border border-primary bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground"
-                    : "rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+                    ? "rounded-full border border-primary bg-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground"
+                    : "rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
                 }
               >
                 {c.name}
@@ -269,7 +269,7 @@ export function SongsFrame({
               key={c.id}
               type="button"
               onClick={() => removeCategory(c.slug)}
-              className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground"
+              className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground"
               aria-label={`Quitar filtro ${c.name}`}
             >
               {c.name}
