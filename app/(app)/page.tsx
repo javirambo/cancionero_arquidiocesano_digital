@@ -18,6 +18,8 @@ import { FeaturedAnnouncementPopup } from "@/app/components/featured-announcemen
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
 import { HomeHero } from "@/app/components/home-hero";
+import { HelpHint } from "@/app/components/help-hint";
+import type { PublicCategoryOption } from "@/lib/songs";
 
 const PREVIEW = 3;
 const PLAYLIST_HOME_LIMIT = 4;
@@ -141,7 +143,7 @@ export default async function Home() {
         )}
 
         {/* Atajos a categorías de cantos */}
-        <SongCategoryShortcuts />
+        <SongCategoryShortcuts categories={songCategories} />
 
         {/* Canciones */}
         <SongsFrame
@@ -241,23 +243,42 @@ function AnnouncementsSection({
   );
 }
 
-function SongCategoryShortcuts() {
-  const shortcuts: Array<{ label: string; href: string }> = [
-    { label: "Ordinario de la Misa", href: "/canciones?cat=ordinario-de-la-misa" },
-    { label: "Salmo responsorial", href: "/canciones?cat=salmo-responsorial" },
-    { label: "Cantos para la Misa", href: "/canciones?cat=cantos-para-la-misa" },
-    { label: "Adoración y oración", href: "/canciones?cat=adoracion-y-oracion" },
-  ];
+const SHORTCUT_SLUGS = [
+  "ordinario-de-la-misa",
+  "salmo-responsorial",
+  "cantos-para-la-misa",
+  "adoracion-y-oracion",
+];
+
+function SongCategoryShortcuts({
+  categories,
+}: {
+  categories: PublicCategoryOption[];
+}) {
+  const shortcuts = SHORTCUT_SLUGS.map((slug) =>
+    categories.find((c) => c.slug === slug)
+  ).filter((c): c is PublicCategoryOption => Boolean(c));
+
+  if (shortcuts.length === 0) return null;
+
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
-      {shortcuts.map((s) => (
-        <li key={s.href}>
+      {shortcuts.map((c) => (
+        <li key={c.slug} className="relative">
           <Link
-            href={s.href}
+            href={`/canciones?cat=${c.slug}`}
+            title={c.description ?? undefined}
             className="flex h-full items-center justify-center rounded-xl border border-shortcut bg-shortcut px-4 py-4 text-center text-base uppercase text-white transition-opacity hover:opacity-90"
           >
-            {s.label}
+            {c.name}
           </Link>
+          {c.description && (
+            <span className="absolute right-2 top-2 text-white sm:hidden">
+              <HelpHint label={`Descripción de ${c.name}`}>
+                {c.description}
+              </HelpHint>
+            </span>
+          )}
         </li>
       ))}
     </ul>

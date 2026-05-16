@@ -367,7 +367,7 @@ export function SiteHeader() {
                     <MenuItem
                       href="/playlists"
                       icon={<ListasIcon />}
-                      label="Listas"
+                      label="Mis listas"
                       onSelect={closeMenu}
                     />
                   </li>
@@ -375,7 +375,7 @@ export function SiteHeader() {
                     <MenuItem
                       href="/parroquias"
                       icon={<ParroquiasIcon />}
-                      label="Parroquias"
+                      label="Mi parroquia"
                       onSelect={closeMenu}
                     />
                   </li>
@@ -383,7 +383,7 @@ export function SiteHeader() {
                     <MenuItem
                       href="/novedades"
                       icon={<NovedadesIcon />}
-                      label="Novedades"
+                      label="Orientaciones litúrgicas"
                       onSelect={closeMenu}
                     />
                   </li>
