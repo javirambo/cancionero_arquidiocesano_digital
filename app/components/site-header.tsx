@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -294,16 +295,28 @@ export function SiteHeader() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border bg-sidebar`}>
+    <header
+      style={{ backgroundColor: "#436bb0" }}
+      className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border`}
+    >
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-1">
-        <Link href="/" className="flex items-baseline gap-3">
-          <span
-            className={`text-xl font-bold tracking-wide text-primary transition-opacity duration-300 ease-in-out ${
-              titleVisible ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            {displayTitle}
-          </span>
+        <Link href="/" className="-ml-3.5 flex items-center gap-3" aria-label={displayTitle}>
+          <Image
+            src="/logo-cordero.png"
+            alt=""
+            width={90}
+            height={90}
+            priority
+            className="h-10 w-auto"
+          />
+          <Image
+            src="/logo-comision.png"
+            alt="Comisión de Liturgia"
+            width={300}
+            height={100}
+            priority
+            className="h-8 w-auto"
+          />
         </Link>
 
         <div className="flex items-center gap-2">
@@ -608,9 +621,9 @@ function CircleButton({
       aria-haspopup={ariaHaspopup}
       aria-expanded={ariaExpanded}
       onClick={onClick}
-      className="group flex flex-col items-center gap-0.5 text-muted-foreground transition-colors hover:text-primary"
+      className="group flex flex-col items-center gap-0.5 text-white transition-colors hover:text-white/80"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition-colors group-hover:border-primary">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary">
         {icon}
       </span>
       <span className="text-[10px] leading-none">{label}</span>
@@ -722,7 +735,7 @@ function AccountButton({
       aria-haspopup="menu"
       aria-expanded={ariaExpanded}
       onClick={onClick}
-      className="group flex flex-col items-center gap-0.5 text-muted-foreground transition-colors hover:text-primary"
+      className="group flex flex-col items-center gap-0.5 text-white transition-colors hover:text-white/80"
     >
       <span className="block h-10 w-10 overflow-hidden rounded-full border border-border bg-background transition-colors group-hover:border-primary">
         {/* eslint-disable-next-line @next/next/no-img-element */}
