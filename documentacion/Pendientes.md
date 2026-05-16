@@ -55,6 +55,19 @@
 
 [ ] CU-11 - Descargar playlist como cancionero 
 
+[ ] cambiar vista de cancion
+    Nº 2
+    Vienen con alegría
+    Autor: C. Gabarain
+    (Entrada)
+
+    por esto:
+
+    Nº 2 (Entrada)
+    Vienen con alegría
+    Autor: C. Gabarain
+
+    
 ---
 
 ## Refactor de roles 2026-05-15
@@ -65,16 +78,15 @@ Acordado con Javier el 2026-05-15.
 ### Matriz
 
 **invitado:**
-- Puede: ver canciones, listas, parroquias y anuncios (home y por parroquia). Favoritos
-  en localStorage. En `/parroquias/xxx` ve todas las listas y anuncios + mails de
+- Puede: ver canciones, acordes y trasponer, ver listas, parroquias y anuncios de la home y de /parroquias. Puede ver favoritear y se persiste en local storage. Las notas al trasponer no se guardan.
+  En `/parroquias/xxx` ve todas las parroquias, las listas y anuncios + mails de
   coordinator parroquial. En home: playlists y anuncios globales. En `/playlists`:
   globales. En `/anuncios`: globales.
-- NO puede: ver acordes ni transponer, crear/editar nada, asociarse a parroquias.
+- NO puede: crear/editar nada, ni asociarse a parroquias.
 
 **member** (idem invitado +):
-- Puede: ver acordes, transponer (persistido en BD), vincularse a parroquias, crear
-  playlists personales. Home: anuncios y playlists de su parroquia. En `/anuncios`
-  y `/playlists`: también de su parroquia. En `/parroquias/xxx`: mails de coordinator.
+- persiste todo en BD , y si viene de invitado migra localStorage a BD.
+- Puede: vincularse a parroquias, crear playlists personales. Home: anuncios y playlists de su parroquia. En `/anuncios` y `/playlists`: también de su parroquia. En `/parroquias/xxx`: mails de coordinator.
 - NO puede: crear canciones, crear playlists de parroquia, crear anuncios, crear
   parroquias.
 

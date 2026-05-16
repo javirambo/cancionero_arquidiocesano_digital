@@ -169,8 +169,8 @@ export default async function Home() {
               Iniciá sesión
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground normal-case">
-              Asociate a parroquias, guardá tus favoritos en la nube y creá tus
-              propias playlists.
+              Asociate a parroquias, sincroniza con tus otros dispositivos
+              celulares y computadoras, y creá tus propias listas de cantos.
             </p>
             <GoogleSignInButton />
           </section>

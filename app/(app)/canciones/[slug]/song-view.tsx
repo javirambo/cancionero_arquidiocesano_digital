@@ -59,8 +59,10 @@ export function SongView({
   const { user } = useSession();
   const { isAdmin, isEditor } = useUserRoles();
   const canEdit = isAdmin || isEditor;
-  // CU-03: los acordes y la transposición sólo se exponen a usuarios con sesión.
-  const chordsAvailable = chordsExist && isAuthenticated;
+  // CU-03: el invitado también ve acordes y puede transponer; la
+  // transposición se persiste en localStorage (CU-03). Solo se oculta
+  // cuando la canción no tiene acordes definidos.
+  const chordsAvailable = chordsExist;
 
 
   const { showChords, setPreference } = usePreferences();

@@ -50,8 +50,8 @@ Hay dos dimensiones que conviven: **roles globales** (catálogo `roles`, asignad
 
 Asamblea o fiel cualquiera. No tiene cuenta. **Caso de uso central:** escanear un QR pegado en un banco de la iglesia y ver la playlist de la celebración.
 
-- **Puede:** buscar (CU-01), ver canciones (CU-02), reproducir YouTube (CU-04), ver **todas las parroquias** (CU-06) — sin filtro por `status` (mig. 0035 abrió la lectura), entrar a la página de cualquier parroquia y ver **todas las listas y anuncios** de esa parroquia, ver **playlists arquidiocesanas** y **anuncios globales** en la home y en `/playlists`/`/anuncios`, modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD. En `/parroquias/{slug}` ve mails de **coordinator parroquial**.
-- **NO puede:** ver acordes ni transponer (la UI de transposición se oculta — CU-03), crear/editar nada, asociarse a parroquias.
+- **Puede:** buscar (CU-01), ver canciones (CU-02) **con acordes** y **transponer** (transposición persistida en `localStorage` — CU-03), reproducir YouTube (CU-04), ver **todas las parroquias** (CU-06) — sin filtro por `status` (mig. 0035 abrió la lectura), entrar a la página de cualquier parroquia y ver **todas las listas y anuncios** de esa parroquia, ver **playlists arquidiocesanas** y **anuncios globales** en la home y en `/playlists`/`/anuncios`, modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD. En `/parroquias/{slug}` ve mails de **coordinator parroquial**.
+- **NO puede:** crear/editar nada, asociarse a parroquias (la transposición y los favoritos no se sincronizan entre dispositivos).
 - **Migración al loguearse:** al hacer su primer login (CU-13), los favoritos guardados en `localStorage` se transfieren a `favorites` en BD.
 
 ### 2. 🎵 Músico / Corista
@@ -149,8 +149,8 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 ## CU-02.2: Ver canción con letra y acordes
 
 - **RF:** RF5
-- **Actor primario:** Músico
-- **Precondiciones:** La canción existe en el catálogo.
+- **Actores primarios:** Músico / Invitado (cualquiera con o sin sesión).
+- **Precondiciones:** La canción existe en el catálogo y tiene acordes (`body` con marcadores `[acorde]`).
 - **Disparador:** El usuario navega a `/canciones/{id}` (o desde búsqueda/playlist).
 - **Flujo principal:**
   1. El sistema carga la canción: título, autor, categorías litúrgicas (chips, una o varias), letra, acordes y link de YouTube si existe.
@@ -159,16 +159,15 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 - **Flujos alternativos:**
   - 1a. Canción inexistente: el sistema muestra 404.
   - 3a. Canción sin acordes: el toggle queda deshabilitado.
-- **Postcondiciones:** Ninguna persistente.
+- **Postcondiciones:** Ninguna persistente (la preferencia de mostrar/ocultar acordes se guarda en localStorage también para invitado).
 
 ---
 
 ## CU-03: Transponer tonalidad
 
 - **RF:** RF6
-- **Actor primario:** Músico (autenticado como `member` o superior)
-- **Precondiciones:** Estar autenticado y en la vista de canción con acordes (CU-02).
-- **Restricción:** **El visitante anónimo no puede transponer.** La UI de transposición se oculta cuando no hay sesión. Si querés transponer, hay que loguearse.
+- **Actores primarios:** Cualquier usuario (incluso invitado anónimo).
+- **Precondiciones:** Estar en la vista de canción con acordes (CU-02.2).
 - **Disparador:** El usuario hace clic en + / − del selector de tono.
 - **Flujo principal:**
   1. El usuario solicita subir o bajar un semitono (o seleccionar un tono específico).
@@ -177,14 +176,16 @@ Rol global con permisos plenos. Puede todo lo del editor +:
   4. El usuario puede restablecer al tono original.
 - **Flujos alternativos:**
   - 2a. Acorde no estándar: el sistema preserva el acorde tal cual y registra advertencia (no bloqueante).
-  - 1a. El tono elegido se persiste en `user_song_keys` (server-side) y queda asociado a su cuenta; al volver a abrir la canción desde cualquier dispositivo se restaura automáticamente.
+  - 1a (autenticado). El tono elegido se persiste en `user_song_keys` (server-side) y queda asociado a su cuenta; al volver a abrir la canción desde cualquier dispositivo se restaura automáticamente.
+  - 1b (invitado). El tono elegido se persiste en `localStorage` del navegador (`song:transpose:{songId}`). Es local al dispositivo y se pierde al limpiar datos del navegador.
 - **Precedencia del tono inicial al abrir una canción** (de mayor a menor prioridad):
   1. **Contexto de playlist** — si la canción se abre desde una playlist y `playlist_songs.key_override` está definido, se usa ese tono. El coordinador armó la playlist pensando esa tonalidad para la celebración.
-  2. **Preferencia del usuario** — `user_song_keys`.
+  2. **Preferencia del usuario** — `user_song_keys` (autenticado) o `localStorage` (invitado).
   3. **Tono original** — `songs.original_key`.
-  - Si el usuario transpone mientras está en contexto de playlist, el cambio se aplica solo a la sesión actual y **no** sobreescribe `playlist_songs.key_override` ni `user_song_keys`.
+  - Si el usuario transpone mientras está en contexto de playlist, el cambio se aplica solo a la sesión actual y **no** sobreescribe `playlist_songs.key_override` ni la preferencia persistida.
 - **Postcondiciones:**
-  - Fuera de playlist: tono guardado en `user_song_keys (user_id, song_id)` y disponible en cualquier dispositivo.
+  - Fuera de playlist (autenticado): tono guardado en `user_song_keys (user_id, song_id)` y disponible en cualquier dispositivo.
+  - Fuera de playlist (invitado): tono guardado en `localStorage`, local al dispositivo.
   - Dentro de playlist: ningún cambio persistido (override sólo en sesión).
 
 ---
