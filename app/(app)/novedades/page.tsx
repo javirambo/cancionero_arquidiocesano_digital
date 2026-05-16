@@ -10,8 +10,8 @@ export const metadata = {
 
 export default async function NovedadesPage() {
   const [liturgical, common] = await Promise.all([
-    listLiturgicalAnnouncements(),
-    listCommonAnnouncements(),
+    listLiturgicalAnnouncements(undefined, "home"),
+    listCommonAnnouncements(undefined, "home"),
   ]);
 
   const empty = liturgical.items.length === 0 && common.items.length === 0;

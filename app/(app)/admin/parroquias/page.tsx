@@ -2,31 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminAccess } from "../access";
-import { PendingParishRow } from "./pending-row";
-import { AdminContactEmailsForm } from "./admin-contact-emails-form";
 
 export default async function AdminParroquiasPage() {
   const access = await getAdminAccess();
-  if (!access.isAdmin) redirect("/admin");
+  if (!access.isAdmin && !access.isEditor) redirect("/admin");
   const supabase = await createClient();
-  const [parishesRes, settingRes] = await Promise.all([
-    supabase
-      .from("parishes")
-      .select("id, name, slug, city, address, status")
-      .order("name"),
-    supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "admin_contact_emails")
-      .maybeSingle(),
-  ]);
-  const parishes = parishesRes.data;
-  const adminContactEmails = Array.isArray(settingRes.data?.value)
-    ? (settingRes.data?.value as string[])
-    : [];
+  const { data: parishes } = await supabase
+    .from("parishes")
+    .select("id, name, slug, city, address, status")
+    .order("name");
 
-  const pending = (parishes ?? []).filter((p) => p.status === "pending");
-  const others = (parishes ?? []).filter((p) => p.status !== "pending");
+  const rows = parishes ?? [];
 
   return (
     <main className="flex flex-col gap-6">
@@ -41,45 +27,14 @@ export default async function AdminParroquiasPage() {
           </Link>
         </div>
         <p className="text-sm normal-case text-muted-foreground">
-          Alta, edición y baja de parroquias de la Arquidiócesis. Las parroquias en estado pendiente requieren revisión.
+          Alta, edición y baja de parroquias de la Arquidiócesis.
         </p>
       </header>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border p-5">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Configuración general
-        </h2>
-        <AdminContactEmailsForm initialEmails={adminContactEmails} />
-      </section>
-
-      {pending.length > 0 && (
+      {rows.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Pendientes de revisión ({pending.length})
-          </h2>
           <ul className="divide-y divide-border rounded-xl border border-border">
-            {pending.map((p) => (
-              <PendingParishRow
-                key={p.id}
-                id={p.id as string}
-                name={p.name as string}
-                city={(p.city as string | null) ?? null}
-                address={(p.address as string | null) ?? null}
-              />
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {others.length > 0 && (
-        <section className="flex flex-col gap-3">
-          {pending.length > 0 && (
-            <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-              Todas
-            </h2>
-          )}
-          <ul className="divide-y divide-border rounded-xl border border-border">
-            {others.map((p) => (
+            {rows.map((p) => (
               <li
                 key={p.id}
                 className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar"
@@ -98,9 +53,7 @@ export default async function AdminParroquiasPage() {
             ))}
           </ul>
         </section>
-      )}
-
-      {pending.length === 0 && others.length === 0 && (
+      ) : (
         <p className="text-sm normal-case text-muted-foreground">
           No hay parroquias cargadas todavía.
         </p>

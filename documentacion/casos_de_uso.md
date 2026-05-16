@@ -19,8 +19,8 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-07   | Visualizar novedades / festividad del día            | —         | ✅     |
 | CU-08   | Silenciar dispositivo y mantener pantalla            | RF20      | ✅     |
 | CU-09   | Descargar archivos de la canción                     | RF7       | ✅     |
-| CU-10   | Descargar canción para imprimir                      | RF14      | ✅ Vista `/imprimir` con CSS print + auto-shrink en una hoja A4 (mínimo 9pt). |
-| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. |
+| CU-10   | Descargar canción para imprimir                      | RF14      | ✅     |
+| CU-11   | Descargar playlist como cancionero                   | RF15      | ⏳     |
 | CU-12   | Descargar QR de la página actual                     | RF13      | ✅     |
 | CU-13   | Login con Google                                     | RF16      | ✅     |
 | CU-14   | Vincular usuario a parroquia                         | RF17      | ✅     |
@@ -29,17 +29,20 @@ Este documento detalla los casos de uso del sistema, derivados de los requerimie
 | CU-17   | ABM de playlist                                      | RF2       | ✅     |
 | CU-18   | ABM de usuario                                       | RF9       | ✅     |
 | CU-19   | ABM de parroquia                                     | RF10      | ✅     |
-| CU-20   | Gestionar permisos (tal vez nunca se necesite)       | RF21      | ⏳ Solo si necesitamos granularidad por permiso atómico; hoy los permisos están hardcodeados en RLS por rol y puede ser suficiente. |
+| CU-20   | Gestionar permisos o roles                           | RF21      | ✅     |
 | CU-21   | Gestionar anuncios                                   | RF19      | ✅     |
 | CU-22   | Gestionar "Mis favoritos"                            | RF18      | ✅     |
 | CU-23   | Lista de canciones con badges y menú contextual      | RF4       | ✅     |
 | CU-24   | Barra de acciones global en el header                | RF4, RF18 | ✅     |
-| CU-25   | Gestión de categorías litúrgicas                     | RF22      | ⚠️ Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.                                                                                                  |
-| CU-26   | ABM de festividades litúrgicas                       | RF23      | ❌ Deprecado — fusionado en CU-21 (anuncios con `kind` litúrgico).                                                                                                                                                                                              |
+| CU-25   | Gestión de categorías litúrgicas                     | RF22      | ✅     |
+| CU-26   | Pagina de creditos y de privacidad                   |           | ✅     |
+
 
 ---
 
 ## Actores del sistema
+
+> **Matriz vigente desde 2026-05-15** (ver bloque "Refactor de roles 2026-05-15" en `Pendientes.md`).
 
 Hay dos dimensiones que conviven: **roles globales** (catálogo `roles`, asignados en `user_roles`) y **vínculo contextual con parroquia** (`parish_members.role`).
 
@@ -47,7 +50,7 @@ Hay dos dimensiones que conviven: **roles globales** (catálogo `roles`, asignad
 
 Asamblea o fiel cualquiera. No tiene cuenta. **Caso de uso central:** escanear un QR pegado en un banco de la iglesia y ver la playlist de la celebración.
 
-- **Puede:** buscar (CU-01), ver canciones (CU-02), reproducir YouTube (CU-04), ver playlists arquidiocesanas y públicas (CU-05), ver parroquias (CU-06), home/festividad (CU-07), modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD.
+- **Puede:** buscar (CU-01), ver canciones (CU-02), reproducir YouTube (CU-04), ver **todas las parroquias** (CU-06) — sin filtro por `status` (mig. 0035 abrió la lectura), entrar a la página de cualquier parroquia y ver **todas las listas y anuncios** de esa parroquia, ver **playlists arquidiocesanas** y **anuncios globales** en la home y en `/playlists`/`/anuncios`, modo coro (CU-08), descargar QR (CU-12), favoritear (CU-15) — **persistido en `localStorage`**, no en BD. En `/parroquias/{slug}` ve mails de **coordinator parroquial**.
 - **NO puede:** ver acordes ni transponer (la UI de transposición se oculta — CU-03), crear/editar nada, asociarse a parroquias.
 - **Migración al loguearse:** al hacer su primer login (CU-13), los favoritos guardados en `localStorage` se transfieren a `favorites` en BD.
 
@@ -60,11 +63,11 @@ No es un rol técnico distinto: es un patrón de uso del visitante o del `member
 Rol global default al loguearse por primera vez (CU-13, CU-18.1). Es el "fiel" que decide formar parte del cancionero, o el músico/corista que quiere personalizar.
 
 - **Suma sobre el invitado:**
-  - Transposición persistida en `user_song_keys` (CU-03).
+  - Ver acordes y transponer; transposición persistida en `user_song_keys` (CU-03).
   - Favoritos persistidos en BD (CU-15, CU-22).
   - Vincularse a N parroquias y elegir una principal con ⭐ (CU-14).
   - **Crear playlists personales** (`parish_id = NULL`) — esté o no asociado a una parroquia. Las puede compartir por URL.
-- **Ve:** sus playlists personales + las de las parroquias en que es miembro + las arquidiocesanas + las públicas accedidas por URL.
+- **Ve en la home:** anuncios globales + anuncios scoped a sus `parish_members`, y playlists de sus parroquias asociadas + arquidiocesanas (con dedupe). En `/playlists` y `/anuncios`: también los de sus parroquias. Las listas/anuncios de otras parroquias no aparecen en la home pero se pueden ver entrando a `/parroquias/{slug}`. En `/parroquias/{slug}`: ve mails de **coordinator parroquial**.
 - **NO puede:** crear canciones, crear playlists de parroquia, crear anuncios, crear parroquias.
 
 ### 4. ⛪ *coordinator* (Coordinador parroquial)
@@ -73,40 +76,35 @@ Rol contextual: se asigna por parroquia en `parish_members.role='coordinator'`. 
 
 - **Suma sobre member:**
   - Crear/editar **playlists de su parroquia** (CU-17). Si tiene varias parroquias, debe seleccionar a cuál asignar la playlist.
-  - Crear/editar **canciones en estado `draft`** y enviarlas a `review` para que el editor las apruebe (CU-16).
-  - Adjuntar **`song_files`** (partituras, audios) a una canción en estado `draft`/`review` para enviarlos a aprobación junto con la canción.
-  - Crear **anuncios con alcance parroquial** — solo para su(s) parroquia(s) (CU-21).
-  - Crear **parroquia nueva** en estado `pending` (busca en Maps) — el admin/editor debe aprobarla (CU-19).
-- **Caso especial — Coordinador pastoral:** es el coordinator de la parroquia virtual `arquidiocesis`. Solo él puede marcar sus playlists con `is_archdiocesan = true` (visibles por defecto en todas las parroquias).
+  - Crear **anuncios dirigidos a su(s) parroquia(s)** (CU-21). NO puede crear anuncios globales.
+- **En `/parroquias/{slug}`:** ve mails de **editor + admin**.
+- **NO puede:** crear/editar canciones (mig. 0037), crear parroquias, crear anuncios globales, administrar usuarios.
 
 ### 5. ✏️ *editor* (Editor de contenido — Comisión Litúrgico-Musical)
 
 Rol global en `user_roles`.
 
-- **Suma sobre coordinator (en cuanto a flujo editorial):**
-  - **Aprobar/rechazar canciones** en estado `review` → `published` o `rejected` con `review_notes` (CU-16).
-  - **Aprobar/rechazar `song_files`** (partituras, audios) en estado `review`.
-  - **Aprobar/rechazar parroquias** en estado `pending` → `active` o rechazadas.
-  - Publicar nuevas versiones de canciones existentes.
-  - Archivar canciones.
-  - Crear canciones directamente (puede saltar el flujo de review).
+- **Suma sobre coordinator:**
+  - Crear/editar/borrar/archivar **canciones** y todo el flujo editorial `draft → review → published` (CU-16). Puede aprobar/rechazar canciones en review.
+  - Crear/editar/borrar **`song_files`** (partituras, audios) asociados a canciones.
+  - Crear/editar/borrar **parroquias** (CU-19).
+  - Crear **anuncios globales** (sin destinatarios específicos) (CU-21).
   - Asignar múltiples categorías litúrgicas a una canción (CU-25). El ABM del catálogo `categories` se gestiona hoy por SQL (catálogo estable).
+- **Caso especial — coordinator de `arquidiocesis`:** el editor es **siempre y automáticamente** coordinator de la parroquia virtual `arquidiocesis`. Solo el editor puede marcar playlists con `is_archdiocesan = true` (visibles por defecto en todas las parroquias).
+- **En `/parroquias/{slug}`:** ve mails de **admin**.
+- **NO puede:** administrar usuarios (CU-18), gestionar permisos/roles (CU-20), reasignar `parish_id` de playlists.
 
 ### 6. 👑 *admin* (Administrador)
 
-Rol global con permisos plenos.
+Rol global con permisos plenos. Puede todo lo del editor +:
 
-- **Puede todo, con dos diferencias clave:**
-  - Cuando crea (canciones, playlists, etc.), **se le pregunta a qué parroquia asignar** la creación — no se asume ninguna por defecto.
-  - **Reasignar dueño** de una playlist: cambiar `parish_id`, incluso convertir personal (`NULL`) → de parroquia, o de parroquia → otra parroquia, o de parroquia → personal.
+- **Cuando crea cosas que requieren parroquia (canciones, playlists, etc.), se le pregunta a qué parroquia asignar** — no se asume ninguna por defecto.
+- **Reasignar dueño** de una playlist: cambiar `parish_id`, incluso convertir personal (`NULL`) → de parroquia, o de parroquia → otra parroquia, o de parroquia → personal.
 - **Gestiona:**
-  - ABM de parroquias (CU-19).
   - ABM de usuarios y asignación de roles globales (CU-18).
   - Gestión de permisos (CU-20).
-  - Eventos litúrgicos (`liturgical_events`).
-  - **Anuncios globales** (sin filas en `announcement_parishes`) (CU-21).
-  - Playlists de cualquier parroquia (CU-17).
   - Mover usuarios entre parroquias.
+- **En `/parroquias/{slug}`:** no ve sección de contactos.
 
 ---
 
@@ -261,13 +259,15 @@ Rol global con permisos plenos.
 - **Precondiciones:** Existe contenido marcado como "novedad" o "festividad" para la fecha actual.
 - **Disparador:** El usuario abre la home `/`.
 - **Flujo principal:**
-  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
+  1. El sistema busca un anuncio con `kind in ('solemnidad','fiesta','memoria','tiempo','indicaciones')` cuya **vigencia** (en `entity_schedules`, evaluada en hora AR) incluya el momento actual. Si existe, lo muestra como "Festividad de hoy" con su descripción y atajo a la playlist asociada (si aplica). Si hay varias, gana la de mayor `priority`.
   2. *(Pausado)* Cálculo automático con `romcal` cuando no hay festividad cargada — se moverá a una página dedicada "¿Qué hay hoy de nuevo?" en una iteración posterior.
   3. El sistema muestra los **anuncios comunes vigentes** (`announcements` con `kind is null` cuya vigencia en `entity_schedules` matchee el momento actual) en la sección "Novedades", ordenados por `priority desc`. Cada anuncio se muestra una sola vez (sin duplicados aunque el usuario esté en varias parroquias destinatarias). Si tiene atajo (`target_kind` ≠ `'none'`), el banner enlaza al recurso.
-  4. **Visibilidad de anuncios:**
-     - **Anónimo:** ve únicamente anuncios **globales** (sin filas en `announcement_parishes`).
-     - **Autenticado:** ve los globales + los anuncios cuyas parroquias destinatarias intersectan con sus `parish_members`.
-  5. El usuario navega al contenido de su interés.
+  4. **Visibilidad de anuncios y listas en la home (filtro de audiencia, client-side):**
+     - **Anónimo:** ve únicamente anuncios **globales** (sin filas en `announcement_parishes`) y playlists **arquidiocesanas**. Las listas/anuncios de una parroquia específica solo se ven entrando a `/parroquias/{slug}`.
+     - **Autenticado (member o superior):** ve los anuncios globales + los anuncios scoped a alguna de sus `parish_members`. Idem para listas: las de sus parroquias asociadas + arquidiocesanas (con dedupe).
+     - **RLS:** la base de datos abre la lectura a todos (mig. 0035) para que la página de parroquia funcione para invitados. El filtro de audiencia es responsabilidad de los loaders de la home y `/novedades`.
+  5. **Popup destacado:** si existe un anuncio con `featured=true` que aplique a la audiencia y esté vigente, se muestra como **modal fullscreen** sobre la home al cargar la página (con botón X y cierre por backdrop/Esc). Si hay varios, gana el de mayor `priority`. El popup también aparece en el grid normal.
+  6. El usuario navega al contenido de su interés.
 - **Flujos alternativos:**
   - 1a. Sin festividad ni anuncios: la home muestra el tiempo litúrgico calculado y acceso al buscador y al catálogo.
 - **Postcondiciones:** Ninguna persistente.
@@ -336,6 +336,7 @@ Rol global con permisos plenos.
   - 4a. El usuario cancela el diálogo de impresión: queda en la vista, con un botón "Imprimir" para reintentar y "← Volver" para ir a la canción.
 - **Postcondiciones:** Ninguna persistente.
 - **Notas técnicas:** No se genera PDF server-side; se usa CSS print + `window.print()` del navegador. La vista vive en el route group `(print)` para no heredar el chrome del sitio (header/footer/toolbar).
+  - Vista `/imprimir` con CSS print + auto-shrink en una hoja A4 (mínimo 9pt).
 
 ---
 
@@ -346,12 +347,14 @@ Rol global con permisos plenos.
 - **Precondiciones:** La playlist tiene al menos una canción.
 - **Disparador:** El usuario elige "Descargar cancionero" desde la vista de playlist.
 - **Flujo principal:**
-  1. El usuario elige opciones (con/sin acordes, tamaño A4, índice sí/no).
-  2. El sistema arma un PDF concatenando cada canción con portada (nombre de parroquia) e índice.
+  1. El usuario elige opciones (con/sin acordes, tamaño A4, índice sí/no, respetar numeración si/no).
+  2. El sistema arma un PDF concatenando cada canción con portada (nombre de parroquia) e índice, usando numeración original o enumerando desde 1.
   3. El navegador descarga el archivo.
 - **Flujos alternativos:**
   - 2a. Una canción no se puede renderizar: se omite y se reporta en el índice como faltante.
 - **Postcondiciones:** Ninguna persistente.
+  - ⏳ PDF/print de todas las canciones de la playlist, con preview. Colocar el botón de descarga cuando se está visualizando la playlist. 
+  - Hacer menu con opciones antes de renderizar.
 
 ---
 
@@ -429,45 +432,31 @@ Rol global con permisos plenos.
 
 - **RF:** RF1
 - **Actores primarios:**
-  - **Coordinador parroquial:** crea/edita y envía a revisión.
-  - **Editor de contenido:** aprueba o rechaza.
-- **Precondiciones:** Sesión activa con uno de los roles indicados.
+  - **Editor de contenido:** crea, edita, aprueba.
+  - **Admin:** mismas capacidades que Editor.
+- **Precondiciones:** Sesión activa con rol Editor o Admin.
 - **Disparadores:**
-  - Coordinador: accede a `/admin/canciones` y crea/edita un borrador.
-  - Editor: accede a `/admin/canciones?estado=review` y revisa pendientes.
+  - Editor/Admin: accede a `/admin/canciones` para crear, editar o revisar.
 
-### Flujo principal — Coordinador parroquial (envía)
+> **Cambio 2026-05-15:** el rol Coordinador parroquial ya NO puede crear ni editar canciones. Solo Editor/Admin gestionan el cantoral. El coordinador conserva la lectura de canciones publicadas como cualquier usuario.
 
-1. El coordinador crea una canción nueva o edita una existente: título, autor, categorías litúrgicas (una o varias, vía chips clicables), letra, acordes (ChordPro), tonalidad original, tempo, link YT, partituras y audios. **Alta:** el botón "+ Nuevo" llama al RPC `create_blank_song` (mig. 0024), que asigna automáticamente el siguiente número (`max(number) + 1` sobre todos los estados, con `pg_advisory_xact_lock` para evitar carreras) y redirige al editor con la canción ya creada en `draft`. Los huecos no se reusan.
+### Flujo principal — Editor/Admin (crea y publica)
+
+1. El editor crea una canción nueva o edita una existente: título, autor, categorías litúrgicas (una o varias, vía chips clicables), letra, acordes (ChordPro), tonalidad original, tempo, link YT, partituras y audios. **Alta:** el botón "+ Nuevo" llama al RPC `create_blank_song` (mig. 0024, restringido a editor/admin desde mig. 0037), que asigna automáticamente el siguiente número (`max(number) + 1` sobre todos los estados, con `pg_advisory_xact_lock` para evitar carreras) y redirige al editor con la canción ya creada en `draft`. Los huecos no se reusan.
 2. El sistema valida formato de acordes y campos obligatorios.
 3. El sistema sube los archivos a Supabase Storage (`partituras`, `audios`) en estado `draft` (no son visibles públicamente).
-4. La canción queda persistida con `status = 'draft'`. El coordinador puede seguir editándola.
-5. Cuando considera que está lista, hace clic en **"Enviar a revisión"**.
-6. El sistema cambia `status` a `'review'`, registra `submitted_by` y `submitted_at`, y notifica a los Editores. La canción queda bloqueada para edición salvo por el Editor.
-
-### Flujo principal — Editor de contenido (aprueba / rechaza)
-
-1. El editor abre la cola de revisión y ve la canción con sus archivos.
-2. **Aprobar:**
-   1. El editor confirma "Aprobar".
-   2. El sistema cambia `status` a `'published'`, registra `reviewed_by`, `reviewed_at`, `published_at`.
-   3. El sistema inserta una nueva fila en `song_versions` con el snapshot del contenido aprobado e incrementa `songs.current_version`.
-   4. Los archivos asociados (`song_files`) pasan también a `'published'` y quedan accesibles públicamente.
-   5. La canción aparece en búsquedas (CU-01) y vistas públicas (CU-02).
-3. **Rechazar:**
-   1. El editor escribe `review_notes` (obligatorio) explicando los cambios solicitados.
-   2. El sistema cambia `status` a `'rejected'`, registra `reviewed_by` y `reviewed_at`.
-   3. La canción vuelve a ser editable por el coordinador (puede pasar nuevamente a `'draft'` al editarla).
-   4. El sistema notifica al coordinador.
+4. La canción queda persistida con `status = 'draft'`. El editor puede seguir editándola.
+5. Cuando considera que está lista, puede enviarla a revisión (paso opcional cuando hay un segundo editor que valida) o publicarla directamente.
+6. **Aprobar / publicar:** el sistema cambia `status` a `'published'`, registra `reviewed_by`, `reviewed_at`, `published_at`, inserta snapshot en `song_versions` e incrementa `songs.current_version`. Los archivos asociados (`song_files`) pasan también a `'published'`. La canción aparece en búsquedas (CU-01) y vistas públicas (CU-02).
+7. **Rechazar (cuando se usó review):** el editor escribe `review_notes` (obligatorio); el sistema cambia `status` a `'rejected'` y registra `reviewed_by`/`reviewed_at`. Otro editor puede retomarla.
 
 ### Flujos alternativos
 
-- **2a (validación):** Acordes mal formados → error inline; no se permite enviar a revisión.
-- **6a (sin permisos):** Un usuario sin rol Coordinador o Editor no puede acceder a `/admin/canciones` (RLS rechaza).
-- **Edición concurrente:** Si la canción está en `'review'`, el coordinador no puede editarla; debe esperar a que el editor decida o "retirar de revisión" (vuelve a `'draft'`).
+- **2a (validación):** Acordes mal formados → error inline; no se permite enviar a revisión ni publicar.
+- **Sin permisos:** Un usuario sin rol Editor/Admin no puede acceder a `/admin/canciones` (UI redirige + RLS rechaza). El coordinador parroquial queda fuera.
 - **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar (RPC `archive_song`, mig. 0022). Se confirma con doble paso (dos `confirm` consecutivos en la UI). La transición es válida desde cualquier estado salvo `archived`. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva. El archivado/Eliminado limpia los campos de flujo (`submitted_*`, `reviewed_*`, `published_at`, `review_notes`).
 - **Reverso (`unarchive_song`):** Editor o Admin pueden desarchivar; la canción vuelve a `draft` y debe pasar por el flujo de revisión si quiere republicarse.
-- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`. *(Decisión: simplificación deliberada — el Editor tiene confianza total y el flujo de review se reserva para canciones nuevas. El coordinator no puede editar canciones publicadas.)*
+- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`.
 
 ### Postcondiciones
 
@@ -481,7 +470,7 @@ Edición rápida de una canción cuando solo se modifica la letra y los metadato
 
 - **Disparador:** desde la vista de canción o desde `/admin/canciones`, opción "Editar".
 - **Campos editables:** `title`, `number`, `author_id`, categorías litúrgicas (relación N:M `song_categories`), `body` (solo letra, sin marcadores `[acorde]`), `tempo_bpm`, `youtube_url`.
-- **Flujo:** al guardar, si la canción estaba `published` se crea una nueva edición en estado `draft` que sigue el flujo de revisión (CU-16). Si estaba en `draft`/`rejected`, se sobrescribe.
+- **Flujo:** la edición la realiza el Editor/Admin directamente sobre la canción. Si estaba `published`, sigue `published` (no se re-genera flujo draft→review). Si estaba en `draft`/`rejected`, se sobrescribe.
 - **Flujos alternativos:**
   - 1a. La canción tenía acordes en `body` previos: el editor "sin acordes" preserva los marcadores intactos y solo muestra la letra plana; los acordes no se pierden.
 
@@ -506,9 +495,9 @@ Edición específica de la información musical.
 
 - **RF:** RF2
 - **Actores primarios:**
-  - **Coordinador parroquial:** crea/edita/elimina playlists de su parroquia.
-  - **Administrador:** gestiona playlists de cualquier parroquia.
-  - **Coordinador pastoral:** coordinador de la parroquia virtual `arquidiocesis`; sus playlists pueden marcarse `is_archdiocesan` y aparecen en todas las parroquias.
+  - **Coordinator parroquial:** crea/edita/elimina playlists de su parroquia.
+  - **Editor:** además gestiona playlists arquidiocesanas (`is_archdiocesan=true`) por ser siempre coordinator de la parroquia virtual `arquidiocesis`.
+  - **Admin:** gestiona playlists de cualquier parroquia y puede reasignar `parish_id`.
 
 ### Modelo (estilo Spotify)
 
@@ -518,7 +507,7 @@ Edición específica de la información musical.
 - **Compartir por URL:** quien tenga la URL `/playlists/{uuid}` puede ver la playlist **independientemente de `visibility`**. La visibilidad solo decide si la playlist aparece o no en listados públicos / búsquedas. Esto vale incluso para playlists `private` si el dueño compartió el link explícitamente.
 - **Playlist personal (`parish_id IS NULL`):** rol `member` puede crear playlists sin parroquia. El dueño es `created_by`. Aparecen en sus propios listados y se comparten por URL como cualquier otra. El admin puede reasignar el `parish_id` (convertir personal → de parroquia, o viceversa).
 - **Compartir entre parroquias:** tabla `playlist_parish_subscriptions(playlist_id, parish_id)`. Otra parroquia puede "suscribirse" a una playlist pública para que aparezca en su listado.
-- **Arquidiocesanas:** flag `playlists.is_archdiocesan`. Si está en `true`, la playlist se ve por defecto en el listado de todas las parroquias (sin necesidad de suscripción explícita). Solo se permite marcar `is_archdiocesan` cuando la parroquia dueña es `arquidiocesis`.
+- **Arquidiocesanas:** flag `playlists.is_archdiocesan`. Si está en `true`, la playlist se ve por defecto en el listado de todas las parroquias (sin necesidad de suscripción explícita). Solo el **editor** puede marcar `is_archdiocesan = true` (es siempre coordinator de la parroquia virtual `arquidiocesis`).
 
 ### Listados disponibles
 
@@ -529,7 +518,7 @@ Edición específica de la información musical.
 ### Flujo principal — Crear
 
 1. Coordinador (o admin) entra a `/parroquias/{slug}/playlists/nueva`.
-2. Completa nombre (obligatorio), descripción, visibilidad, **vigencia** (ver más abajo), **imagen opcional** (CU-17.4) y opcionalmente `is_archdiocesan` (solo visible si la parroquia es `arquidiocesis`).
+2. Completa nombre (obligatorio), descripción, visibilidad, **vigencia** (ver más abajo), **imagen opcional** (CU-17.4) y opcionalmente `is_archdiocesan` (campo visible solo para el editor, sobre playlists de `arquidiocesis`).
 3. Al guardar, el sistema redirige a `/playlists/{nuevo-id}/editar`.
 4. En la pantalla de edición, abajo aparece el editor de canciones (CU-17.1.a).
 
@@ -625,17 +614,18 @@ Una playlist puede tener una imagen asociada que aparece como franja izquierda (
 ## CU-19: ABM de parroquia
 
 - **RF:** RF10
-- **Actor primario:** Administrador
-- **Precondiciones:** Sesión con rol admin.
-- **Disparador:** Acceso a `/admin/parroquias`.
+- **Actores primarios:** Editor / Admin.
+- **Precondiciones:** Sesión con rol editor o admin.
+- **Disparador:** Acceso a `/admin/parroquias` (o botón "+ Agregar" desde `/parroquias`).
 - **Flujo principal:**
-  1. El admin crea/edita/baja parroquias (nombre, dirección, slug, contacto).
+  1. El editor o admin crea/edita/baja parroquias (nombre, dirección, slug, contacto).
   2. Al crear una nueva, el sistema ofrece **autocompletar desde OpenStreetMap** (CU-19.1).
   3. El sistema valida unicidad del slug (`parishes.slug`).
-  4. Persiste los cambios.
+  4. Persiste los cambios. La parroquia queda **activa de inmediato** — no existe estado `pending` ni flujo de aprobación (decisión 2026-05-15).
 - **Flujos alternativos:**
   - 3a. Slug duplicado: el sistema sugiere uno alternativo basado en `slugify(name)` con sufijo numérico.
-- **Postcondiciones:** Parroquia persistida.
+  - **Sin permisos:** coordinator y member NO pueden crear, editar ni borrar parroquias; la UI esconde los botones y la RLS rechaza.
+- **Postcondiciones:** Parroquia persistida y visible.
 
 ### CU-19.1: Autocompletar parroquia desde OpenStreetMap (Nominatim)
 
@@ -643,12 +633,12 @@ Al crear una parroquia nueva, el formulario ofrece dos modos de localización us
 
 a. **Por GPS del navegador:** el sistema solicita `navigator.geolocation.getCurrentPosition`. Con las coordenadas, consulta Nominatim acotado a un viewbox de ~2 km alrededor del punto y muestra una lista de candidatos con nombre y dirección. Al elegir uno se prellenan `name`, `address`, `city`.
 
-b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 caracteres) y se invoca `nominatim.openstreetmap.org/search`. Al elegir un resultado se prellenan los mismos campos.
+b. **Por búsqueda de texto:** el editor/admin escribe un nombre/dirección (mínimo 3 caracteres) y se invoca `nominatim.openstreetmap.org/search`. Al elegir un resultado se prellenan los mismos campos.
 
 - **Flujos alternativos:**
   - a.1. El navegador deniega geolocalización: se muestra mensaje y se ofrece el modo (b).
   - a.2. Sin candidatos cercanos: se muestra mensaje "No encontramos parroquias cerca" y se ofrece (b).
-  - El admin siempre puede editar manualmente cualquier campo prellenado.
+  - El editor/admin siempre puede editar manualmente cualquier campo prellenado.
 - **Postcondiciones:** Datos prellenados; la parroquia se persiste recién al pulsar "Guardar" del formulario principal (CU-19).
 
 ---
@@ -672,28 +662,33 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ## CU-21: Gestionar anuncios
 
 - **RF:** RF19
-- **Actor primario:** Administrador.
-- **Precondiciones:** Sesión con rol admin.
+- **Actores primarios:**
+  - **Coordinator:** crea anuncios dirigidos a su(s) parroquia(s).
+  - **Editor / Admin:** además crean anuncios globales (sin destinatarios específicos) y pueden dirigir a cualquier parroquia.
+- **Precondiciones:** Sesión con rol coordinator, editor o admin.
 - **Disparador:** Acceso a `/admin/anuncios`.
 - **Alcance:** "anuncio" y "novedad" son el mismo concepto. Un anuncio es una pieza de contenido con **vigencia configurable** (ver `entity_schedules`, CU-17.3) que aparece en la home (CU-07). Pueden ser **anuncios comunes** (`kind is null`) o **festividades litúrgicas** (`kind` con valor) que reemplazan a la antigua tabla `liturgical_events` (eliminada en migración 0018).
 
 ### Modelo
 
 - **Vigencia:** se evalúa con `entity_schedules` (`entity_type='announcement'`) en hora AR. Sin reglas → siempre vigente.
-- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo`) para festividades litúrgicas que la home muestra en el bloque "Festividad de hoy".
-- **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo.
+- **Tipo (`kind`):** NULL para anuncios comunes; valor (`solemnidad` / `fiesta` / `memoria` / `tiempo` / `indicaciones`) para festividades litúrgicas o indicaciones que la home muestra en el bloque "Festividad de hoy".
+- **Atajo opcional (banner clickeable):** `target_kind ∈ ('song','playlist','parish','external','none','document')` + `target_id` o `target_url`. Si está definido, el banner enlaza al recurso correspondiente. Si `target_kind='none'`, el anuncio es solo informativo. Si `target_kind='document'`, enlaza a `/anuncios/{id}` donde se renderiza el documento rich asociado (`announcement_documents`).
+- **Destacado (`featured`):** si `true`, el anuncio se muestra como **popup fullscreen** sobre la home en cada carga (con X para cerrar y CTA al atajo si lo tiene). Sigue apareciendo también en el grid normal. Si hay varios destacados aplicables, gana el de mayor `priority`.
 - **Destinatarios:** tabla N–N `announcement_parishes(announcement_id, parish_id)`.
-  - Sin filas → **anuncio global** (lo ven todos: anónimos y autenticados).
-  - Con filas → **anuncio dirigido**: lo ven únicamente los usuarios autenticados asociados (vía `parish_members`) a alguna de esas parroquias. Los anónimos **no** lo ven.
+  - Sin filas → **anuncio global** (en la home lo ven todos, anónimos y autenticados).
+  - Con filas → **anuncio dirigido a parroquias específicas**: en la home solo lo ven los autenticados asociados (vía `parish_members`) a alguna de esas parroquias. En la **página de la parroquia** (`/parroquias/{slug}`) lo ve cualquier visitante.
+  - El filtro por audiencia se aplica client-side en los loaders. La RLS (mig. 0035) habilita lectura abierta para soportar la página de parroquia y `/anuncios/{id}`.
 - **Deduplicación:** un mismo anuncio se muestra una sola vez al usuario, aunque esté asociado a múltiples parroquias destinatarias.
+- **Documento asociado (target_kind='document'):** en el form, al elegir el atajo "Documento" aparece el botón **"Crear documento"** / **"Editar documento"**. Si el anuncio aún no fue persistido, al hacer click el form valida + guarda el anuncio y navega al editor `/admin/anuncios/{id}/documento`. El editor es **TipTap** (StarterKit + Underline + Link) y soporta pegado preservando formato desde Word/Docs/web. Al guardar, hace `upsert` en `announcement_documents`. La vista pública `/anuncios/{id}` sanea el HTML con **DOMPurify** antes de renderizar.
 
 ### Flujo principal — Crear
 
-1. El admin entra a `/admin/anuncios/nuevo`.
+1. El usuario entra a `/admin/anuncios/nuevo`.
 2. Completa: `title` (obligatorio), `body` (opcional), `kind` (opcional — festividad), `priority`, **imagen opcional** (`image_path` en bucket `images`, mismas reglas que CU-17.4), **vigencia** (ver CU-17.3 — mismo editor reusado).
 3. Selecciona destinatarios:
-   - **Todas las parroquias** (default) — no se insertan filas en `announcement_parishes`.
-   - **Parroquias específicas** — selector multi-select. Debe elegir al menos una.
+   - **Todas las parroquias** (anuncio global, sin filas en `announcement_parishes`) — opción visible solo para **editor + admin**.
+   - **Parroquias específicas** — selector multi-select. El **coordinator** solo ve sus propias parroquias y debe elegir al menos una; editor/admin pueden elegir cualquiera.
 4. Opcionalmente define un atajo: tipo de recurso + selección (búsqueda del recurso o URL externa).
 5. Al guardar, se inserta la fila en `announcements` y, si corresponde, las filas en `announcement_parishes`.
 
@@ -716,6 +711,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ### Flujos alternativos
 
 - 3a. **Selección "específicas" sin elegir ninguna parroquia** → error de validación.
+- 3b. **Coordinator intenta crear anuncio global** → la opción "Todas las parroquias" no aparece en su UI; si llega vía API, RLS rechaza.
 - 4a. **Atajo con tipo `song`/`playlist`/`parish` y `target_id` ausente** → error de validación.
 - 4b. **Atajo con tipo `external` y `target_url` inválida** → error de validación.
 
@@ -785,6 +781,7 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
   2. **Buscar:** abre un overlay/diálogo con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01.
   3. **Mis favoritos:** abre el diálogo popup de CU-22.
   4. **Menú:** abre el menú desplegable con encabezado de perfil read-only (avatar + nombre + email, o "Invitado" + botón "Iniciá sesión") y los items de navegación y configuración.
+- NOTA: Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.      
 - **Flujos alternativos:**
   - **Buscar sin término:** el overlay muestra accesos rápidos (parroquias destacadas, últimas playlists, etc.).
 - **Postcondiciones:** Ninguna persistente; las acciones derivadas siguen sus propios CU.
@@ -794,8 +791,8 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 ## CU-25: Gestión de categorías litúrgicas
 
 - **RF:** RF22
-- **Actores primarios:** Coordinador parroquial / Editor de contenido / Administrador.
-- **Precondiciones:** Sesión activa con uno de esos roles.
+- **Actores primarios:** Editor / Admin (las categorías se asignan dentro del editor de canción, y las canciones solo las gestionan editor/admin desde la mig. 0037).
+- **Precondiciones:** Sesión activa con rol editor o admin.
 - **Alcance:** una canción puede tener **una o varias** categorías litúrgicas (Entrada, Comunión, Ofertorio, Salida, Mariana, etc.). La relación canción↔categoría se modela como N:M en la tabla pivote `song_categories` (mig. 0021). El catálogo `categories` es un vocabulario controlado.
 
 ### Asignación de categorías a una canción (implementado)
@@ -817,47 +814,23 @@ b. **Por búsqueda de texto:** el admin escribe un nombre/dirección (mínimo 3 
 
 ---
 
-## CU-26: ABM de festividades litúrgicas (DEPRECADO — fusionado en CU-21)
+## CU-26 - Pagina de creditos y privacidad
 
-> **Nota:** la migración 0018 eliminó la tabla `liturgical_events`. Las festividades litúrgicas ahora son **anuncios** con `kind in ('solemnidad','fiesta','memoria','tiempo')` (ver CU-21; `'otro'` se removió en migración 0019). El ABM se hace desde `/admin/anuncios`. La sección que sigue queda como referencia histórica.
+- Asi quedan los emails cuando se acceden a las paginas /creditos o /privacidad:
+  
+  Setting                 Origen        Uso
+  --------------------------------------------------------------------
+  legal_contact_emails    Setting       /privacidad
+  credits_contact_emails  Setting       /creditos
 
-- **RF:** RF23
-- **Actor primario:** Administrador.
-- **Precondiciones:** Sesión con rol admin.
-- **Disparador:** acceso a `/admin/eventos-liturgicos`.
-- **Flujo principal:**
-  1. El admin lista las festividades cargadas en `liturgical_events` ordenadas por `event_date`. Filtros básicos: año, tipo (`solemnidad`, `fiesta`, `memoria`, `tiempo`, `otro`).
-  2. Crea/edita/elimina entradas con: `name`, `slug` (autogenerado), `event_date` (fecha concreta), `kind`, `description`, `playlist_id` opcional (sugerencia de repertorio para esa fecha).
-  3. El sistema valida unicidad de `slug` y que `event_date` sea válida.
-  4. Persiste los cambios.
-- **Comportamiento en home (CU-07):** la festividad cargada en `liturgical_events` para `event_date = hoy` tiene **prioridad** sobre la festividad calculada por la librería `romcal`. Esto permite controlar nombre, descripción y playlist asociada en español argentino.
-- **Flujos alternativos:**
-  - 3a (slug duplicado): el sistema sugiere uno alternativo con sufijo numérico.
-  - Baja con playlist asociada: la FK `liturgical_events.playlist_id` es `ON DELETE SET NULL`, por lo que borrar la playlist no elimina el evento.
-- **Postcondiciones:** Evento persistido en `liturgical_events`.
 
-### CU-26.1: Importación automática del calendario litúrgico
+- Contactos de roles: esto se ve en /parroquias
+- siempre desde DB vía parish_members y get_users_by_global_role.
 
-Para evitar carga manual año tras año, el sistema ofrece una **importación masiva** desde una fuente externa.
-
-- **Fuentes posibles** (a evaluar al implementar):
-  - **Conferencia Episcopal Argentina** ([episcopado.org](https://episcopado.org) — sección liturgia): publica el calendario en HTML. Requiere scraping.
-  - **Vaticano** ([vatican.va](https://www.vatican.va)): calendario universal en HTML, también scraping.
-  - **divinumofficium.com**: calendario tradicional, HTML.
-  - **iCal feeds litúrgicos** (catholic-resources.org, universalis.com): formato `.ics` parseable.
-  - **romcal** (librería ya instalada): generación local sin red, pero sin locale español. Puede combinarse con un mapa de traducción y servir como base, sobreescribiendo los nombres con scraping si se prefiere.
-- **Disparador:** botón **"Importar calendario {año}"** en `/admin/eventos-liturgicos`.
-- **Flujo:**
-  1. El admin elige el año (default: año en curso).
-  2. El sistema obtiene el calendario desde la fuente configurada (server-side; el scraping se hace en un endpoint Next.js, no desde el browser).
-  3. Se previsualizan las entradas que se van a crear, marcando duplicados con respecto a lo ya cargado (mismo `slug` o misma `event_date`).
-  4. El admin confirma. Las entradas se insertan con `on conflict do nothing` para no pisar ediciones manuales.
-  5. Al finalizar se muestra un resumen: *N creadas, M omitidas (duplicadas), K errores*.
-- **Flujos alternativos:**
-  - La fuente externa cae o cambia su formato → el sistema marca el error y permite reintentar; las entradas ya existentes no se tocan.
-- **Postcondiciones:** Múltiples filas en `liturgical_events`. La carga manual sigue siendo posible para corregir nombres/descripciones.
-
-> **Nota:** la elección de la fuente y el parser específico se decidirá al implementar el CU. El scraping de sitios oficiales requiere respetar `robots.txt` y aplicar caching agresivo (los calendarios cambian anualmente, no diariamente).
-
----
-
+  Visitante	          Personas            Si vacío
+  --------------------------------------------------------------------
+  Admin	                —                   —
+  Editor              Admins              (mensaje "no hay contactos")
+  Coord de la parro   Editores + Admins   (mensaje)
+  Member común        Coords de la parro  Editores (fallback DB)
+  Invitado            Coords de la parro  Sección oculta

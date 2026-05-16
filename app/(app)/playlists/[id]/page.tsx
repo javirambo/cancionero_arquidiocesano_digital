@@ -145,7 +145,7 @@ export default async function PlaylistPage({
             </Link>
           )}
           <PrecacheButton
-            slugs={pl.songs.map((s) => s.slug)}
+            slugs={pl.songs.filter((s) => s.status === "published").map((s) => s.slug)}
             storageKey={`playlist:${pl.id}`}
           />
         </div>

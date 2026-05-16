@@ -21,7 +21,9 @@
       "Bash(npx eslint *)",
       "Bash(xargs sed *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "PowerShell(python \"C:\\\\Users\\\\javie\\\\OneDrive\\\\Documentos\\\\Proyectos\\\\Iset57\\\\cancionero_arquidiocesano_digital\\\\canciones\\\\test.py\")",
+      "PowerShell(pip install geopy)"
     ]
   }
 }

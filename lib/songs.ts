@@ -165,6 +165,41 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   };
 }
 
+// Trae un set acotado de canciones publicadas por sus IDs con todos los campos
+// necesarios para renderizar la vista detalle. Conserva el orden de `ids`.
+// Usado por el pager de playlist para precargar canciones adyacentes (CU-05).
+export async function getSongsByIds(ids: string[]): Promise<Song[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("songs")
+    .select(
+      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
+    )
+    .eq("status", "published")
+    .in("id", ids);
+  if (error) throw error;
+  const byId = new Map((data ?? []).map((r) => [r.id as string, r]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((row): row is NonNullable<typeof row> => row !== undefined)
+    .map((row) => {
+      const files = (row.song_files as { id: string }[] | null) ?? [];
+      return {
+        id: row.id as string,
+        number: row.number as number | null,
+        title: row.title as string,
+        slug: row.slug as string,
+        body: row.body as string,
+        original_key: row.original_key as string | null,
+        youtube_url: row.youtube_url as string | null,
+        categories: categoryNames(row.song_categories as SongCategoryRel),
+        author: joinAuthors(row.author1 as Named, row.author2 as Named),
+        hasFiles: files.length > 0,
+      };
+    });
+}
+
 export async function listSongsWithCapabilities(
   q: string = "",
   limit = 100,
@@ -424,7 +459,9 @@ export type LiturgicalEventToday = {
 
 // Festividad litúrgica del día: anuncio con `kind` litúrgico y schedule
 // vigente ahora. Si hay varios, gana el de mayor priority.
-export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
+export async function getEventForToday(
+  audience?: "home"
+): Promise<LiturgicalEventToday | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("announcements")
@@ -434,7 +471,7 @@ export async function getEventForToday(): Promise<LiturgicalEventToday | null> {
   if (error) throw error;
   const allRows = (data ?? []) as Array<{ id: string } & Record<string, unknown>>;
   if (allRows.length === 0) return null;
-  const rows = await filterAnnouncementsByParish(allRows);
+  const rows = await filterAnnouncementsByAudience(allRows, audience);
   if (rows.length === 0) return null;
 
   const ids = rows.map((r) => r.id);
@@ -482,6 +519,7 @@ export type Featured = {
   target_id: string | null;
   target_url: string | null;
   image_path: string | null;
+  featured: boolean;
   // URL ya resuelta a la que debe navegar el banner si es clickeable.
   // Null cuando target_kind === 'none' o no se pudo resolver.
   href: string | null;
@@ -497,6 +535,7 @@ type AnnouncementRow = {
   target_url: string | null;
   image_path: string | null;
   priority: number;
+  featured: boolean;
   created_at: string;
 };
 
@@ -538,6 +577,8 @@ async function resolveAnnouncementHrefs(
       if (slug) href = `/parroquias/${slug}`;
     } else if (r.target_kind === "external" && r.target_url) {
       href = r.target_url;
+    } else if (r.target_kind === "document") {
+      href = `/anuncios/${r.id}`;
     }
     return {
       title: r.title,
@@ -547,13 +588,14 @@ async function resolveAnnouncementHrefs(
       target_id: r.target_id,
       target_url: r.target_url,
       image_path: r.image_path,
+      featured: r.featured,
       href,
     };
   });
 }
 
-// Parroquias asociadas al usuario actual (principal en `users.parish_id` +
-// asociadas vía `parish_members`). Devuelve set vacío si no hay sesión.
+// Parroquias asociadas al usuario actual (principal en users.parish_id +
+// asociadas vía parish_members). Devuelve set vacío si no hay sesión.
 async function getCurrentUserParishIds(): Promise<Set<string>> {
   const supabase = await createClient();
   const {
@@ -573,21 +615,20 @@ async function getCurrentUserParishIds(): Promise<Set<string>> {
   return ids;
 }
 
-// Filtra anuncios por parroquia: un anuncio es visible si NO tiene filas en
-// `announcement_parishes` (es global/arquidiocesano) o si intersecta con las
-// parroquias del usuario actual.
-async function filterAnnouncementsByParish<T extends { id: string }>(
-  rows: T[]
+// Filtra anuncios según la audiencia.
+// - "home": invitado solo ve globales (sin filas en announcement_parishes);
+//   member ve globales + scoped a sus parroquias.
+// - undefined: pass-through (todas las filas, RLS ya decide).
+async function filterAnnouncementsByAudience<T extends { id: string }>(
+  rows: T[],
+  audience?: "home"
 ): Promise<T[]> {
-  if (rows.length === 0) return rows;
+  if (rows.length === 0 || audience !== "home") return rows;
   const supabase = await createClient();
   const { data: links } = await supabase
     .from("announcement_parishes")
     .select("announcement_id, parish_id")
-    .in(
-      "announcement_id",
-      rows.map((r) => r.id)
-    );
+    .in("announcement_id", rows.map((r) => r.id));
   const byAnn = new Map<string, Set<string>>();
   for (const l of links ?? []) {
     const annId = l.announcement_id as string;
@@ -606,36 +647,39 @@ async function filterAnnouncementsByParish<T extends { id: string }>(
 
 async function listAnnouncementsByKindFilter(
   kindFilter: "null" | "not-null",
-  limit?: number
+  limit?: number,
+  audience?: "home"
 ): Promise<{ items: Featured[]; total: number }> {
   const supabase = await createClient();
   let query = supabase
     .from("announcements")
-    .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, created_at")
+    .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at")
     .order("created_at", { ascending: false });
   if (kindFilter === "null") query = query.is("kind", null);
   else query = query.not("kind", "is", null);
   const { data, error } = await query;
   if (error) throw error;
   const all = (data ?? []) as AnnouncementRow[];
-  const byParish = await filterAnnouncementsByParish(all);
-  const sched = await loadSchedules("announcement", byParish.map((r) => r.id));
-  const visibles = byParish.filter((r) => isVisibleNow(sched.get(r.id)));
+  const byAudience = await filterAnnouncementsByAudience(all, audience);
+  const sched = await loadSchedules("announcement", byAudience.map((r) => r.id));
+  const visibles = byAudience.filter((r) => isVisibleNow(sched.get(r.id)));
   const rows = limit ? visibles.slice(0, limit) : visibles;
   const items = await resolveAnnouncementHrefs(rows);
   return { items, total: visibles.length };
 }
 
 export async function listCommonAnnouncements(
-  limit?: number
+  limit?: number,
+  audience?: "home"
 ): Promise<{ items: Featured[]; total: number }> {
-  return listAnnouncementsByKindFilter("null", limit);
+  return listAnnouncementsByKindFilter("null", limit, audience);
 }
 
 export async function listLiturgicalAnnouncements(
-  limit?: number
+  limit?: number,
+  audience?: "home"
 ): Promise<{ items: Featured[]; total: number }> {
-  return listAnnouncementsByKindFilter("not-null", limit);
+  return listAnnouncementsByKindFilter("not-null", limit, audience);
 }
 
 // Anuncios vinculados específicamente a una parroquia (excluye globales).
@@ -655,7 +699,7 @@ export async function listAnnouncementsForParish(
   const { data, error } = await supabase
     .from("announcements")
     .select(
-      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, created_at"
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
     )
     .in("id", ids)
     .order("priority", { ascending: false })
@@ -667,6 +711,29 @@ export async function listAnnouncementsForParish(
   const rows = limit ? visibles.slice(0, limit) : visibles;
   const items = await resolveAnnouncementHrefs(rows);
   return { items, total: visibles.length };
+}
+
+// Devuelve el anuncio destacado (featured = true) de mayor prioridad que el
+// usuario debería ver en la Home. Aplica filtros de parroquia y vigencia.
+export async function loadFeaturedAnnouncementPopup(): Promise<Featured | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
+    )
+    .eq("featured", true)
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  if (all.length === 0) return null;
+  const byAudience = await filterAnnouncementsByAudience(all, "home");
+  const sched = await loadSchedules("announcement", byAudience.map((r) => r.id));
+  const visibles = byAudience.filter((r) => isVisibleNow(sched.get(r.id)));
+  if (visibles.length === 0) return null;
+  const items = await resolveAnnouncementHrefs(visibles.slice(0, 1));
+  return items[0] ?? null;
 }
 
 // Compat: la home anterior llamaba listActiveFeatured (5 items, kind null).

@@ -16,6 +16,20 @@ type Props = {
 
 type Mode = "list" | "create";
 
+// Cache en memoria de "playlists del usuario" para evitar refetch al abrir
+// el menú en distintas canciones. TTL corto + clave por user.id.
+const PLAYLISTS_CACHE_TTL_MS = 5 * 60 * 1000;
+type PlaylistsCacheEntry = {
+  userId: string;
+  groups: AddablePlaylistGroup[];
+  fetchedAt: number;
+};
+let playlistsCache: PlaylistsCacheEntry | null = null;
+
+export function invalidatePlaylistsCache() {
+  playlistsCache = null;
+}
+
 export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
   const { show: showToast } = useToast();
   const [groups, setGroups] = useState<AddablePlaylistGroup[] | null>(null);
@@ -30,13 +44,32 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
     let cancelled = false;
     (async () => {
       try {
+        const supabase = createClient();
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth.user?.id ?? null;
+
+        const now = Date.now();
+        if (
+          userId &&
+          playlistsCache &&
+          playlistsCache.userId === userId &&
+          now - playlistsCache.fetchedAt < PLAYLISTS_CACHE_TTL_MS
+        ) {
+          if (!cancelled) setGroups(playlistsCache.groups);
+          return;
+        }
+
         const res = await fetch("/api/playlists/mias");
         if (!res.ok) {
           if (!cancelled) setError("No se pudieron cargar tus playlists.");
           return;
         }
         const data = (await res.json()) as { groups: AddablePlaylistGroup[] };
-        if (!cancelled) setGroups(data.groups ?? []);
+        const fetched = data.groups ?? [];
+        if (userId) {
+          playlistsCache = { userId, groups: fetched, fetchedAt: Date.now() };
+        }
+        if (!cancelled) setGroups(fetched);
       } catch {
         if (!cancelled) setError("No se pudieron cargar tus playlists.");
       }
@@ -127,6 +160,7 @@ export function AddToPlaylistMenu({ songId, songTitle, onClose }: Props) {
         throw new Error(data.message ?? "No se pudo crear la playlist");
       }
       const created = (await res.json()) as { id: string; name: string };
+      invalidatePlaylistsCache();
 
       const supabase = createClient();
       const { error: insertErr } = await supabase

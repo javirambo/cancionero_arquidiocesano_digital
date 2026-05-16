@@ -4,8 +4,8 @@ export type ParishOption = { id: string; slug: string; name: string };
 
 // Devuelve las parroquias seleccionables como destino de un anuncio:
 // - nunca incluye la parroquia virtual `arquidiocesis`,
-// - si el usuario es admin, todas las parroquias activas,
-// - si no es admin, solo aquellas donde es miembro (parish_members).
+// - si el usuario es admin o editor, todas las parroquias no inactivas,
+// - si es coordinator/member, solo aquellas donde es miembro (parish_members).
 export async function listScopedParishes(): Promise<ParishOption[]> {
   const supabase = await createClient();
   const {
@@ -25,15 +25,16 @@ export async function listScopedParishes(): Promise<ParishOption[]> {
     })
     .filter((n): n is string => Boolean(n));
   const isAdmin = roleNames.includes("admin");
+  const isEditor = isAdmin || roleNames.includes("editor");
 
   let query = supabase
     .from("parishes")
     .select("id, slug, name")
-    .eq("status", "active")
+    .neq("status", "inactive")
     .neq("slug", "arquidiocesis")
     .order("name");
 
-  if (!isAdmin) {
+  if (!isEditor) {
     const { data: members } = await supabase
       .from("parish_members")
       .select("parish_id")

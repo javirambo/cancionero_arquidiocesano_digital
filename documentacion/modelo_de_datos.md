@@ -443,19 +443,22 @@ Anuncios + festividades litúrgicas que aparecen en la home (CU-07, CU-21). Pued
 | `id`           | uuid        | PK                                                                                            |
 | `title`        | text        | NOT NULL                                                                                      |
 | `body`         | text        | NULL permitido                                                                                |
-| `kind`         | text        | NULL = anuncio común. Si tiene valor in ('solemnidad','fiesta','memoria','tiempo') → festividad litúrgica |
-| `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none'); default 'none'                       |
+| `kind`         | text        | NULL = anuncio común. Si tiene valor in ('solemnidad','fiesta','memoria','tiempo','indicaciones') → festividad litúrgica o indicación |
+| `target_kind`  | text        | CHECK in ('song','playlist','parish','external','none','document'); default 'none'            |
 | `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`                                    |
 | `target_url`   | text        | requerido si `target_kind='external'`                                                         |
 | `priority`     | int         | default 0                                                                                     |
+| `featured`     | boolean     | default false. Si true, el anuncio se muestra como **popup fullscreen** en la home en cada carga (mig. 0033) |
 | `image_path`   | text        | NULL permitido. Path dentro del bucket `images` para la imagen del anuncio (mig. 0023)        |
 | `created_by`   | uuid        | FK → `users.id` ON DELETE SET NULL                                                            |
 | `created_at`   | timestamptz | default now()                                                                                 |
 | `updated_at`   | timestamptz | default now()                                                                                 |
 
-> **Alcance de visibilidad:** un anuncio es **global** si no tiene filas en `announcement_parishes`; en ese caso lo ven todos (anónimos y autenticados). Si tiene filas, es de **parroquias específicas** y lo ven únicamente los usuarios autenticados asociados (vía `parish_members`) a alguna de esas parroquias. Los anónimos solo ven los globales.
+> **Visibilidad (RLS, mig. 0035):** lectura totalmente abierta — cualquier usuario (incluso anónimo) puede leer cualquier anuncio. La vigencia se evalúa client-side con `entity_schedules`. El filtrado por audiencia ("solo globales para anónimo en la home" / "globales + las parroquias del miembro") se hace **en código** en los loaders de la home y `/novedades`, no en RLS. La página `/parroquias/[slug]` muestra todos los anuncios scoped a esa parroquia sin importar quién la visita.
 
 > **Deduplicación:** la consulta de la home devuelve cada anuncio una sola vez aunque el usuario esté asociado a varias parroquias destinatarias del mismo anuncio.
+
+> **target_kind = 'document':** el anuncio enlaza a un documento rich asociado 1:1 en `announcement_documents` (no usa `target_id` ni `target_url`). En la home/popup el atajo lleva a `/anuncios/{id}`.
 
 ---
 
@@ -469,6 +472,19 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 
 **PK compuesta:** `(announcement_id, parish_id)`.
 **Índices:** `parish_id` (para resolver "anuncios de esta parroquia").
+
+---
+
+### `announcement_documents`
+Documento rich (HTML) asociado 1:1 a un anuncio (mig. 0034). Solo existe cuando el anuncio tiene `target_kind='document'` **y** el editor lo guardó al menos una vez. Se renderiza en `/anuncios/{id}` con el contenido **saneado por DOMPurify** antes de insertarlo en el DOM. El editor admin es TipTap (`/admin/anuncios/{id}/documento`) y soporta pegado preservando formato desde Word/Google Docs/web.
+
+| Columna           | Tipo        | Notas                                                          |
+| ----------------- | ----------- | -------------------------------------------------------------- |
+| `announcement_id` | uuid        | PK, FK → `announcements.id` ON DELETE CASCADE                  |
+| `content_html`    | text        | HTML rich; NOT NULL, default `''`                              |
+| `updated_at`      | timestamptz | default now(), trigger `set_updated_at`                        |
+
+> **RLS:** lectura abierta a través de `announcement_is_visible_to_user(announcement_id)` (que en mig. 0035 devuelve siempre true) + admin + coordinator. Escritura: admin/editor global o coordinator de alguna parroquia destinataria del anuncio.
 
 ---
 
@@ -496,7 +512,7 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 | CU-05   | `playlists`, `playlist_songs`, `songs`, `parishes`, `entity_schedules`             |
 | CU-06.1 | `parishes`                                                                         |
 | CU-06.2 | `parishes`, `playlists`                                                            |
-| CU-07   | `announcements`, `announcement_parishes`, `entity_schedules`, `playlists`          |
+| CU-07   | `announcements`, `announcement_parishes`, `announcement_documents`, `entity_schedules`, `playlists` |
 | CU-08   | — (cliente)                                                                        |
 | CU-09   | `song_files`, bucket `partituras`                                                  |
 | CU-10   | `songs`                                                                            |
@@ -510,5 +526,5 @@ Destino multi-parroquia de un anuncio (relación N–N con `parishes`). Si un an
 | CU-18   | `users`, `user_roles`                                                              |
 | CU-19   | `parishes`                                                                         |
 | CU-20   | `roles`, `permissions`, `role_permissions`, `user_roles`                           |
-| CU-21   | `announcements`, `announcement_parishes`, `entity_schedules`, `parish_members`     |
+| CU-21   | `announcements`, `announcement_parishes`, `announcement_documents`, `entity_schedules`, `parish_members` |
 | CU-22   | `favorites`                                                                        |

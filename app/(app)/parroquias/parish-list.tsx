@@ -46,6 +46,16 @@ function sortByDistance(parishes: Parish[], origin: { lat: number; lon: number }
   return [...withCoords.map(({ _d, ...rest }) => rest as Parish), ...withoutCoords];
 }
 
+function filterByQuery(parishes: Parish[], q: string): Parish[] {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return parishes;
+  return parishes.filter(
+    (p) =>
+      p.name.toLowerCase().includes(needle) ||
+      p.slug.toLowerCase().includes(needle)
+  );
+}
+
 export function ParishList({
   parishes,
   initialMemberIds,
@@ -60,27 +70,28 @@ export function ParishList({
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Si las props del server cambian (p. ej. tras navegación), resincronizo.
+  // Filtros y colapso por sección.
+  const [mineQuery, setMineQuery] = useState("");
+  const [othersQuery, setOthersQuery] = useState("");
+  const [mineSearchOpen, setMineSearchOpen] = useState(false);
+  const [othersSearchOpen, setOthersSearchOpen] = useState(false);
+  const [mineCollapsed, setMineCollapsed] = useState(false);
+  const [othersCollapsed, setOthersCollapsed] = useState(false);
+
   useEffect(() => setMemberIds(new Set(initialMemberIds)), [initialMemberIds]);
   useEffect(() => setPrimaryId(initialPrimaryId), [initialPrimaryId]);
 
-  // Pedir geolocalización para ordenar "Otras" por cercanía. Si el usuario
-  // rechaza o el navegador no soporta, queda el orden alfabético.
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setOrigin({ lat: pos.coords.latitude, lon: pos.coords.longitude });
       },
-      () => {
-        // Silencioso: la geolocalización es asistencia, no requisito.
-      },
+      () => {},
       { timeout: 6000, maximumAge: 600_000 }
     );
   }, []);
 
-  // Set de ids "visibles como mías": memberIds + los que están saliendo
-  // (siguen mostrándose mientras dura la animación).
   const displayMembers = new Set(memberIds);
   for (const [id, state] of anim) {
     if (state === "leaving") displayMembers.add(id);
@@ -102,6 +113,9 @@ export function ParishList({
     .sort(sortByName);
   const others = origin ? sortByDistance(othersAlpha, origin) : othersAlpha;
 
+  const mineFiltered = filterByQuery(mine, mineQuery);
+  const othersFiltered = filterByQuery(others, othersQuery);
+
   async function handleAdd(parishId: string) {
     if (!userId) return;
     setError(null);
@@ -115,8 +129,6 @@ export function ParishList({
     }
     setMemberIds((prev) => new Set(prev).add(parishId));
     setAnim((prev) => new Map(prev).set(parishId, "entering"));
-    // Doble RAF para asegurar que el browser pinte el estado inicial
-    // colapsado antes de transicionar al estado final.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setAnim((prev) => {
@@ -181,59 +193,230 @@ export function ParishList({
 
   const isLogged = Boolean(userId);
 
+  function renderCard(p: Parish) {
+    return (
+      <ParishCard
+        key={p.id}
+        parish={p}
+        isLogged={isLogged}
+        isMember={memberIds.has(p.id)}
+        isPrimary={primaryId === p.id}
+        animState={anim.get(p.id)}
+        onAdd={handleAdd}
+        onRemove={handleRemove}
+        onTogglePrimary={handleTogglePrimary}
+      />
+    );
+  }
+
+  // ----- Invitado: una sola lista con buscador arriba. -----
+  if (!isLogged) {
+    return (
+      <>
+        {error && (
+          <p className="text-sm normal-case text-destructive">{error}</p>
+        )}
+        <div className="flex items-center gap-2">
+          <SearchIcon className="h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={othersQuery}
+            onChange={(e) => setOthersQuery(e.target.value)}
+            placeholder="Buscar parroquia…"
+            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
+          />
+        </div>
+        {othersFiltered.length === 0 ? (
+          <p className="rounded-xl border border-border bg-sidebar p-6 text-base normal-case text-muted-foreground">
+            Sin coincidencias.
+          </p>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {othersFiltered.map(renderCard)}
+          </ul>
+        )}
+      </>
+    );
+  }
+
+  // ----- Member/Coord/Admin: dos secciones con acordeón + lupa. -----
   return (
     <>
       {error && (
         <p className="text-sm normal-case text-destructive">{error}</p>
       )}
 
-      {isLogged && mine.length > 0 && (
+      {mine.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Mis parroquias
-          </h2>
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {mine.map((p) => (
-              <ParishCard
-                key={p.id}
-                parish={p}
-                isLogged={true}
-                isMember={memberIds.has(p.id)}
-                isPrimary={primaryId === p.id}
-                animState={anim.get(p.id)}
-                onAdd={handleAdd}
-                onRemove={handleRemove}
-                onTogglePrimary={handleTogglePrimary}
-              />
-            ))}
-          </ul>
+          <SectionHeader
+            title="Mis parroquias"
+            count={mine.length}
+            collapsed={mineCollapsed}
+            onToggleCollapsed={() => setMineCollapsed((v) => !v)}
+            searchOpen={mineSearchOpen}
+            onToggleSearch={() => setMineSearchOpen((v) => !v)}
+          />
+          <Collapsible open={!mineCollapsed}>
+            <div className="flex flex-col gap-3 pt-1">
+              {mineSearchOpen && (
+                <input
+                  type="text"
+                  value={mineQuery}
+                  onChange={(e) => setMineQuery(e.target.value)}
+                  placeholder="Filtrar mis parroquias…"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
+                  autoFocus
+                />
+              )}
+              {mineFiltered.length === 0 ? (
+                <p className="rounded-xl border border-border bg-sidebar p-4 text-sm normal-case text-muted-foreground">
+                  Sin coincidencias.
+                </p>
+              ) : (
+                <ul className="grid gap-4 sm:grid-cols-2">
+                  {mineFiltered.map(renderCard)}
+                </ul>
+              )}
+            </div>
+          </Collapsible>
         </section>
       )}
 
       {others.length > 0 && (
         <section className="flex flex-col gap-3">
-          {isLogged && mine.length > 0 && (
-            <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-              Otras parroquias
-            </h2>
-          )}
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {others.map((p) => (
-              <ParishCard
-                key={p.id}
-                parish={p}
-                isLogged={isLogged}
-                isMember={false}
-                isPrimary={false}
-                animState={anim.get(p.id)}
-                onAdd={handleAdd}
-                onRemove={handleRemove}
-                onTogglePrimary={handleTogglePrimary}
-              />
-            ))}
-          </ul>
+          <SectionHeader
+            title="Otras parroquias"
+            count={others.length}
+            collapsed={othersCollapsed}
+            onToggleCollapsed={() => setOthersCollapsed((v) => !v)}
+            searchOpen={othersSearchOpen}
+            onToggleSearch={() => setOthersSearchOpen((v) => !v)}
+          />
+          <Collapsible open={!othersCollapsed}>
+            <div className="flex flex-col gap-3 pt-1">
+              {othersSearchOpen && (
+                <input
+                  type="text"
+                  value={othersQuery}
+                  onChange={(e) => setOthersQuery(e.target.value)}
+                  placeholder="Filtrar otras parroquias…"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
+                  autoFocus
+                />
+              )}
+              {othersFiltered.length === 0 ? (
+                <p className="rounded-xl border border-border bg-sidebar p-4 text-sm normal-case text-muted-foreground">
+                  Sin coincidencias.
+                </p>
+              ) : (
+                <ul className="grid gap-4 sm:grid-cols-2">
+                  {othersFiltered.map(renderCard)}
+                </ul>
+              )}
+            </div>
+          </Collapsible>
         </section>
       )}
     </>
+  );
+}
+
+function SectionHeader({
+  title,
+  count,
+  collapsed,
+  onToggleCollapsed,
+  searchOpen,
+  onToggleSearch,
+}: {
+  title: string;
+  count: number;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  searchOpen: boolean;
+  onToggleSearch: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        className="flex flex-1 items-center gap-2 text-left text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
+        aria-expanded={!collapsed}
+      >
+        <ChevronIcon
+          className={`h-3 w-3 transition-transform ${collapsed ? "" : "rotate-90"}`}
+        />
+        <span>{title}</span>
+        <span className="text-muted-foreground">({count})</span>
+      </button>
+      <button
+        type="button"
+        onClick={onToggleSearch}
+        className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+          searchOpen
+            ? "border-primary text-primary"
+            : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+        }`}
+        aria-label={searchOpen ? "Ocultar filtro" : "Filtrar"}
+      >
+        <SearchIcon className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function Collapsible({
+  open,
+  children,
+}: {
+  open: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+      style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      aria-hidden={!open}
+    >
+      <div className="overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function ChevronIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
   );
 }

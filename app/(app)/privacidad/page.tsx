@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadContactEmails } from "@/lib/contact-emails";
 
 export const metadata: Metadata = {
   title: "Política de Privacidad · Cancionero Arquidiocesano",
@@ -6,7 +7,27 @@ export const metadata: Metadata = {
     "Política de Privacidad del Cancionero Arquidiocesano relativa al tratamiento de los datos personales del Usuario.",
 };
 
-export default function PrivacidadPage() {
+function EmailList({ emails }: { emails: string[] }) {
+  if (emails.length === 0) return null;
+  return (
+    <>
+      {emails.map((email, i) => (
+        <span key={email}>
+          {i > 0 && (i === emails.length - 1 ? " o " : ", ")}
+          <a
+            href={`mailto:${email}`}
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            {email}
+          </a>
+        </span>
+      ))}
+    </>
+  );
+}
+
+export default async function PrivacidadPage() {
+  const legalEmails = await loadContactEmails("legal_contact_emails");
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16">
       <header className="flex flex-col gap-2">
@@ -25,15 +46,13 @@ export default function PrivacidadPage() {
           El responsable del tratamiento de los datos personales recogidos a
           través del Sitio es el Arzobispado de Rosario, con domicilio
           legal en Córdoba 1677, S2000 Rosario, Provincia de Santa Fe,
-          Argentina. Las consultas relativas a la presente Política podrán
-          dirigirse a la dirección{" "}
-          <a
-            href="mailto:yo.azimo@gmail.com"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            yo.azimo@gmail.com
-          </a>
-          .
+          Argentina.
+          {legalEmails.length > 0 && (
+            <>
+              {" "}Las consultas relativas a la presente Política podrán
+              dirigirse a <EmailList emails={legalEmails} />.
+            </>
+          )}
         </p>
       </section>
 
@@ -106,15 +125,13 @@ export default function PrivacidadPage() {
         <p className="text-base leading-7 text-foreground">
           De conformidad con la Ley argentina N.° 25.326 de Protección de los
           Datos Personales, el Usuario tiene derecho a acceder a sus datos, a
-          solicitar su rectificación o su supresión. Para ejercer estos
-          derechos, deberá remitir su solicitud a la dirección{" "}
-          <a
-            href="mailto:yo.azimo@gmail.com"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            yo.azimo@gmail.com
-          </a>
-          .
+          solicitar su rectificación o su supresión.
+          {legalEmails.length > 0 && (
+            <>
+              {" "}Para ejercer estos derechos, deberá remitir su solicitud a{" "}
+              <EmailList emails={legalEmails} />.
+            </>
+          )}
         </p>
       </section>
     </main>

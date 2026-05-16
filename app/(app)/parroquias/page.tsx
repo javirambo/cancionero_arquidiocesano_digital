@@ -50,8 +50,7 @@ export default async function ParroquiasPage() {
       .filter((n): n is string => Boolean(n));
     isAdmin = roleNames.includes("admin");
     const isEditor = roleNames.includes("editor");
-    const isCoordinator = memberRows.some((m) => m.role === "coordinator");
-    canAddParish = isAdmin || isEditor || isCoordinator;
+    canAddParish = isAdmin || isEditor;
   }
 
   return (
@@ -79,7 +78,7 @@ export default async function ParroquiasPage() {
         </div>
         {canAddParish && (
           <Link
-            href={isAdmin ? "/admin/parroquias/nueva" : "/parroquias/nueva"}
+            href="/admin/parroquias/nueva"
             className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
           >
             + Agregar parroquia

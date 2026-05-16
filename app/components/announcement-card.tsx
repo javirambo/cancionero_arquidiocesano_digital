@@ -1,11 +1,13 @@
 import type { Featured } from "@/lib/songs";
 import { CardWithImage } from "./card-with-image";
+import { SimpleMarkdown } from "./simple-markdown";
 
 const KIND_LABEL: Record<string, string> = {
   solemnidad: "Solemnidad",
   fiesta: "Fiesta",
   memoria: "Memoria",
   tiempo: "Tiempo litúrgico",
+  indicaciones: "Indicaciones",
 };
 
 export function AnnouncementCard({ item }: { item: Featured }) {
@@ -25,9 +27,10 @@ export function AnnouncementCard({ item }: { item: Featured }) {
       )}
       <p className="text-base text-primary">{item.title}</p>
       {item.body && (
-        <p className="mt-1 whitespace-pre-line text-sm normal-case leading-6 text-muted-foreground">
-          {item.body}
-        </p>
+        <SimpleMarkdown
+          text={item.body}
+          className="mt-1 text-sm normal-case leading-6 text-muted-foreground"
+        />
       )}
     </CardWithImage>
   );

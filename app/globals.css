@@ -115,3 +115,19 @@ select {
     font-size: 16px;
   }
 }
+
+/* Documentos rich (editor TipTap y render público de announcement_documents). */
+.rich-doc h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; color: var(--color-primary); margin: 1rem 0 0.5rem; }
+.rich-doc h2 { font-size: 1.4rem; line-height: 1.3; font-weight: 600; color: var(--color-secondary); margin: 1rem 0 0.5rem; }
+.rich-doc h3 { font-size: 1.15rem; line-height: 1.3; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+.rich-doc p  { margin: 0.5rem 0; line-height: 1.7; }
+.rich-doc ul { list-style: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+.rich-doc ol { list-style: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+.rich-doc li { margin: 0.25rem 0; }
+.rich-doc blockquote { border-left: 3px solid var(--color-primary); padding-left: 0.75rem; margin: 0.75rem 0; color: var(--color-muted-foreground); font-style: italic; }
+.rich-doc a { color: var(--color-primary); text-decoration: underline; }
+.rich-doc strong { font-weight: 700; }
+.rich-doc em { font-style: italic; }
+.rich-doc u { text-decoration: underline; }
+.rich-doc s { text-decoration: line-through; }
+.rich-doc img { max-width: 100%; height: auto; }

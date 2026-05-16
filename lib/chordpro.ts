@@ -128,13 +128,34 @@ export function transposeLine(
   system: ChordSystem = "auto"
 ): ChordLine {
   if (semitones === 0 && system === "auto") return line;
-  return {
+  const result: ChordLine = {
     lyrics: line.lyrics,
     chords: line.chords.map((c) => ({
       chord: transposeChord(c.chord, semitones, system),
       index: c.index,
     })),
   };
+  if (line.inChorus) result.inChorus = true;
+  return result;
+}
+
+// Calcula el offset en semitonos entre dos tonos (ej. "G" → "A" = 2).
+// Toma sólo la raíz del acorde (ignora cualidad). Devuelve null si alguno no parsea.
+// Resultado normalizado al rango [-5, +6] para coincidir con el rango circular del UI.
+export function semitonesBetween(
+  fromKey: string | null | undefined,
+  toKey: string | null | undefined
+): number | null {
+  if (!fromKey || !toKey) return null;
+  const a = splitChord(fromKey);
+  const b = splitChord(toKey);
+  if (!a || !b) return null;
+  const ai = NOTE_INDEX[a.root];
+  const bi = NOTE_INDEX[b.root];
+  if (ai === undefined || bi === undefined) return null;
+  let diff = ((bi - ai) % 12 + 12) % 12;
+  if (diff > 6) diff -= 12;
+  return diff;
 }
 
 // Detecta el sistema de cifrado dominante en una lista de líneas parseadas.

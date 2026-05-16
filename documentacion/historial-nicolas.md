@@ -43,8 +43,8 @@
     - tambien audios o cualquier otro archivo.
     - (basta con colocar el PDF y un nombre o descripcion)
 
-- Administrador parroquial:
-- Una texto o algo donde diga con quién contactarse para ser administrador parroquial y/o que aparezca su parroquia.
+- Coordinador parroquial:
+- Una texto o algo donde diga con quién contactarse para ser Coordinador parroquial y/o que aparezca su parroquia.
     >> LISTO
     - en creditos, listo
 

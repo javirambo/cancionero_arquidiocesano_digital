@@ -25,7 +25,7 @@ const secciones: Seccion[] = [
     href: "/admin/parroquias",
     titulo: "Parroquias",
     descripcion: "Alta, edición y baja de parroquias de la Arquidiócesis.",
-    show: (a) => a.isAdmin,
+    show: (a) => a.isAdmin || a.isEditor,
   },
   {
     href: "/admin/anuncios",

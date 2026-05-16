@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { HeroContent } from "@/app/components/home-hero";
+import { loadContactEmails } from "@/lib/contact-emails";
 import { CopyEmailButton } from "./copy-email-button";
-
-const CONTACT_EMAIL = "contacto@ejemplo.com";
 
 export const metadata: Metadata = {
   title: "Créditos · Cancionero Arquidiocesano",
@@ -46,10 +45,12 @@ async function getFeedbackCardBgUrl(): Promise<string | null> {
 }
 
 export default async function CreditosPage() {
-  const [parishName, feedbackBgUrl] = await Promise.all([
+  const [parishName, feedbackBgUrl, creditsEmails] = await Promise.all([
     getPrimaryParishName(),
     getFeedbackCardBgUrl(),
+    loadContactEmails("credits_contact_emails"),
   ]);
+  const contactEmail = creditsEmails[0] ?? null;
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-16">
       <HeroContent parishName={parishName} />
@@ -95,7 +96,7 @@ export default async function CreditosPage() {
             tenés una sugerencia o simplemente querés ayudarnos a crecer, no
             dudes en escribirnos.
           </p>
-          <CopyEmailButton email={CONTACT_EMAIL} />
+          {contactEmail && <CopyEmailButton email={contactEmail} />}
         </div>
       </section>
 

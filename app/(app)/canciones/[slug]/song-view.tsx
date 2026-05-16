@@ -6,12 +6,15 @@ import {
   detectSystem,
   hasAnyChord,
   parseBody,
+  semitonesBetween,
   transposeLine,
   type ChordLine,
   type ChordSystem,
 } from "@/lib/chordpro";
 import { useFavorites } from "@/app/components/favorites";
+import { useSession } from "@/app/components/session";
 import { useUserRoles } from "@/app/components/user-roles";
+import { createClient } from "@/lib/supabase/client";
 import { DownloadFilesMenu } from "@/app/components/download-files-menu";
 import { PlayMenu } from "@/app/components/play-menu";
 import { groupChorus, LineView } from "@/app/components/song-render";
@@ -31,6 +34,9 @@ type Props = {
   originalKey: string | null;
   youtubeEmbed: string | null;
   hasFiles: boolean;
+  playlistKeyOverride?: string | null;
+  inPlaylistContext?: boolean;
+  hideToolbar?: boolean;
 };
 
 const STORAGE_KEY_PREFIX = "song:transpose:";
@@ -43,10 +49,14 @@ export function SongView({
   originalKey,
   youtubeEmbed,
   hasFiles,
+  playlistKeyOverride = null,
+  inPlaylistContext = false,
+  hideToolbar = false,
 }: Props) {
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
   const { isAuthenticated } = useFavorites();
+  const { user } = useSession();
   const { isAdmin, isEditor } = useUserRoles();
   const canEdit = isAdmin || isEditor;
   // CU-03: los acordes y la transposición sólo se exponen a usuarios con sesión.
@@ -110,20 +120,74 @@ export function SongView({
   const effectiveSystem: "latin" | "english" =
     system === "auto" ? detected : (system as "latin" | "english");
 
-  // Restaurar tono persistido (anónimo: localStorage por canción).
-  useEffect(() => {
-    if (!chordsExist) return;
-    const raw = window.localStorage.getItem(STORAGE_KEY_PREFIX + songId);
-    if (raw !== null) {
-      const n = Number.parseInt(raw, 10);
-      if (Number.isFinite(n)) setSemitones(n);
-    }
-  }, [songId, chordsExist]);
+  // Hidratado: evita que el guardado se dispare antes de cargar el valor inicial.
+  const [hydrated, setHydrated] = useState(false);
 
+  // Carga inicial del tono (CU-03 precedencia):
+  //   1) Contexto playlist: usa key_override (en sesión, sin persistencia).
+  //   2) Usuario logueado: user_song_keys.
+  //   3) Anónimo: localStorage.
+  //   4) Default: 0.
   useEffect(() => {
-    if (!chordsExist) return;
-    window.localStorage.setItem(STORAGE_KEY_PREFIX + songId, String(semitones));
-  }, [songId, semitones, chordsExist]);
+    if (!chordsExist) {
+      setHydrated(true);
+      return;
+    }
+    if (inPlaylistContext) {
+      const off = semitonesBetween(originalKey, playlistKeyOverride);
+      setSemitones(off ?? 0);
+      setHydrated(true);
+      return;
+    }
+    let cancelled = false;
+    const userId = user?.id;
+    (async () => {
+      if (userId) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("user_song_keys")
+          .select("semitones")
+          .eq("user_id", userId)
+          .eq("song_id", songId)
+          .maybeSingle();
+        if (cancelled) return;
+        if (data && Number.isFinite(data.semitones)) {
+          setSemitones(data.semitones);
+          setHydrated(true);
+          return;
+        }
+      }
+      const raw = window.localStorage.getItem(STORAGE_KEY_PREFIX + songId);
+      if (raw !== null) {
+        const n = Number.parseInt(raw, 10);
+        if (Number.isFinite(n)) setSemitones(n);
+      }
+      if (!cancelled) setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [songId, chordsExist, user?.id, inPlaylistContext, originalKey, playlistKeyOverride]);
+
+  // Guardado: en contexto playlist NO persistir. Logueado → BD; anónimo → localStorage.
+  useEffect(() => {
+    if (!chordsExist || !hydrated || inPlaylistContext) return;
+    const userId = user?.id;
+    if (!userId) {
+      window.localStorage.setItem(STORAGE_KEY_PREFIX + songId, String(semitones));
+      return;
+    }
+    const t = window.setTimeout(() => {
+      const supabase = createClient();
+      void supabase
+        .from("user_song_keys")
+        .upsert(
+          { user_id: userId, song_id: songId, semitones },
+          { onConflict: "user_id,song_id" }
+        );
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [songId, semitones, chordsExist, hydrated, user?.id, inPlaylistContext]);
 
   const transposed: ChordLine[] = useMemo(
     () => lines.map((l) => transposeLine(l, semitones, system)),
@@ -134,6 +198,7 @@ export function SongView({
 
   return (
     <div className="flex flex-col gap-6">
+      {!hideToolbar && (
       <div
         role="toolbar"
         aria-label="Controles de la canción"
@@ -178,11 +243,25 @@ export function SongView({
         <div
           className="flex items-center gap-0.5"
           aria-label="Transposición"
+          title={
+            inPlaylistContext && playlistKeyOverride
+              ? "Tono sugerido por la playlist"
+              : undefined
+          }
         >
+          {inPlaylistContext && playlistKeyOverride && (
+            <span
+              aria-hidden="true"
+              className="mr-0.5 text-xs text-secondary"
+              title="Tono sugerido por la playlist"
+            >
+              ★
+            </span>
+          )}
           <button
             type="button"
-            onClick={() => setSemitones((s) => Math.max(-12, s - 1))}
-            disabled={!showChords || semitones <= -12}
+            onClick={() => setSemitones((s) => (s <= -5 ? 6 : s - 1))}
+            disabled={!showChords}
             aria-label="Bajar un semitono"
             title="Bajar un semitono"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
@@ -209,8 +288,8 @@ export function SongView({
           </button>
           <button
             type="button"
-            onClick={() => setSemitones((s) => Math.min(12, s + 1))}
-            disabled={!showChords || semitones >= 12}
+            onClick={() => setSemitones((s) => (s >= 6 ? -5 : s + 1))}
+            disabled={!showChords}
             aria-label="Subir un semitono"
             title="Subir un semitono"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50"
@@ -321,6 +400,7 @@ export function SongView({
           )}
         </div>
       </div>
+      )}
 
       {media?.type === "youtube" && youtubeEmbed && (
         youtubeEmbed.includes("open.spotify.com") ? (
@@ -398,10 +478,10 @@ export function SongView({
         <div
           role="dialog"
           aria-label="Velocidad de desplazamiento"
-          className="fixed bottom-4 right-4 z-30 flex items-center gap-3 rounded-xl border border-primary bg-sidebar px-4 py-3 shadow-lg"
+          className="fixed bottom-4 right-4 z-30 flex flex-col items-center gap-2 rounded-xl border border-primary bg-sidebar px-3 py-4 shadow-lg"
         >
           <span className="text-xs font-semibold text-muted-foreground">
-            Velocidad
+            Vel.
           </span>
           <input
             type="range"
@@ -411,7 +491,14 @@ export function SongView({
             value={scrollSpeed}
             onChange={(e) => setScrollSpeed(Number(e.target.value))}
             aria-label="Velocidad de desplazamiento"
+            aria-orientation="vertical"
             className="accent-primary"
+            style={{
+              writingMode: "vertical-lr",
+              direction: "rtl",
+              width: 24,
+              height: 140,
+            }}
           />
           <span className="w-4 text-center text-sm font-semibold text-primary">
             {scrollSpeed}

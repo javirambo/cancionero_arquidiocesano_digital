@@ -14,7 +14,14 @@ export type PlaylistSummary = {
 };
 
 export type PlaylistWithSongs = PlaylistSummary & {
-  songs: (SongSummary & SongCapabilities & { position: number; created_at: string })[];
+  songs: (SongSummary & SongCapabilities & {
+    position: number;
+    created_at: string;
+    original_key: string | null;
+    key_override: string | null;
+    body: string;
+    status: string;
+  })[];
 };
 
 type Named = { name: string } | { name: string }[] | null;
@@ -359,7 +366,7 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
   const { data: items, error: iErr } = await supabase
     .from("playlist_songs")
     .select(
-      "position, created_at, songs(id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id))"
+      "position, created_at, key_override, songs(id, number, title, slug, body, original_key, status, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id))"
     )
     .eq("playlist_id", id)
     .order("position", { ascending: true });
@@ -374,6 +381,8 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
     title: string;
     slug: string;
     body: string | null;
+    original_key: string | null;
+    status: string | null;
     youtube_url: string | null;
     song_categories: SongCategoryRow[] | null;
     author1: Named;
@@ -410,12 +419,23 @@ export async function getPlaylistById(id: string): Promise<PlaylistWithSongs | n
         hasFiles: files.length > 0,
         position: row.position as number,
         created_at: row.created_at as string,
+        original_key: s.original_key,
+        key_override: (row as { key_override: string | null }).key_override ?? null,
+        body,
+        status: s.status ?? "unknown",
       };
     })
     .filter(
       (
         x
-      ): x is SongSummary & SongCapabilities & { position: number; created_at: string } =>
+      ): x is SongSummary & SongCapabilities & {
+        position: number;
+        created_at: string;
+        original_key: string | null;
+        key_override: string | null;
+        body: string;
+        status: string;
+      } =>
         x !== null
     );
 
