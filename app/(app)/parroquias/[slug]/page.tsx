@@ -129,25 +129,6 @@ export default async function ParroquiaPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
-      <Link
-        href="/parroquias"
-        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        Volver a parroquias
-      </Link>
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.2em] text-secondary">
           Parroquia

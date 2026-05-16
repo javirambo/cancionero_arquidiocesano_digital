@@ -39,6 +39,11 @@ export default async function CancionesPage({
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-col gap-3">
+        {lockedCats.length > 0 && (
+          <p className="text-sm uppercase tracking-[0.2em] text-page-title">
+            Cantos
+          </p>
+        )}
         <h1 className="text-3xl text-page-title">
           {lockedCats.length > 0
             ? lockedCats.map((c) => c.name).join(" · ")

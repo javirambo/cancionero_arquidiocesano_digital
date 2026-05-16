@@ -1,19 +1,16 @@
 "use client";
 
-export function HomeHero({ parishName }: { parishName: string | null }) {
+export function HomeHero() {
   return (
     <section>
-      <HeroContent parishName={parishName} />
+      <HeroContent />
     </section>
   );
 }
 
-export function HeroContent({ parishName }: { parishName: string | null }) {
+export function HeroContent() {
   return (
     <div className="flex flex-col items-center gap-4 text-center">
-      {parishName && (
-        <p className="text-2xl text-secondary">{parishName}</p>
-      )}
       <p className="text-sm uppercase tracking-[0.2em] text-secondary">
         Evangelizar a través de la música
       </p>

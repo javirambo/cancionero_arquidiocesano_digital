@@ -108,7 +108,7 @@ export default async function Home() {
     <div className="flex flex-1 flex-col">
       {featuredPopup && <FeaturedAnnouncementPopup item={featuredPopup} />}
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12">
-        <HomeHero parishName={primaryParish?.name ?? null} />
+        <HomeHero />
 
         {/* Playlists: una sola sección mezclada, dedupe, máximo 4. */}
         {(() => {
@@ -276,12 +276,12 @@ function SongCategoryShortcuts({
           <Link
             href={`/canciones?cat=${c.slug}`}
             title={c.description ?? undefined}
-            className="flex h-full items-center justify-center rounded-xl border border-shortcut bg-shortcut px-4 py-4 text-center text-base uppercase text-white transition-opacity hover:opacity-90"
+            className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-base uppercase text-page-title transition-opacity hover:opacity-90"
           >
             {c.name}
           </Link>
           {c.description && (
-            <span className="absolute right-2 top-2 text-white sm:hidden">
+            <span className="absolute right-2 top-2 text-page-title sm:hidden">
               <HelpHint label={`Descripción de ${c.name}`}>
                 {c.description}
               </HelpHint>

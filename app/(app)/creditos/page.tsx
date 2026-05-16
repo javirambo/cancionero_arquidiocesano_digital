@@ -10,27 +10,6 @@ export const metadata: Metadata = {
     "Créditos del Cancionero Arquidiocesano y referencia al cantoral oficial.",
 };
 
-async function getPrimaryParishName(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase
-    .from("users")
-    .select("parish_id")
-    .eq("id", user.id)
-    .maybeSingle();
-  const primaryId = (profile?.parish_id as string | undefined) ?? null;
-  if (!primaryId) return null;
-  const { data: pr } = await supabase
-    .from("parishes")
-    .select("name")
-    .eq("id", primaryId)
-    .maybeSingle();
-  return (pr?.name as string | undefined) ?? null;
-}
-
 async function getFeedbackCardBgUrl(): Promise<string | null> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -45,15 +24,14 @@ async function getFeedbackCardBgUrl(): Promise<string | null> {
 }
 
 export default async function CreditosPage() {
-  const [parishName, feedbackBgUrl, creditsEmails] = await Promise.all([
-    getPrimaryParishName(),
+  const [feedbackBgUrl, creditsEmails] = await Promise.all([
     getFeedbackCardBgUrl(),
     loadContactEmails("credits_contact_emails"),
   ]);
   const contactEmail = creditsEmails[0] ?? null;
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-16">
-      <HeroContent parishName={parishName} />
+      <HeroContent />
       <header className="flex flex-col">
         <h1 className="text-3xl leading-tight text-page-title">Créditos</h1>
       </header>

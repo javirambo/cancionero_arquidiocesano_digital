@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadSchedulesForEntity } from "@/lib/schedule.server";
@@ -90,12 +89,6 @@ export default async function EditarAnuncioPage({
   return (
     <main className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <Link
-          href="/admin/anuncios"
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          ← Volver
-        </Link>
         <h1 className="text-2xl text-page-title">Editar anuncio</h1>
       </header>
 

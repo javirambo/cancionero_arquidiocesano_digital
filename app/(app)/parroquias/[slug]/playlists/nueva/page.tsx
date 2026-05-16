@@ -51,25 +51,6 @@ export default async function NuevaPlaylistPage({
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
-      <Link
-        href={`/parroquias/${parish.slug}/playlists`}
-        className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-secondary hover:underline"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        Playlists
-      </Link>
       <h1 className="text-2xl text-page-title">Nueva lista en {parish.name}</h1>
       <PlaylistForm
         mode="create"

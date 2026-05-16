@@ -37,7 +37,7 @@
   /* Tema light (por defecto) */
   --theme-background: #fafaf7;       /* FONDO GENERAL (crema) */
   --theme-foreground: #30343b;       /* TEXTO */
-  --theme-sidebar: #bfd0ea;          /* FONDO SUAVE — encabezado, pie, barra menú acciones */
+  --theme-sidebar: #d5e2f5;          /* FONDO SUAVE — encabezado, pie, barra menú acciones */
   --theme-card: #ffffff;             /* TARJETAS */
   --theme-border: #e3ddce;           /* FONDO SUAVE como borde */
   --theme-muted-foreground: #6c717a; /* TEXTO SECUNDARIO */

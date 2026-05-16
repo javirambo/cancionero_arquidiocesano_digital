@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getAdminAccess } from "@/app/(app)/admin/access";
 import { createClient } from "@/lib/supabase/server";
@@ -46,12 +45,6 @@ export default async function EditarCancionPage({
 
   return (
     <main className="flex flex-col gap-6">
-      <nav className="text-sm normal-case text-muted-foreground">
-        <Link href="/admin/canciones" className="hover:text-primary">
-          ← Canciones
-        </Link>
-      </nav>
-
       <header className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-[0.2em] text-secondary">
           Editar canto

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import DOMPurify from "isomorphic-dompurify";
 import { createClient } from "@/lib/supabase/server";
@@ -38,12 +37,6 @@ export default async function AnuncioDocumentoPage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
       <header className="flex flex-col gap-2">
-        <Link
-          href="/"
-          className="text-xs uppercase tracking-[0.2em] text-secondary hover:text-primary"
-        >
-          ← Volver al inicio
-        </Link>
         <h1 className="text-3xl text-song-title">{annRes.data.title}</h1>
       </header>
 
