@@ -70,6 +70,21 @@ function filterByQuery(parishes: Parish[], q: string): Parish[] {
   );
 }
 
+function uniqueCities(parishes: Parish[]): string[] {
+  const set = new Set<string>();
+  for (const p of parishes) {
+    const c = p.city?.trim();
+    if (c) set.add(c);
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "es"));
+}
+
+function filterByCity(parishes: Parish[], city: string | null): Parish[] {
+  if (!city) return parishes;
+  const target = normalize(city);
+  return parishes.filter((p) => p.city && normalize(p.city) === target);
+}
+
 export function ParishList({
   parishes,
   initialMemberIds,
@@ -88,6 +103,7 @@ export function ParishList({
   // Filtros y colapso por sección.
   const [mineQuery, setMineQuery] = useState("");
   const [othersQuery, setOthersQuery] = useState("");
+  const [othersCity, setOthersCity] = useState<string | null>(null);
   const [mineSearchOpen, setMineSearchOpen] = useState(false);
   const [othersSearchOpen, setOthersSearchOpen] = useState(false);
   const [mineCollapsed, setMineCollapsed] = useState(false);
@@ -129,7 +145,8 @@ export function ParishList({
   const others = origin ? sortByDistance(othersAlpha, origin) : othersAlpha;
 
   const mineFiltered = filterByQuery(mine, mineQuery);
-  const othersFiltered = filterByQuery(others, othersQuery);
+  const othersFiltered = filterByQuery(filterByCity(others, othersCity), othersQuery);
+  const othersCities = uniqueCities(others);
 
   async function handleAdd(parishId: string) {
     if (!userId) return;
@@ -241,6 +258,13 @@ export function ParishList({
             placeholder="Buscar parroquia…"
           />
         </div>
+        {othersCities.length > 0 && (
+          <CityChips
+            cities={othersCities}
+            selected={othersCity}
+            onSelect={setOthersCity}
+          />
+        )}
         {othersFiltered.length === 0 ? (
           <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
             Sin coincidencias.
@@ -313,6 +337,13 @@ export function ParishList({
                   onChange={setOthersQuery}
                   placeholder="Filtrar otras parroquias…"
                   autoFocus
+                />
+              )}
+              {othersSearchOpen && othersCities.length > 0 && (
+                <CityChips
+                  cities={othersCities}
+                  selected={othersCity}
+                  onSelect={setOthersCity}
                 />
               )}
               {othersFiltered.length === 0 ? (
@@ -427,6 +458,34 @@ function SearchInput({
         </button>
       )}
     </div>
+  );
+}
+
+function CityChips({
+  cities,
+  selected,
+  onSelect,
+}: {
+  cities: string[];
+  selected: string | null;
+  onSelect: (city: string | null) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-secondary">
+      <span>Ciudad:</span>
+      <select
+        value={selected ?? ""}
+        onChange={(e) => onSelect(e.target.value || null)}
+        className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case tracking-normal text-foreground"
+      >
+        <option value="">Todas</option>
+        {cities.map((city) => (
+          <option key={city} value={city}>
+            {city}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
