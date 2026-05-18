@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminAccess } from "../access";
+import { AdminParishList, type AdminParishRow } from "./admin-parish-list";
 
 export default async function AdminParroquiasPage() {
   const access = await getAdminAccess();
@@ -13,7 +14,7 @@ export default async function AdminParroquiasPage() {
     .neq("slug", "arquidiocesis")
     .order("name");
 
-  const rows = parishes ?? [];
+  const rows = (parishes ?? []) as AdminParishRow[];
 
   return (
     <main className="flex flex-col gap-6">
@@ -33,27 +34,7 @@ export default async function AdminParroquiasPage() {
       </header>
 
       {rows.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <ul className="divide-y divide-border rounded-xl border border-border">
-            {rows.map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-sidebar"
-              >
-                <Link
-                  href={`/admin/parroquias/${p.id}`}
-                  className="flex flex-1 flex-col gap-0.5"
-                >
-                  <span className="text-base text-primary">{p.name}</span>
-                  <span className="text-xs normal-case text-muted-foreground">
-                    {p.city ?? "—"}
-                    {p.status === "inactive" && " · inactiva"}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <AdminParishList rows={rows} />
       ) : (
         <p className="text-sm normal-case text-muted-foreground">
           No hay parroquias cargadas todavía.
