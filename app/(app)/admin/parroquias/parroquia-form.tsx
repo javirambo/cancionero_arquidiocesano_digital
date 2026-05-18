@@ -17,6 +17,12 @@ export type ParishFormData = {
   email: string;
   description: string;
   status: ParishStatus;
+  logo_url: string;
+  decanato: string;
+  parent_id: string;
+  latitude: string;
+  longitude: string;
+  url: string;
 };
 
 type Candidate = {
@@ -36,20 +42,61 @@ const empty: ParishFormData = {
   email: "",
   description: "",
   status: "active",
+  logo_url: "",
+  decanato: "",
+  parent_id: "",
+  latitude: "",
+  longitude: "",
+  url: "",
 };
 
 export function ParroquiaForm({
   initial,
   mode,
+  parishes,
+  decanatos,
+  restricted,
+  backHref = "/admin/parroquias",
 }: {
   initial?: ParishFormData;
   mode: "create" | "edit";
+  parishes: Array<{ id: string; name: string; decanato: string | null }>;
+  decanatos: string[];
+  restricted: boolean;
+  backHref?: string;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<ParishFormData>(initial ?? empty);
-  const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialDecanato = (initial?.decanato ?? "").trim();
+  const [decanatoMode, setDecanatoMode] = useState<"list" | "new">(
+    initialDecanato !== "" && !decanatos.includes(initialDecanato) ? "new" : "list"
+  );
+  const [coordsInput, setCoordsInput] = useState<string>(() => {
+    const lat = initial?.latitude ?? "";
+    const lon = initial?.longitude ?? "";
+    return lat !== "" && lon !== "" ? `${lat}, ${lon}` : "";
+  });
+  const [coordsError, setCoordsError] = useState<string | null>(null);
+
+  function handleCoordsChange(value: string) {
+    setCoordsInput(value);
+    if (value.trim() === "") {
+      setCoordsError(null);
+      update("latitude", "");
+      update("longitude", "");
+      return;
+    }
+    const parsed = parseCoords(value);
+    if (!parsed) {
+      setCoordsError("No pude leer las coordenadas. Pegá 'lat,lon' o una URL de Google Maps.");
+      return;
+    }
+    setCoordsError(null);
+    update("latitude", String(parsed.lat));
+    update("longitude", String(parsed.lon));
+  }
 
   // Autocomplete Nominatim
   const [query, setQuery] = useState("");
@@ -61,8 +108,14 @@ export function ParroquiaForm({
   function update<K extends keyof ParishFormData>(key: K, value: ParishFormData[K]) {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
-      if (key === "name" && !slugTouched) {
-        next.slug = slugify(String(value));
+      if (mode === "create" && (key === "name" || key === "city" || key === "decanato")) {
+        next.slug = buildSlug(next.name, next.city, next.decanato);
+      }
+      if (key === "decanato" && next.parent_id) {
+        const stillValid = parishes.some(
+          (p) => p.id === next.parent_id && (p.decanato ?? "") === next.decanato
+        );
+        if (!stillValid) next.parent_id = "";
       }
       return next;
     });
@@ -148,36 +201,76 @@ export function ParroquiaForm({
   }
 
   function applyCandidate(c: Candidate) {
-    setForm((prev) => ({
-      ...prev,
-      name: c.name,
-      slug: prev.slug || slugify(c.name),
-      address: c.address,
-      city: c.city,
-    }));
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        name: c.name,
+        address: c.address,
+        city: c.city,
+        latitude: String(c.lat),
+        longitude: String(c.lon),
+      };
+      if (mode === "create") {
+        next.slug = buildSlug(next.name, next.city, next.decanato);
+      }
+      return next;
+    });
     setCandidates(null);
     setQuery("");
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.slug.trim()) {
-      setError("Nombre y atajo son obligatorios.");
+    if (!form.name.trim()) {
+      setError("El nombre es obligatorio.");
+      return;
+    }
+    if (!form.decanato.trim()) {
+      setError("El decanato es obligatorio.");
+      return;
+    }
+    if (mode === "create" && !form.city.trim()) {
+      setError("Para crear una parroquia, la ciudad es obligatoria (forma parte del atajo).");
+      return;
+    }
+    if (!form.slug.trim()) {
+      setError("El atajo no pudo generarse. Revisá nombre, ciudad y decanato.");
+      return;
+    }
+    const lat = form.latitude.trim() === "" ? null : Number(form.latitude);
+    const lon = form.longitude.trim() === "" ? null : Number(form.longitude);
+    if (lat !== null && (!Number.isFinite(lat) || lat < -90 || lat > 90)) {
+      setError("Latitud inválida (rango -90 a 90).");
+      return;
+    }
+    if (lon !== null && (!Number.isFinite(lon) || lon < -180 || lon > 180)) {
+      setError("Longitud inválida (rango -180 a 180).");
       return;
     }
     setSaving(true);
     setError(null);
     const supabase = createClient();
-    const payload = {
+    const editablePayload = {
       name: form.name.trim(),
-      slug: form.slug.trim(),
       address: form.address.trim() || null,
       city: form.city.trim() || null,
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       description: form.description.trim() || null,
-      status: form.status,
+      logo_url: form.logo_url.trim() || null,
+      latitude: lat,
+      longitude: lon,
+      url: form.url.trim() || null,
     };
+    const payload = restricted
+      ? editablePayload
+      : {
+          ...editablePayload,
+          slug: form.slug.trim(),
+          status: form.status,
+          decanato: form.decanato.trim(),
+          parent_id: form.parent_id || null,
+        };
 
     if (mode === "create") {
       const { data, error } = await supabase
@@ -194,7 +287,7 @@ export function ParroquiaForm({
         setSaving(false);
         return;
       }
-      router.push(`/admin/parroquias/${data.id}`);
+      router.push(backHref === "/admin/parroquias" ? `/admin/parroquias/${data.id}` : backHref);
       router.refresh();
     } else {
       const { error } = await supabase
@@ -210,7 +303,7 @@ export function ParroquiaForm({
         setSaving(false);
         return;
       }
-      router.push("/admin/parroquias");
+      router.push(backHref);
       router.refresh();
     }
   }
@@ -296,16 +389,20 @@ export function ParroquiaForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Atajo *" hint="Aparece en la dirección web de la parroquia">
+        <Field
+          label="Atajo"
+          hint={
+            mode === "create"
+              ? "Se genera automáticamente desde Nombre + Ciudad + Decanato. No editable."
+              : "Aparece en la dirección web de la parroquia. No editable."
+          }
+        >
           <input
             type="text"
-            required
+            readOnly
             value={form.slug}
-            onChange={(e) => {
-              setSlugTouched(true);
-              update("slug", slugify(e.target.value));
-            }}
-            className={inputClass}
+            className={`${inputClass} cursor-not-allowed bg-sidebar text-muted-foreground`}
+            tabIndex={-1}
           />
         </Field>
         <Field label="Dirección">
@@ -340,7 +437,146 @@ export function ParroquiaForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Descripción" full>
+        <Field
+          label="Decanato *"
+          hint={restricted ? "Solo editable por administrador o editor." : undefined}
+        >
+          {restricted ? (
+            <input
+              type="text"
+              readOnly
+              value={form.decanato}
+              tabIndex={-1}
+              className={`${inputClass} cursor-not-allowed bg-sidebar text-muted-foreground`}
+            />
+          ) : decanatoMode === "list" ? (
+            <select
+              required
+              value={form.decanato}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "__new__") {
+                  setDecanatoMode("new");
+                  update("decanato", "");
+                } else {
+                  update("decanato", v);
+                }
+              }}
+              className={inputClass}
+            >
+              <option value="" disabled>
+                Seleccioná un decanato…
+              </option>
+              {decanatos.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+              <option value="__new__">+ Nuevo decanato…</option>
+            </select>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <input
+                type="text"
+                value={form.decanato}
+                onChange={(e) => update("decanato", e.target.value)}
+                placeholder="Nombre del nuevo decanato"
+                autoFocus
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setDecanatoMode("list");
+                  update("decanato", "");
+                }}
+                className="self-start text-xs normal-case text-primary hover:underline"
+              >
+                ← elegir existente
+              </button>
+            </div>
+          )}
+        </Field>
+        <Field
+          label="Sede"
+          hint={
+            restricted
+              ? "Solo editable por administrador o editor."
+              : form.decanato.trim() === ""
+              ? "Seleccioná primero un decanato para ver las sedes disponibles."
+              : "Dejar vacío si esta parroquia no depende de otra."
+          }
+        >
+          {restricted ? (
+            <input
+              type="text"
+              readOnly
+              value={
+                parishes.find((p) => p.id === form.parent_id)?.name ??
+                "— Parroquia Padre —"
+              }
+              tabIndex={-1}
+              className={`${inputClass} cursor-not-allowed bg-sidebar text-muted-foreground`}
+            />
+          ) : (
+            <select
+              value={form.parent_id}
+              onChange={(e) => update("parent_id", e.target.value)}
+              disabled={form.decanato.trim() === ""}
+              className={`${inputClass} ${
+                form.decanato.trim() === "" ? "cursor-not-allowed opacity-60" : ""
+              }`}
+            >
+              <option value="">— Parroquia Padre —</option>
+              {parishes
+                .filter((p) => (p.decanato ?? "") === form.decanato)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+          )}
+        </Field>
+        <Field label="Logo (URL)">
+          <input
+            type="url"
+            value={form.logo_url}
+            onChange={(e) => update("logo_url", e.target.value)}
+            placeholder="https://…"
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Sitio web">
+          <input
+            type="url"
+            value={form.url}
+            onChange={(e) => update("url", e.target.value)}
+            placeholder="https://…"
+            className={inputClass}
+          />
+        </Field>
+        <Field
+          label="Coordenadas (Google Maps)"
+          hint="Pegá 'lat,lon' (ej: -32.9812188,-60.7493701) o una URL de Google Maps."
+          full
+        >
+          <input
+            type="text"
+            value={coordsInput}
+            onChange={(e) => handleCoordsChange(e.target.value)}
+            placeholder="-32.9812188,-60.7493701  o  https://www.google.com/maps/…"
+            className={`${inputClass} ${coordsError ? "border-destructive" : ""}`}
+          />
+          {coordsError ? (
+            <span className="text-xs text-destructive">{coordsError}</span>
+          ) : form.latitude && form.longitude ? (
+            <span className="text-xs text-muted-foreground">
+              → lat: {form.latitude}, lon: {form.longitude}
+            </span>
+          ) : null}
+        </Field>
+        <Field label="Descripción (ejemplo horarios de misa)" full>
           <textarea
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
@@ -350,26 +586,40 @@ export function ParroquiaForm({
         </Field>
         <Field
           label="Estado"
-          hint="Activa: visible en listados. Inactiva: dada de baja (oculta)."
+          hint={
+            restricted
+              ? "Solo editable por administrador o editor."
+              : "Activa: visible en listados. Inactiva: dada de baja (oculta)."
+          }
           full
         >
-          <select
-            value={form.status}
-            onChange={(e) => {
-              const next = e.target.value as ParishStatus;
-              if (next === "inactive" && mode === "edit") {
-                const ok = window.confirm(
-                  `¿Marcar "${form.name}" como inactiva? Dejará de aparecer en la app pública. Podés reactivarla más tarde.`
-                );
-                if (!ok) return;
-              }
-              update("status", next);
-            }}
-            className={inputClass}
-          >
-            <option value="active">Activa</option>
-            <option value="inactive">Inactiva</option>
-          </select>
+          {restricted ? (
+            <input
+              type="text"
+              readOnly
+              value={form.status === "active" ? "Activa" : "Inactiva"}
+              tabIndex={-1}
+              className={`${inputClass} cursor-not-allowed bg-sidebar text-muted-foreground`}
+            />
+          ) : (
+            <select
+              value={form.status}
+              onChange={(e) => {
+                const next = e.target.value as ParishStatus;
+                if (next === "inactive" && mode === "edit") {
+                  const ok = window.confirm(
+                    `¿Marcar "${form.name}" como inactiva? Dejará de aparecer en la app pública. Podés reactivarla más tarde.`
+                  );
+                  if (!ok) return;
+                }
+                update("status", next);
+              }}
+              className={inputClass}
+            >
+              <option value="active">Activa</option>
+              <option value="inactive">Inactiva</option>
+            </select>
+          )}
         </Field>
       </div>
 
@@ -387,7 +637,7 @@ export function ParroquiaForm({
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/parroquias")}
+          onClick={() => router.push(backHref)}
           className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
         >
           Cancelar
@@ -399,6 +649,45 @@ export function ParroquiaForm({
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
+
+function buildSlug(name: string, city: string, decanato: string): string {
+  const parts = [name, city, decanato]
+    .map((p) => slugify(p.trim()))
+    .filter((p) => p.length > 0);
+  return parts.join("_");
+}
+
+function parseCoords(input: string): { lat: number; lon: number } | null {
+  const s = input.trim();
+  if (s === "") return null;
+  const candidates: Array<[string, string]> = [];
+
+  // URL de Google Maps con @lat,lon,zoom
+  const atMatch = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (atMatch) candidates.push([atMatch[1], atMatch[2]]);
+
+  // URL con ?q=lat,lon o &q=lat,lon
+  const qMatch = s.match(/[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (qMatch) candidates.push([qMatch[1], qMatch[2]]);
+
+  // Par "lat,lon" simple (con o sin espacios)
+  const pairMatch = s.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (pairMatch) candidates.push([pairMatch[1], pairMatch[2]]);
+
+  for (const [latStr, lonStr] of candidates) {
+    const lat = Number(latStr);
+    const lon = Number(lonStr);
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      lat >= -90 && lat <= 90 &&
+      lon >= -180 && lon <= 180
+    ) {
+      return { lat, lon };
+    }
+  }
+  return null;
+}
 
 function Field({
   label,

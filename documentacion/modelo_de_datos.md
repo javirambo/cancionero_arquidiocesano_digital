@@ -51,22 +51,30 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 ### `parishes`
 Datos de cada parroquia. El `slug` se usa para URLs públicas (CU-06.2).
 
-| Columna       | Tipo         | Notas                                                    |
-| ------------- | ------------ | -------------------------------------------------------- |
-| `id`          | uuid         | PK                                                       |
-| `name`        | text         | NOT NULL                                                 |
-| `slug`        | text         | NOT NULL, UNIQUE — usado en `/parroquia/{slug}`          |
-| `address`     | text         | dirección completa                                       |
-| `city`        | text         |                                                          |
-| `phone`       | text         |                                                          |
-| `email`       | text         |                                                          |
-| `description` | text         | bio / presentación de la parroquia                       |
-| `logo_url`    | text         | URL en Supabase Storage (bucket `parishes`)              |
-| `is_active`   | boolean      | default true                                             |
-| `created_at`  | timestamptz  | default now()                                            |
-| `updated_at`  | timestamptz  | default now()                                            |
+| Columna       | Tipo          | Notas                                                                                      |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `id`          | uuid          | PK                                                                                         |
+| `name`        | text          | NOT NULL                                                                                   |
+| `slug`        | text          | NOT NULL, UNIQUE — usado en `/parroquia/{slug}`                                            |
+| `address`     | text          | dirección completa                                                                         |
+| `city`        | text          |                                                                                            |
+| `phone`       | text          |                                                                                            |
+| `email`       | text          |                                                                                            |
+| `description` | text          | bio / presentación de la parroquia                                                         |
+| `logo_url`    | text          | URL en Supabase Storage (bucket `parishes`)                                                |
+| `latitude`    | numeric(9,6)  | coordenada para ordenar por cercanía (CU-19) — mig. 0010                                   |
+| `longitude`   | numeric(9,6)  | coordenada para ordenar por cercanía (CU-19) — mig. 0010                                   |
+| `status`      | text          | NOT NULL default 'active', CHECK in ('active','inactive') — reemplazó `is_active` (mig. 0011 + 0038) |
+| `decanato`    | text          | NOT NULL — decanato al que pertenece la parroquia (cambio manual fuera de migración)       |
+| `parent_id`   | uuid          | FK self → `parishes.id`, nullable (sin ON DELETE). Si presente, esta parroquia es una capilla/sede dependiente de la parroquia padre. La UI solo consume nivel 1 de jerarquía (cambio manual fuera de migración) |
+| `created_at`  | timestamptz   | default now()                                                                              |
+| `updated_at`  | timestamptz   | default now()                                                                              |
 
-**Índices:** `slug` UNIQUE, `name` (búsqueda).
+**Índices:**
+- `slug` UNIQUE.
+- `parishes_name_idx` — GIN trigram sobre `name`.
+- `parishes_name_unaccent_trgm_idx` — GIN trigram sobre `f_unaccent(lower(name))`.
+- `parishes_city_unaccent_trgm_idx` — GIN trigram sobre `f_unaccent(lower(coalesce(city,'')))`.
 
 ---
 
@@ -456,6 +464,11 @@ Anuncios + festividades litúrgicas que aparecen en la home (CU-07, CU-21). Pued
 
 > **Visibilidad (RLS, mig. 0035):** lectura totalmente abierta — cualquier usuario (incluso anónimo) puede leer cualquier anuncio. La vigencia se evalúa client-side con `entity_schedules`. El filtrado por audiencia ("solo globales para anónimo en la home" / "globales + las parroquias del miembro") se hace **en código** en los loaders de la home y `/novedades`, no en RLS. La página `/parroquias/[slug]` muestra todos los anuncios scoped a esa parroquia sin importar quién la visita.
 
+> **Escritura (RLS, mig. 0041):** las policies de coordinator están **separadas por operación** porque `is_coordinator_of_announcement(id)` necesita filas en `announcement_parishes` que todavía no existen al momento del INSERT.
+> - `announcements_coordinator_insert`: cualquier `is_any_coordinator()` puede crear un anuncio. El scope efectivo se controla en la policy de `announcement_parishes` (un coordinator solo puede linkear a sus parroquias).
+> - `announcements_coordinator_update` / `announcements_coordinator_delete`: solo si la fila ya está linkeada a una parroquia donde el user es coordinator (`is_coordinator_of_announcement(id)`).
+> - Admin/editor: cubiertos por `announcements_editor_all`.
+
 > **Deduplicación:** la consulta de la home devuelve cada anuncio una sola vez aunque el usuario esté asociado a varias parroquias destinatarias del mismo anuncio.
 
 > **target_kind = 'document':** el anuncio enlaza a un documento rich asociado 1:1 en `announcement_documents` (no usa `target_id` ni `target_url`). En la home/popup el atajo lleva a `/anuncios/{id}`.
@@ -495,7 +508,7 @@ Documento rich (HTML) asociado 1:1 a un anuncio (mig. 0034). Solo existe cuando 
 | `partituras`  | PDFs de partituras              | lectura pública (solo `published`); escritura: Coordinador/Editor; revisión: Editor    |
 | `audios`      | mp3/ogg de referencia           | lectura pública (solo `published`); escritura: Coordinador/Editor; revisión: Editor    |
 | `parishes`    | logos / imágenes de parroquia   | lectura pública; escritura: admin                                                      |
-| `images`      | imágenes de cards (playlists/anuncios) — mig. 0023 | lectura pública; escritura: editor o coordinator (autenticado, dueño del objeto); update/delete: editor o dueño |
+| `images`      | imágenes de cards (playlists/anuncios) — mig. 0023, restaurado en mig. 0041 | lectura pública; escritura: editor o coordinator (autenticado, dueño del objeto); update/delete: editor o dueño |
 
 > RLS de Storage verifica que el `song_files` que apunta al objeto pertenezca a una canción en `songs.status = 'published'` (vía join) antes de permitir lectura pública. Si la canción está en `draft`/`review`/`rejected`, los archivos solo son visibles para el uploader y Editor/Admin.
 

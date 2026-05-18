@@ -26,6 +26,7 @@ export default async function ParroquiasPage() {
   let primaryId: string | null = null;
   let isAdmin = false;
   let canAddParish = false;
+  let canSeeMeta = false;
   if (user) {
     const [membersRes, profileRes, rolesRes] = await Promise.all([
       supabase
@@ -51,6 +52,7 @@ export default async function ParroquiasPage() {
     isAdmin = roleNames.includes("admin");
     const isEditor = roleNames.includes("editor");
     canAddParish = isAdmin || isEditor;
+    canSeeMeta = isAdmin || isEditor;
   }
 
   return (
@@ -98,6 +100,7 @@ export default async function ParroquiasPage() {
           initialMemberIds={memberIds}
           initialPrimaryId={primaryId}
           userId={user?.id ?? null}
+          canSeeMeta={canSeeMeta}
         />
       )}
     </main>

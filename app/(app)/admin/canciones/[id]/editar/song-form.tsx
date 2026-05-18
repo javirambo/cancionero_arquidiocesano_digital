@@ -108,7 +108,16 @@ export function SongForm({
 
     if (updateErr) {
       setSaving(false);
-      setError(updateErr.message);
+      const isDuplicateNumber =
+        updateErr.code === "23505" &&
+        (updateErr.message?.includes("songs_number_unique") ?? false);
+      if (isDuplicateNumber) {
+        setError(
+          `El número ${numberVal} ya está en uso por otra canción. Probá con otro o tocá "Sugerir número".`
+        );
+      } else {
+        setError(updateErr.message);
+      }
       return;
     }
 

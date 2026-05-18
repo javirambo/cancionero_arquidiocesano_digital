@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadSchedulesForEntity } from "@/lib/schedule.server";
 import { AnuncioForm, type AnnouncementFormData, type AnnouncementKind } from "../../anuncio-form";
@@ -31,10 +31,12 @@ export default async function EditarAnuncioPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const access = await getAdminAccess();
+  if (!access.isAdmin && !access.isEditor) redirect("/admin");
   const { id } = await params;
   const supabase = await createClient();
 
-  const [annRes, apRes, parishes, access, schedules, docRes] = await Promise.all([
+  const [annRes, apRes, parishes, schedules, docRes] = await Promise.all([
     supabase
       .from("announcements")
       .select("id, title, body, kind, priority, featured, target_kind, target_id, target_url, image_path")
@@ -42,7 +44,6 @@ export default async function EditarAnuncioPage({
       .maybeSingle(),
     supabase.from("announcement_parishes").select("parish_id").eq("announcement_id", id),
     listScopedParishes(),
-    getAdminAccess(),
     loadSchedulesForEntity("announcement", id),
     supabase
       .from("announcement_documents")

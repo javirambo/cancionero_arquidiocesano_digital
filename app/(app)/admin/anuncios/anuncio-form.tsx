@@ -75,6 +75,10 @@ export function AnuncioForm({
   mode,
   allowGlobal = true,
   hasDocument = false,
+  backHref = "/admin/anuncios",
+  lockedParishIds,
+  restrictKinds = false,
+  hideDocumentOption = false,
 }: {
   initial?: AnnouncementFormData;
   parishes: ParishOption[];
@@ -85,11 +89,37 @@ export function AnuncioForm({
    */
   allowGlobal?: boolean;
   hasDocument?: boolean;
+  /** Ruta para volver/cancelar y después de guardar/eliminar. */
+  backHref?: string;
+  /**
+   * Si está, fija las parroquias destinatarias (no editables) y fuerza
+   * scope="selected". Usado por el wrapper /parroquias/{slug}/anuncios.
+   */
+  lockedParishIds?: string[];
+  /** Oculta opciones de kind reservadas para admin/editor (indicaciones). */
+  restrictKinds?: boolean;
+  /** Oculta target_kind="document" y el botón de editor rich. */
+  hideDocumentOption?: boolean;
 }) {
   const router = useRouter();
+  const isLocked = Array.isArray(lockedParishIds) && lockedParishIds.length > 0;
   const [form, setForm] = useState<AnnouncementFormData>(() => {
     const base = initial ?? empty;
-    return allowGlobal ? base : { ...base, scope: "selected" };
+    let sanitized: AnnouncementFormData = base;
+    if (restrictKinds && sanitized.kind === "indicaciones") {
+      sanitized = { ...sanitized, kind: null };
+    }
+    if (hideDocumentOption && sanitized.target_kind === "document") {
+      sanitized = { ...sanitized, target_kind: "none", target_id: null };
+    }
+    if (isLocked) {
+      return {
+        ...sanitized,
+        scope: "selected",
+        parish_ids: lockedParishIds!,
+      };
+    }
+    return allowGlobal ? sanitized : { ...sanitized, scope: "selected" };
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -317,7 +347,7 @@ export function AnuncioForm({
     e.preventDefault();
     const id = await persist();
     if (!id) return;
-    router.push("/admin/anuncios");
+    router.push(backHref);
     router.refresh();
   }
 
@@ -345,7 +375,7 @@ export function AnuncioForm({
       setDeleting(false);
       return;
     }
-    router.push("/admin/anuncios");
+    router.push(backHref);
     router.refresh();
   }
 
@@ -405,7 +435,9 @@ export function AnuncioForm({
               <option value="fiesta">Fiesta</option>
               <option value="memoria">Memoria</option>
               <option value="tiempo">Tiempo litúrgico</option>
-              <option value="indicaciones">Indicaciones</option>
+              {!restrictKinds && (
+                <option value="indicaciones">Indicaciones</option>
+              )}
             </select>
           </Field>
         </div>
@@ -431,6 +463,16 @@ export function AnuncioForm({
         </div>
       </section>
 
+      {isLocked ? (
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
+            Destinatarios
+          </h2>
+          <p className="mt-2 text-sm normal-case text-muted-foreground">
+            Este anuncio es exclusivo de la parroquia desde la que estás creando.
+          </p>
+        </section>
+      ) : (
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
           Destinatarios
@@ -506,6 +548,7 @@ export function AnuncioForm({
           </div>
         )}
       </section>
+      )}
 
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm uppercase tracking-[0.2em] text-secondary">
@@ -518,6 +561,7 @@ export function AnuncioForm({
           <Field label="Tipo">
             <TargetKindDropdown
               value={form.target_kind}
+              hideDocument={hideDocumentOption}
               onChange={(next) => {
                 clearTarget();
                 update("target_kind", next);
@@ -638,7 +682,7 @@ export function AnuncioForm({
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/anuncios")}
+          onClick={() => router.push(backHref)}
           className="rounded-full border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:px-5 sm:text-sm"
         >
           Cancelar
@@ -676,10 +720,15 @@ const TARGET_KIND_OPTIONS: {
 function TargetKindDropdown({
   value,
   onChange,
+  hideDocument = false,
 }: {
   value: AnnouncementFormData["target_kind"];
   onChange: (v: AnnouncementFormData["target_kind"]) => void;
+  hideDocument?: boolean;
 }) {
+  const options = hideDocument
+    ? TARGET_KIND_OPTIONS.filter((o) => o.value !== "document")
+    : TARGET_KIND_OPTIONS;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -699,7 +748,7 @@ function TargetKindDropdown({
     };
   }, [open]);
 
-  const current = TARGET_KIND_OPTIONS.find((o) => o.value === value);
+  const current = options.find((o) => o.value === value);
 
   return (
     <div ref={ref} className="relative">
@@ -720,7 +769,7 @@ function TargetKindDropdown({
           role="listbox"
           className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-lg"
         >
-          {TARGET_KIND_OPTIONS.map((opt) => {
+          {options.map((opt) => {
             const active = opt.value === value;
             return (
               <li key={opt.value}>

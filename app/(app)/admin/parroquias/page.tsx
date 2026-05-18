@@ -10,6 +10,7 @@ export default async function AdminParroquiasPage() {
   const { data: parishes } = await supabase
     .from("parishes")
     .select("id, name, slug, city, address, status")
+    .neq("slug", "arquidiocesis")
     .order("name");
 
   const rows = parishes ?? [];

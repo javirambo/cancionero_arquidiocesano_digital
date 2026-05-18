@@ -9,6 +9,7 @@ import type { SongStatus } from "@/lib/songs-admin";
 import { SongStatusBadge } from "../../status-badge";
 
 type Capabilities = {
+  canSubmit: boolean;
   canWithdraw: boolean;
   canApprove: boolean;
   canReject: boolean;
@@ -19,6 +20,7 @@ type Capabilities = {
 
 function capsFor(status: SongStatus, canReview: boolean): Capabilities {
   const base: Capabilities = {
+    canSubmit: false,
     canWithdraw: false,
     canApprove: false,
     canReject: false,
@@ -37,7 +39,7 @@ function capsFor(status: SongStatus, canReview: boolean): Capabilities {
     return { ...base, canUnarchive: true };
   }
   if (status === "draft" || status === "rejected") {
-    return { ...base, canArchive: true };
+    return { ...base, canSubmit: true, canArchive: true };
   }
   return base;
 }
@@ -91,6 +93,11 @@ export function ReviewActions({
     }
     router.refresh();
     return true;
+  }
+
+  async function onSubmit() {
+    if (!confirm("¿Enviar esta canción a revisión?")) return;
+    await call("submit_song_for_review", { p_song_id: songId });
   }
 
   async function onWithdraw() {
@@ -188,6 +195,16 @@ export function ReviewActions({
       )}
 
       <div className="flex flex-wrap gap-2">
+        {caps.canSubmit && (
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={busy}
+            className="rounded-full border border-success bg-success px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            Enviar a revisión
+          </button>
+        )}
         {caps.canApprove && (
           <button
             type="button"

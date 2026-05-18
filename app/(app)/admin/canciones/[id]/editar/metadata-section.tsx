@@ -40,13 +40,9 @@ export function MetadataSection({
         </Field>
 
         <Field label="Número en cancionero">
-          <input
-            type="text"
+          <NumberPicker
             value={form.number}
-            readOnly
-            disabled
-            title="Autogenerado"
-            className={`${inputClass} cursor-not-allowed opacity-60`}
+            onChange={(v) => update("number", v)}
           />
         </Field>
 
@@ -128,6 +124,59 @@ export function MetadataSection({
         </Field>
       </div>
     </Accordion>
+  );
+}
+
+function NumberPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function suggest() {
+    setLoading(true);
+    setErr(null);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("songs")
+      .select("number")
+      .not("number", "is", null)
+      .order("number", { ascending: false })
+      .limit(1);
+    setLoading(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    const max = data && data.length > 0 ? Number(data[0].number) : 0;
+    onChange(String(max + 1));
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex gap-2">
+        <input
+          type="number"
+          min={1}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${inputClass} flex-1`}
+        />
+        <button
+          type="button"
+          onClick={() => void suggest()}
+          disabled={loading}
+          className="shrink-0 rounded-full border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
+        >
+          {loading ? "Buscando…" : "Sugerir número"}
+        </button>
+      </div>
+      {err && <span className="text-xs text-destructive normal-case">{err}</span>}
+    </div>
   );
 }
 
