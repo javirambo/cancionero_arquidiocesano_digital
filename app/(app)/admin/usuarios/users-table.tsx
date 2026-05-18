@@ -15,6 +15,15 @@ import type {
 
 type Parish = { id: string; slug: string; name: string };
 
+type UserChipFilter = "admin" | "editor" | "coordinator" | "other";
+
+const CHIP_FILTERS: { id: UserChipFilter; label: string }[] = [
+  { id: "admin", label: "ADMIN" },
+  { id: "editor", label: "EDITOR" },
+  { id: "coordinator", label: "COORDINADOR" },
+  { id: "other", label: "OTROS" },
+];
+
 type Props = {
   initialUsers: AdminUser[];
   parishes: Parish[];
@@ -34,17 +43,39 @@ export function UsersTable({
   const { show: showToast } = useToast();
   const [users, setUsers] = useState<AdminUser[]>(initialUsers);
   const [filter, setFilter] = useState("");
+  const [activeChips, setActiveChips] = useState<Set<UserChipFilter>>(new Set());
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
+
+  function toggleChip(chip: UserChipFilter) {
+    setActiveChips((prev) => {
+      const next = new Set(prev);
+      if (next.has(chip)) next.delete(chip);
+      else next.add(chip);
+      return next;
+    });
+  }
 
   const filtered = useMemo(() => {
     const term = filter.trim().toLowerCase();
-    if (!term) return users;
-    return users.filter(
-      (u) =>
-        u.email.toLowerCase().includes(term) ||
-        (u.display_name ?? "").toLowerCase().includes(term)
-    );
-  }, [users, filter]);
+    return users.filter((u) => {
+      if (term) {
+        const matchesText =
+          u.email.toLowerCase().includes(term) ||
+          (u.display_name ?? "").toLowerCase().includes(term);
+        if (!matchesText) return false;
+      }
+      if (activeChips.size === 0) return true;
+      const isAdmin = u.global_roles.includes("admin");
+      const isEditor = u.global_roles.includes("editor");
+      const isCoordinator = u.memberships.some((m) => m.role === "coordinator");
+      const isOther = !isAdmin && !isEditor && !isCoordinator;
+      if (activeChips.has("admin") && isAdmin) return true;
+      if (activeChips.has("editor") && isEditor) return true;
+      if (activeChips.has("coordinator") && isCoordinator) return true;
+      if (activeChips.has("other") && isOther) return true;
+      return false;
+    });
+  }, [users, filter, activeChips]);
 
   const adminCount = useMemo(
     () => users.filter((u) => u.global_roles.includes("admin")).length,
@@ -252,6 +283,26 @@ export function UsersTable({
         className="w-full max-w-md rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
       />
 
+      <div className="flex flex-wrap gap-2">
+        {CHIP_FILTERS.map((chip) => {
+          const active = activeChips.has(chip.id);
+          return (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => toggleChip(chip.id)}
+              className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
+                active
+                  ? "border-primary bg-primary text-white"
+                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              {chip.label}
+            </button>
+          );
+        })}
+      </div>
+
       {filtered.length === 0 ? (
         <p className="text-sm normal-case text-muted-foreground">
           No hay usuarios que coincidan.
@@ -448,7 +499,10 @@ function UserRow({
         )}
           </div>
 
-          <div className="flex justify-end border-t border-border pt-3">
+          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+            <span className="text-xs normal-case text-muted-foreground">
+              Quitar todas las parroquias asociadas y los roles globales de administrador y editor.
+            </span>
             <button
               type="button"
               onClick={onUnbind}
