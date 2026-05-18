@@ -1,0 +1,179 @@
+id,name,city,query_usada,latitude,longitude,status
+6fa3b970-49db-499a-a9ea-6dad7381392b,Ntra. Sra. del Valle,Tortugas,"Tortugas, Santa Fe, Argentina",-32.7464842,-61.8182922,ok_ciudad
+034c0577-ad62-4a58-a5bf-8be66d17f281,San Pedro Apóstol,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+4595f5dd-913c-434c-ac6d-64a49568fef0,Santo Domingo de Guzmán,Villa Eloisa,"Villa Eloisa, Santa Fe, Argentina",-32.9623404,-61.5462137,ok_ciudad
+e57ef2b3-5b32-4a9d-a559-effc0c3e5b7e,Inmaculada Concepción,Arteaga,"Arteaga, Santa Fe, Argentina",-33.089917,-61.7922017,ok_ciudad
+2a56ea53-ff27-4a43-a9c2-fb82e55ba977,Ntra. Sra. de Fátima,Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+c1089fd3-74c2-4947-a837-0cea8ce447b9,Ntra. Sra. de Luján,Bigand,"Bigand, Santa Fe, Argentina",-33.3739862,-61.1845121,ok_ciudad
+8dc44e14-22dd-43f5-8fb2-d5c7b34eee11,Ntra. Sra. de Luján,Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+56646378-020d-42da-9199-3c5f608462f2,Ntra. Sra. del Carmen,Pujato,"Pujato, Santa Fe, Argentina",-33.0176021,-61.0430978,ok_ciudad
+7a8a1464-b03a-43a8-99dd-bd7647d6df60,Ntra. Sra. del Carmen,Soldini,"Soldini, Santa Fe, Argentina",-33.0242175,-60.7553007,ok_ciudad
+bb7f86f0-381d-4bad-9c81-1067d4ff1361,Ntra. Sra. del Rosario,Fuentes,"Fuentes, Santa Fe, Argentina",-33.1729451,-61.0773558,ok_ciudad
+500181e0-5499-45aa-a65d-26b7a8b7671e,Ntra.Sra. de la Merced,Sn. José de la Esquina,"Sn. José de la Esquina, Santa Fe, Argentina",-33.1279104,-61.6995423,ok_ciudad
+67ffddfe-0409-4f14-aa20-947353811ed6,San Miguel Arcángel,Villa Mugueta,"Villa Mugueta, Santa Fe, Argentina",-33.3119003,-61.0563641,ok_ciudad
+f43f1287-4900-4256-b24b-90535578d8cf,Ntra. Sra. de Luján,Fray Luis Beltran,"Fray Luis Beltran, Santa Fe, Argentina",-32.7874256,-60.7295083,ok_ciudad
+9575e6e1-e682-45f0-86e1-594801fc176c,San Antonio de Padua,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+af1a06c8-b918-4a05-a480-410c767c9a4d,San José Obrero,Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+fdd56321-50e5-41b0-9e43-e2e8549a7969,San Pedro Apóstol,Granadero Baigorria,"Granadero Baigorria, Santa Fe, Argentina",-32.8547765,-60.7074143,ok_ciudad
+3c5c6c9c-e535-40e4-ac45-2764bbaa8f3c,Santa Catalina de Alejandría,Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+3d90b840-ee17-4bd4-8724-92e9b9e73d50,Santa Rita de Cascia,Ibarlucea,"Ibarlucea, Santa Fe, Argentina",-32.8523641,-60.7893617,ok_ciudad
+afa0d7c5-cb0d-44c1-a2b0-867e5ffeb701,Santa Rosa de Lima,Oliveros,"Oliveros, Santa Fe, Argentina",-32.5764738,-60.85222,ok_ciudad
+d81e55fc-bb5b-40c1-a546-cbaae9f17a44,Virgen Niña,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+497ab9ba-c3d7-48b8-a5b3-9972d6b90c43,Inmaculado Corazón de María,La Vanguardia,"La Vanguardia, Santa Fe, Argentina",-33.3582473,-60.6568433,ok_ciudad
+f637afaf-0999-42ee-8733-51c8382a982c,Asunción de la Virgen María,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+bf06a7b2-5edc-4116-95e5-28db9945165d,Ntra. Sra. de Fátima,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+6976d7f6-67bc-4a03-b7da-4e486fa63bc4,Ntra. Sra. del Carmen Timbúes,Timbues,"Timbues, Santa Fe, Argentina",-32.6674546,-60.7957434,ok_ciudad
+4d7881ad-99db-47ca-9764-5cd4cab69da8,Ntra. Sra. de Fátima,Puerto General San Martín,"Puerto General San Martín, Santa Fe, Argentina",-32.7116197,-60.7341243,ok_ciudad
+6b2e6dd9-bc3e-4423-8d4e-b5690369d2b0,Ntra. Sra. de Luján,Fighiera,"Fighiera, Santa Fe, Argentina",-33.1937547,-60.469476,ok_ciudad
+386d9786-2cb8-4f31-8691-c7e307788e5b,Ntra. Sra. del Carmen,Godoy,"Godoy, Santa Fe, Argentina",-33.3671562,-60.5092356,ok_ciudad
+121de8ff-c477-49b1-8762-ad856a8200d8,Sta. Teresita,Empalme V.C.,"Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+25d9b6b0-7a8b-4e92-b504-dffa35862711,Capilla San José,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+23797583-6cfd-4db5-8ce4-87286652365f,Capilla Medalla Milagrosa,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+0b2ee923-fd3f-4fd1-a575-85dfd8eabff2,Capilla María Auxiliadora,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+e19bb7e6-5b99-49b6-9597-1d411394a21f,Capilla San Cayetano,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+5fc7f044-6e87-4298-8e4b-6f5edf2daa02,Capilla Ntra. Sra. de Lourdes,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+d1083ce4-441c-428a-8b77-e0ac8883c19a,Capilla Santa Rita,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+6f629a10-5b84-409d-aa1a-6db43e627e6b,Capilla Santa Lucía,Arroyo Seco,"Arroyo Seco, Santa Fe, Argentina",-33.154614,-60.5082223,ok_ciudad
+2f82c072-eced-462b-8397-cfbb2d50b893,Capilla Ntra. Sra. de La Merced,Sanford,"Sanford, Santa Fe, Argentina",-33.1460495,-61.2772071,ok_ciudad
+bfbf4b06-a6b3-4ec9-9513-e1e6d2f0bf2d,Capilla Virgen de Lourdes,Arteaga,"Arteaga, Santa Fe, Argentina",-33.089917,-61.7922017,ok_ciudad
+0cde1e90-a610-4c4c-9996-c2a3c45c5d07,Oratorio Santa Ana,Arteaga,"Arteaga, Santa Fe, Argentina",-33.089917,-61.7922017,ok_ciudad
+a82deb98-3eea-4ddc-abba-701ddf39b42e,Iglesia Inmaculada Concepción,La Vanguardia,"La Vanguardia, Santa Fe, Argentina",-33.3582473,-60.6568433,ok_ciudad
+504d794f-e04a-47b5-82f5-2d60a7c52a52,Iglesia Ntra. Sra. de Luján,La Vanguardia,"La Vanguardia, Santa Fe, Argentina",-33.3582473,-60.6568433,ok_ciudad
+2f0a4100-d3db-4ee6-8938-ddb6687cc35b,Iglesia Sagrado Corazón,La Vanguardia,"La Vanguardia, Santa Fe, Argentina",-33.3582473,-60.6568433,ok_ciudad
+0fab2781-e4b1-4fa9-841f-98638fbfedac,Capilla San Cayetano,Las Parejas,"Las Parejas, Santa Fe, Argentina",-32.6818723,-61.5206966,ok_ciudad
+32f193b9-e10b-40a0-b833-c1ce09d10427,Capilla Jesús Misericordioso,Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+6a96508a-2c90-4934-8654-1e36171ff12a,Capilla Sagrado Corazón de Jesús,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+b7888d58-c547-40a5-b4ff-16831e9af34e,Capilla Ntro. Señor de los Milagros de Mailín,Las Parejas,"Las Parejas, Santa Fe, Argentina",-32.6818723,-61.5206966,ok_ciudad
+98de0018-8aba-4b97-9bcb-d1d741adebea,Iglesia San Roque,Cañada de Gomez,"Cañada de Gomez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+6113f078-6f21-47be-aa54-3cb2a4250193,Ermita María Auxiliadora,Colonia Medici,"Colonia Medici, Santa Fe, Argentina",-32.5963729,-61.3764853,ok_ciudad
+6c9e2c81-5610-42f7-9652-492551b25d1d,Capilla San José,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+978e8396-91a4-4755-90f0-0cf1ba37172a,Capilla San Lorenzo Mártir,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+e52427f3-3206-4d7d-9c6c-73483946e071,Capilla Ntra. Sra. de Fátima,Pueblo Esther,"Pueblo Esther, Santa Fe, Argentina",-33.0788574,-60.5640762,ok_ciudad
+09145ae9-4767-475e-ab63-1f4cfb1c7e1a,Capilla Ntra. Sra. de la Merced,Pueblo Esther,"Pueblo Esther, Santa Fe, Argentina",-33.0788574,-60.5640762,ok_ciudad
+7941d099-0fa2-44c0-bfe8-6c881abfcfa0,Iglesia San José,Pueblo Esther,"Pueblo Esther, Santa Fe, Argentina",-33.0788574,-60.5640762,ok_ciudad
+ec9174d0-ec22-455a-b688-415bba9c7a65,Capilla Asunción de la Santísima Virgen,Correa,"Correa, Santa Fe, Argentina",-32.84599,-61.2517054,ok_ciudad
+a27a7a42-3e2f-483d-8558-d6261f7f226f,Capilla Ntra. Sra. de Luján,Armstrong,"Armstrong, Santa Fe, Argentina",-32.7862754,-61.6035897,ok_ciudad
+95c280ea-d351-4915-8ade-3ec71581e668,Capilla Ntra. Sra. de Luján,Correa,"Correa, Santa Fe, Argentina",-32.84599,-61.2517054,ok_ciudad
+e06b8c4e-846a-4f48-b4bd-56bf3aa546bd,Ermita Virgen de Schöenstatt,Armstrong,"Armstrong, Santa Fe, Argentina",-32.7862754,-61.6035897,ok_ciudad
+e0cc2e10-dfe9-49eb-9261-0430ab14c612,Iglesia San Pedro Apóstol,Montes de Oca,"Montes de Oca, Santa Fe, Argentina",-32.566261,-61.7683388,ok_ciudad
+09968323-1cda-43bc-9095-4a26fc26e550,Capilla del Hogar de ancianos,Montes de Oca,"Montes de Oca, Santa Fe, Argentina",-32.566261,-61.7683388,ok_ciudad
+a470713d-ba78-4976-ab83-c905176be970,Capilla Ntra. Sra. del Pilar,Montes de Oca,"Montes de Oca, Santa Fe, Argentina",-32.566261,-61.7683388,ok_ciudad
+cb39fafc-62ea-43d6-a3f1-ff956558b71c,Iglesia Santa Teresa del Niño Jesús,Zavalla,"Zavalla, Santa Fe, Argentina",-33.0185383,-60.8788584,ok_ciudad
+e58b13f6-0643-42d6-ae6a-2dbc279f5c0e,Capilla Santa María Goretti,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+7a05fc38-9969-45f4-8c0e-b8caeb2d846b,Capilla Cristo Rey,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+d0fdf171-769a-434b-b4d5-5178b94b355e,Capilla Santa Teresita,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+c8411295-2a90-4797-816d-538e1545e068,Capilla San Antonio de Padua,Bigand,"Bigand, Santa Fe, Argentina",-33.3739862,-61.1845121,ok_ciudad
+1bd0c04d-a941-4bd4-af15-97dfd37734c6,Capilla Ntra. Sra. de la Merced,Fray Luis Beltran,"Fray Luis Beltran, Santa Fe, Argentina",-32.7874256,-60.7295083,ok_ciudad
+33c5251d-c036-4e82-b290-041a71b39fd5,Capilla San Cayetano,Fray Luis Beltran,"Fray Luis Beltran, Santa Fe, Argentina",-32.7874256,-60.7295083,ok_ciudad
+fe38f3c6-ed87-432b-b85a-39546b1733a0,Capilla San Ignacio de Loyola,Fray Luis Beltran,"Fray Luis Beltran, Santa Fe, Argentina",-32.7874256,-60.7295083,ok_ciudad
+9d6e267c-e0ae-4442-bf83-1b0eaa5de6db,Iglesia Ntra. Sra. del Rosario,Peyrano,"Peyrano, Santa Fe, Argentina",-33.5383536,-60.7997448,ok_ciudad
+7ab57ce2-2fcd-4dae-9105-64a7b5e766aa,Capilla Ntra. Sra. de Luján,Fighiera,"Fighiera, Santa Fe, Argentina",-33.1937547,-60.469476,ok_ciudad
+06c5ee33-0f71-445e-81f0-339f8c26db90,Capilla del Monasterio de Carmelitas Descalzas,Pueblo Esther,"Pueblo Esther, Santa Fe, Argentina",-33.0788574,-60.5640762,ok_ciudad
+e4d583db-2f56-4dfd-8502-a68fe9707e48,Centro pastoral Ntra. Sra. de Lourdes,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+e16b44b8-393a-41c0-9b5b-2cc33fd59ba7,Iglesia Ntra. Sra. de Luján,Fighiera,"Fighiera, Santa Fe, Argentina",-33.1937547,-60.469476,ok_ciudad
+37d496a1-446e-4ae0-9d04-1c2b05b4f148,Iglesia San Esteban,Fighiera,"Fighiera, Santa Fe, Argentina",-33.1937547,-60.469476,ok_ciudad
+a0c54c2b-0be0-4d30-9cee-f874c1081a1c,Capilla Medalla Milagrosa,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+6554ab54-fd60-49de-9f3f-098a8417d099,"Capilla Ntra. Sra. de la Paz, Cementerio El Prado",Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+9d166f76-3b85-418e-ab1a-8661be0d256a,Capilla Ntra. Sra. de Luján,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+4f9e0a2b-cec2-45e2-84d3-bf55c93be27e,Capilla Ntra. Sra. del Rosario,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+95882a79-7c2f-4541-99c0-5d299bdbe94f,Capilla Ntra. Sra. del Rosario de San Nicolás,Pujato,"Pujato, Santa Fe, Argentina",-33.0176021,-61.0430978,ok_ciudad
+730bac2d-b2e6-408b-9881-1e9df9f252c7,Capilla Perpetuo socorro,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+6675271b-9546-460d-ac94-67719bc0a182,Capilla Sagrado Corazón,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+c769c3ee-f9e0-4d5d-b659-b8bb776c76bd,Capilla San Juan María Vianney,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+b6f99d26-1e1a-4b27-9840-3a7e2d460956,Capilla Virgen Niña,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+21ddf78e-9311-45f7-add8-b4963948bf18,Capilla Ntra. Sra. de los Remedios,Godoy,"Godoy, Santa Fe, Argentina",-33.3671562,-60.5092356,ok_ciudad
+09517ed7-3f5a-4b48-9ac5-b05c8899261a,Capilla Sagrado Corazón de Jesús,Godoy,"Godoy, Santa Fe, Argentina",-33.3671562,-60.5092356,ok_ciudad
+b7b04c1c-f43c-4f6a-a433-6c6ca7341a9e,Capilla Santa Teresita del Niño Jesús,Godoy,"Godoy, Santa Fe, Argentina",-33.3671562,-60.5092356,ok_ciudad
+307503b7-f6cb-4287-b404-5d42bbb7afed,Capilla Ntra. Sra. de Fátima,Carcarañá,"Carcarañá, Santa Fe, Argentina",-32.8563501,-61.148729,ok_ciudad
+6395fe84-619d-414d-a055-a277cd129dce,Capilla Sagrado Corazón de Jesús,Carcarañá,"Carcarañá, Santa Fe, Argentina",-32.8563501,-61.148729,ok_ciudad
+4d374aba-1d5a-466f-821f-1471931cf014,Capilla del Colegio Ntra. Sra. del Rosario,Arequito,"Arequito, Santa Fe, Argentina",-33.1448719,-61.4698345,ok_ciudad
+ccc3abeb-ca9b-4b2e-8095-2fadebb37307,Capilla María Auxiliadora,Arequito,"Arequito, Santa Fe, Argentina",-33.1448719,-61.4698345,ok_ciudad
+5f891f65-1132-4a98-8763-2caf7d3f1ab1,Capilla Ntra. Sra. de Fátima,Arequito,"Arequito, Santa Fe, Argentina",-33.1448719,-61.4698345,ok_ciudad
+fce2506c-2563-4faa-a6c1-b55d18f65d55,Capilla Ntra. Sra. de Luján,Sn. José de la Esquina,"Sn. José de la Esquina, Santa Fe, Argentina",-33.1279104,-61.6995423,ok_ciudad
+e2bb065d-e4de-4444-a6c6-1018f7109b43,Capilla Ntra. Sra. de Itatí,Pérez,"Pérez, Santa Fe, Argentina",-32.9982237,-60.7708529,ok_ciudad
+32c8ff94-05fd-4e17-90a1-5edcbdc895fa,Capilla Ntra. Sra. de Itatí,Carcarañá,"Carcarañá, Santa Fe, Argentina",-32.8563501,-61.148729,ok_ciudad
+b471e5bc-1bd7-4c1b-b472-a4fcb4f40415,"Capilla Ntra. Sra. de la Misericordia, Hnas. de Ntra. Sra. de la Misericordia",Sn. José de la Esquina,"Sn. José de la Esquina, Santa Fe, Argentina",-33.1279104,-61.6995423,ok_ciudad
+1d7d391e-791d-4f79-81ca-54a3fe747657,Iglesia San Juan Bautista,Andino,"Andino, Santa Fe, Argentina",-32.669687,-60.8753866,ok_ciudad
+bed89882-363e-40d2-9f47-4b95427ee9b4,Capilla Santa Teresa de Ávila,Sn. José de la Esquina,"Sn. José de la Esquina, Santa Fe, Argentina",-33.1279104,-61.6995423,ok_ciudad
+8a55080f-0f89-44e5-9940-db685a2350a0,Capilla Jesús Misericordioso,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+382f033c-8239-4701-ba9a-48d55ba25d18,Capilla Ntra. Sra. de la Asunción,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+4ce47703-46a8-4a85-8589-1f67f7f2e917,Capilla Sagrado Corazón de Jesús,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+24154ea0-3f15-4d4d-bb36-a8fb402c0102,Capilla San Cayetano,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+77be9d79-a38f-46c0-bc69-52cd072070ab,Capilla San Francisco,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+dbbca31e-ca3d-4d22-b36d-3fe057f89224,Capilla Santa Cecilia,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+27428690-3482-4a08-b06b-a99690b1fc40,Iglesia Sagrado Corazón de Jesús,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+41a40ab4-1c33-4dc2-a25b-0096b4546686,Capilla Ntra. Sra. de la Esperanza,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+17caa915-6761-423e-ab93-eb77103a5f8f,Capilla San Francisco.,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+cb7a7bae-4386-4e9d-81aa-e1de599997a5,Capilla Virgen de Lourdes,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+6283a5a4-f59f-4d3c-8248-5db4332d9dda,Iglesia San Enrique la Antigua,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+c64b1db9-fa45-4aa7-9093-521e0788a3ca,Iglesia Santa María de los Ángeles,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+3c72eb0a-a7cd-4244-ac01-ef0113fffeaa,Capilla María Madre Nuestra,San Jerónimo Sud,"San Jerónimo Sud, Santa Fe, Argentina",-32.8788862,-61.0230257,ok_ciudad
+247c04cd-4764-4698-85e0-0d714f07baf1,Capilla Madre del Salvador,Roldán,"Roldán, Santa Fe, Argentina",-32.9000832,-60.9066116,ok_ciudad
+b4da51f1-9e0b-4bd7-9f2f-eab119b59772,Capilla Virgen del Rosario,Chabás,"Chabás, Santa Fe, Argentina",-33.2456886,-61.3588841,ok_ciudad
+154c8cc4-9cd1-4554-863e-b19300532cba,Iglesia San Carlos Borromeo,Chabás,"Chabás, Santa Fe, Argentina",-33.2456886,-61.3588841,ok_ciudad
+17a1b28b-0c92-49c0-8fd5-0650c68e5dd3,Capilla Ntra. Sra. de Lourdes,Serodino,"Serodino, Santa Fe, Argentina",-32.6036519,-60.9474434,ok_ciudad
+95540495-c0ce-42c6-901f-7058bc518c1d,Capilla Virgén de Itatí,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+d225a68c-c5e5-40b5-82e2-f583e34101ea,Capilla Virgén de Itatí,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+8dde448e-cfee-47e2-8c79-902013843b8d,Capilla Ntra. Sra. de Itatí,Roldán,"Roldán, Santa Fe, Argentina",-32.9000832,-60.9066116,ok_ciudad
+218fe7d3-c36c-453d-8878-1c8ef2aba26a,Capilla San Roque,VGG,"VGG, Santa Fe, Argentina",-33.0250796,-60.633744,ok_ciudad
+e33b9010-c635-44f6-a88a-aee1ca104e19,Iglesia San Miguel Arcángel,Serodino,"Serodino, Santa Fe, Argentina",-32.6036519,-60.9474434,ok_ciudad
+b1535084-76cc-47a7-9dc1-79acc8772972,Capilla Ntra. Sra. de los Milagros,Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+be5d3f19-58d0-4f51-80ec-5b785f149d9d,Capilla de Bº Fonavi Sur,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+1adef44e-f0ee-497e-8c73-71a051ced7a6,Capilla Ntra. Sra. de Fátima,Villa Mugueta,"Villa Mugueta, Santa Fe, Argentina",-33.3119003,-61.0563641,ok_ciudad
+75a73db1-7666-48be-82a8-e2409f298446,Iglesia San Antonio de Padua,Villa Mugueta,"Villa Mugueta, Santa Fe, Argentina",-33.3119003,-61.0563641,ok_ciudad
+6cc60478-0813-4ab1-ada3-bff1c9ef487e,"Iglesia “Santa Rita”,",Álvarez,"Álvarez, Santa Fe, Argentina",-33.1305513,-60.8021185,ok_ciudad
+24af06cc-1b44-4ef7-ac76-b33e3c5a80c5,Capilla Jesús Misericordioso,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+7f3552e9-9826-4b01-aa7c-8e4079f6e789,Capilla Stella Maris,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+ef744f9e-9d9f-4ecd-a587-f4ed7b4ca85c,Templo Ntra. Sra. del Carmen,Villa Constitución,"Villa Constitución, Santa Fe, Argentina",-33.227206,-60.3298225,ok_ciudad
+ccf28638-05e7-44db-94f0-de6b4b41f4cb,Capilla Colegio San Antonio,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+0c0cbcb9-6a5b-41b7-b64f-3756b3bf14df,Capilla San Cayetano,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+118a0d09-bddc-4fda-a59e-d31735d2d85a,Capilla San José Obrero,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+edb3d628-4184-48f7-924e-f0d866c32745,Capilla Stella Maris,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+c0bc3531-a4bf-4887-9830-0b22af6c408d,Capilla Virgen del Rosario,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+08fe9e0e-1cd1-415b-aa83-3fbc3abefde3,Capilla Sagrada Familia,Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+2b4cefab-4834-4269-a2c0-c4a4c81907d6,Capilla Virgen de Lourdes,Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+18130e2a-00fe-444f-a8f7-348177da6fb8,Capilla Virgen del Rosario de San Nicolás,Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+b1cb84dd-d6ee-477f-9269-ace558fd5a25,"Capilla Ntra. Sra. del Carmen, Hospital Granaderos a Caballo",San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+57bdb746-af80-4320-ab3e-04ab39a86866,Capilla Ntra. Sra. de Guadalupe,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+a89a77f8-a267-45d5-8fa3-c70bfa9db711,"Capilla Ntra. Sra. de Luján, Jefatura de Policía",San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+535e3140-15c6-44b5-affb-4bc82ae8f8ae,"Capilla Ntra. Sra. de la Misericordia, Colegio Ntra. Sra. de la Misericordia",Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+a8e0dbfe-f686-4884-90b2-1b932046579d,Capilla Ntra. Sra. de la Esperanza,Granadero Baigorria,"Granadero Baigorria, Santa Fe, Argentina",-32.8547765,-60.7074143,ok_ciudad
+36dc3488-40be-4ada-9284-977a3de16911,"Capilla San Carlos Borromeo, Hospital San Carlos",Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+0529cf0b-e82e-4f51-8fc3-f3bc851cf838,"Capilla San Ignacio de Loyola, Cementerio",Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+8eccdfe3-253c-45d0-8624-adc61619aa8d,"Capilla San José, Hospital Provincial",Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+499bbd3a-3bce-4a9e-8a5a-c47ba0e47d64,"Capilla Sagrada Familia, Colegio Sagrada Familia",Casilda,"Casilda, Santa Fe, Argentina",-33.0443368,-61.1641779,ok_ciudad
+063fc2c1-8bb1-4ffe-ae62-e5d23a22b770,"Capilla Sagrado Corazón, Instituto Razetto",Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+baddc019-a61e-441f-889c-95130cf4feb8,"Capilla Santa Rosa de Viterbo, Hnas . Franciscanas Educacionistas",San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+ed10be9d-0e4c-4218-8cdc-0b04d855f715,Oratorio Ntra. Sra. de Schöenstatt,Cañada de Gómez,"Cañada de Gómez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad
+eca878fc-6f07-4d3a-9cac-d0f7fc9eb6c6,Capilla Santa Teresa del Niño Jesús,La Carolina,"La Carolina, Santa Fe, Argentina",-33.088746,-60.6935835,ok_ciudad
+02959472-dc15-4365-bf70-34587f6b2c28,Iglesia “Ntra. Sra. de Luján,Pueblo Muñoz,"Pueblo Muñoz, Santa Fe, Argentina",-33.1724748,-60.8968966,ok_ciudad
+24ec3279-14c1-4a29-9998-57735d09731f,Iglesia Sagrado Corazón,Piñero,"Piñero, Santa Fe, Argentina",-33.1092111,-60.7966353,ok_ciudad
+e4f301c7-045a-4014-af26-49fd1bb4f903,Capilla San Marcos,Granadero Baigorria,"Granadero Baigorria, Santa Fe, Argentina",-32.8547765,-60.7074143,ok_ciudad
+50c37448-6ffb-4b67-9f38-a76cd8d442a0,Capilla San Mateo,Granadero Baigorria,"Granadero Baigorria, Santa Fe, Argentina",-32.8547765,-60.7074143,ok_ciudad
+d92605d3-1ea5-4c92-bad1-78fbd4c7f86b,Ermita de Schöenstatt,Granadero Baigorria,"Granadero Baigorria, Santa Fe, Argentina",-32.8547765,-60.7074143,ok_ciudad
+3c99a004-9766-4880-8779-3e83529026d8,Capilla Sagrados Corazones de Jesús y María,Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+910e982a-3481-4079-9aa0-c44a91e8cf54,"Capilla del “Espíritu Santo”,",Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+b59a995d-a074-42cc-b583-527a6a197d9f,Capilla Ntra. Sra. de los Dolores,Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+81a38bdd-6149-4706-916a-1b1beb9d4f03,"Hogarcito “San Roque”,",Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+919e6fea-63b9-4282-847c-62396982362f,Capilla Sagrado Corazón de Jesús,Las Rosas,"Las Rosas, Santa Fe, Argentina",-32.4756443,-61.5761736,ok_ciudad
+cf4062c9-6cda-48bf-ac4d-0da59c465ef4,Capilla San José Obrero,Las Rosas,"Las Rosas, Santa Fe, Argentina",-32.4756443,-61.5761736,ok_ciudad
+f04a5356-fe90-4a63-8a4c-95c4023dfaff,Capilla Ntra. Sra. de Lourdes,Oliveros,"Oliveros, Santa Fe, Argentina",-32.5764738,-60.85222,ok_ciudad
+98c8d183-082a-48d8-8773-a0dc241e1cb0,Capilla Ntra. Sra. de Luján,Totoras,"Totoras, Santa Fe, Argentina",-32.5842697,-61.1667933,ok_ciudad
+2e213615-61a0-4ec7-a7c0-aed45235635f,Capilla San Francisco de Asís,Santa Teresa,"Santa Teresa, Santa Fe, Argentina",-33.4366946,-60.7904524,ok_ciudad
+943150bf-9856-4454-9298-e72b8f5fc1cc,Iglesia San Antonio de Padua,Santa Teresa,"Santa Teresa, Santa Fe, Argentina",-33.4366946,-60.7904524,ok_ciudad
+635a1fce-6db4-4a92-8000-d123a63e4b97,Capilla Ntra. Sra. de Luján,Empalme V.C.,"Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+7e7559dd-ec5e-4e38-8e93-076664890e43,Capilla Santa Ana,Empalme V.C.,"Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+196fedd4-cde5-4ae0-899a-b0bba1710b41,Capilla de la Medalla Milagrosa,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+5b00a210-aeb6-4e1f-92e7-fa6c986b75e7,Capilla Ntra. Sra. de la Esperanza,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+92a726a4-3376-4a59-bd2b-0c1b18ebf403,Capilla San José Obrero,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+e7206f1f-0620-4ff5-a094-333f0736ef4d,Capilla San Juan Bautista,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+1e236c0f-2e1c-4bf2-9308-034e38885ba8,Capilla Ntra. Sra. de Itatí,San Lorenzo,"San Lorenzo, Santa Fe, Argentina",-32.7454865,-60.743091,ok_ciudad
+4b898657-6d4b-41e3-8381-a0cb454655bd,Capilla Ntra. Sra. de la Medalla Milagrosa,Empalme V.C.,"Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+030a82f5-e224-4550-ad68-cdd12d12b778,Capilla Ntra. Sra. de la Medalla Milagrosa,Las Rosas,"Las Rosas, Santa Fe, Argentina",-32.4756443,-61.5761736,ok_ciudad
+9babb692-2d72-46bc-988e-0eff85ed40a6,Capilla Ntra. Sra. de la Medalla Milagrosa,Villa Eloisa,"Villa Eloisa, Santa Fe, Argentina",-32.9623404,-61.5462137,ok_ciudad
+fcbec9fb-57bb-461e-a9dd-3bbcabb40d2b,Capilla Ntra. Sra. del Rosario de San Nicolás,Empalme V.C.,"Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+2a3fed98-10da-4873-bded-442eefddd0dc,"Capilla San Lucas, Hospital Eva Perón",Granadero Baigorria,"Granadero Baigorria, Santa Fe, Argentina",-32.8547765,-60.7074143,ok_ciudad
+46825c4b-c4e6-4f05-805c-c2449852c1f5,Iglesia Ntra. Sra. del Carmen,Carmen del Sauce,"Carmen del Sauce, Santa Fe, Argentina",-33.235991,-60.811795,ok_ciudad
+e692045b-d34e-4003-8b32-ab97a88ac1e3,Capilla del Hogarcito “San José Obrero”,Capitán Bermúdez,"Capitán Bermúdez, Santa Fe, Argentina",-32.8166653,-60.7166716,ok_ciudad
+3c550b76-d781-408d-98c3-9033b0729d9e,Capilla Milagroso Niño Jesús de Praga,Pueblo Esther,"Pueblo Esther, Santa Fe, Argentina",-33.0788574,-60.5640762,ok_ciudad
+1aca7f18-2589-449d-ac61-55e8f868d053,Natividad de la Santísima Virgen María,Cañada de Gomez,"Cañada de Gomez, Santa Fe, Argentina",-32.8234448,-61.3905125,ok_ciudad

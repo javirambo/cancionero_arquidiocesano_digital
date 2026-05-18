@@ -1,0 +1,365 @@
+id,name,city,address,query_usada,latitude,longitude,status
+f46826f0-00b5-4d22-8946-5f5e9138bf77,Ntra. Sra. de Fátima,Las Parejas,,"Ntra. Sra. de Fátima, Las Parejas, Santa Fe, Argentina",-32.6836225,-61.5173039,ok
+2ddc3300-7847-44bb-af40-1305f57d3f62,Ntra. Sra. de la Merced,Armstrong,,"Ntra. Sra. de la Merced, Armstrong, Santa Fe, Argentina",-32.7846362,-61.6031245,ok
+8511b898-e871-418a-9bfb-0a8ed47b19e8,Ntra. Sra. de la Merced,Correa,,"Ntra. Sra. de la Merced, Correa, Santa Fe, Argentina",-32.8491526,-61.2546209,ok
+e0d945a5-e6fd-4aa7-bf8a-c08ca0e4d2eb,Ntra. Sra. de las Mercedes,Montes de Oca,,"Ntra. Sra. de las Mercedes, Montes de Oca, Santa Fe, Argentina",-32.5669811,-61.7680651,ok
+057e22d4-39c6-436d-a563-0ccc8ca75a60,Ntra. Sra. del Pilar,Carcarañá,,"Ntra. Sra. del Pilar, Carcarañá, Santa Fe, Argentina",-32.8577657,-61.1519723,ok
+6fa3b970-49db-499a-a9ea-6dad7381392b,Ntra. Sra. del Valle,Tortugas,,"Ntra. Sra. del Valle, Tortugas, Santa Fe, Argentina",,,no_encontrado
+b8f8b5d6-ab78-4955-8dba-0c8a1b71f9ff,San Francisco de Asís,Bustinza,,"San Francisco de Asís, Bustinza, Santa Fe, Argentina",-32.7387643,-61.2914968,ok
+be10f718-0c76-442b-ab63-0b8f91afe5d1,San Jerónimo,San Jerónimo Sud,,"San Jerónimo, San Jerónimo Sud, Santa Fe, Argentina",-32.8788862,-61.0230257,ok
+d66fd9cb-b1aa-4f8b-a77d-baf2169db8c0,San José,Roldán,,"San José, Roldán, Santa Fe, Argentina",-32.9202302,-60.8725511,ok
+034c0577-ad62-4a58-a5bf-8be66d17f281,San Pedro Apóstol,Cañada de Gómez,,"San Pedro Apóstol, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+f23cba42-426f-4a16-b70a-6cd5f63755ee,Santa Rosa de Lima,Las Rosas,,"Santa Rosa de Lima, Las Rosas, Santa Fe, Argentina",-32.4758932,-61.5768629,ok
+9736865e-4b69-4964-9436-299465f0958d,Santa Teresa de Jesús,Totoras,,"Santa Teresa de Jesús, Totoras, Santa Fe, Argentina",-32.584438,-61.1678419,ok
+4595f5dd-913c-434c-ac6d-64a49568fef0,Santo Domingo de Guzmán,Villa Eloisa,,"Santo Domingo de Guzmán, Villa Eloisa, Santa Fe, Argentina",,,no_encontrado
+2f3f27f9-3720-4b1c-a473-93d13d56545d,Cristo Rey,Sanford,,"Cristo Rey, Sanford, Santa Fe, Argentina",-33.1465885,-61.2768191,ok
+e57ef2b3-5b32-4a9d-a559-effc0c3e5b7e,Inmaculada Concepción,Arteaga,,"Inmaculada Concepción, Arteaga, Santa Fe, Argentina",,,no_encontrado
+2a56ea53-ff27-4a43-a9c2-fb82e55ba977,Ntra. Sra. de Fátima,Casilda,,"Ntra. Sra. de Fátima, Casilda, Santa Fe, Argentina",,,no_encontrado
+cdbf9fa1-54fd-4dd7-bd37-60d5098aebdc,Ntra. Sra. de Las Mercedes,Zavalla,,"Ntra. Sra. de Las Mercedes, Zavalla, Santa Fe, Argentina",-33.0214353,-60.8811156,ok
+c1089fd3-74c2-4947-a837-0cea8ce447b9,Ntra. Sra. de Luján,Bigand,,"Ntra. Sra. de Luján, Bigand, Santa Fe, Argentina",,,no_encontrado
+8dc44e14-22dd-43f5-8fb2-d5c7b34eee11,Ntra. Sra. de Luján,Casilda,,"Ntra. Sra. de Luján, Casilda, Santa Fe, Argentina",,,no_encontrado
+c6e82675-5671-4101-bdca-5cc2b1591599,Ntra. Sra. del Carmen,Pérez,,"Ntra. Sra. del Carmen, Pérez, Santa Fe, Argentina",-32.998118,-60.7689554,ok
+56646378-020d-42da-9199-3c5f608462f2,Ntra. Sra. del Carmen,Pujato,,"Ntra. Sra. del Carmen, Pujato, Santa Fe, Argentina",,,no_encontrado
+7a8a1464-b03a-43a8-99dd-bd7647d6df60,Ntra. Sra. del Carmen,Soldini,,"Ntra. Sra. del Carmen, Soldini, Santa Fe, Argentina",,,no_encontrado
+a8af26ab-48c9-4d94-b554-5d4b69e47229,Ntra. Sra. del Rosario,Arequito,,"Ntra. Sra. del Rosario, Arequito, Santa Fe, Argentina",-33.1471607,-61.4689813,ok
+bb7f86f0-381d-4bad-9c81-1067d4ff1361,Ntra. Sra. del Rosario,Fuentes,,"Ntra. Sra. del Rosario, Fuentes, Santa Fe, Argentina",,,no_encontrado
+d50c53dd-0a4d-4952-89d3-27a30f319789,Ntra. Sra. del Rosario,Los Molinos,,"Ntra. Sra. del Rosario, Los Molinos, Santa Fe, Argentina",-33.1045623,-61.3264216,ok
+500181e0-5499-45aa-a65d-26b7a8b7671e,Ntra.Sra. de la Merced,Sn. José de la Esquina,,"Ntra.Sra. de la Merced, Sn. José de la Esquina, Santa Fe, Argentina",,,no_encontrado
+071ce63f-17f1-48cb-bb81-a4c0a628b01d,San José,Chabás,,"San José, Chabás, Santa Fe, Argentina",-33.2517085,-61.3628434,ok
+67ffddfe-0409-4f14-aa20-947353811ed6,San Miguel Arcángel,Villa Mugueta,,"San Miguel Arcángel, Villa Mugueta, Santa Fe, Argentina",,,no_encontrado
+ce9bc938-9bd4-4c22-88e5-3e28d19fe1f7,San Pedro Apóstol,Casilda,,"San Pedro Apóstol, Casilda, Santa Fe, Argentina",-33.0435088,-61.1656031,ok
+23e97632-2b99-4557-9b61-b7dad7995800,Basílica San José,Rosario,,"Basílica San José, Rosario, Santa Fe, Argentina",,,no_encontrado
+1924f4f7-a024-467d-90b9-b2230f74d804,Inmaculada Concepción,Rosario,,"Inmaculada Concepción, Rosario, Santa Fe, Argentina",,,no_encontrado
+5fe2b959-37ee-4c39-8a7b-40baf17dca4d,Inmaculado Corazón de María,Rosario,,"Inmaculado Corazón de María, Rosario, Santa Fe, Argentina",-32.9643576,-60.649677,ok
+4789a09b-b5c1-42ef-ad26-fb564ea08692,María Auxiliadora,Rosario,,"María Auxiliadora, Rosario, Santa Fe, Argentina",-32.9531301,-60.6657294,ok
+2e6a2642-3cfe-47f6-9653-5b8df504bb8f,Ntra. Sra. de Lourdes,Rosario,,"Ntra. Sra. de Lourdes, Rosario, Santa Fe, Argentina",-32.9484144,-60.6608482,ok
+9a2d4cd9-f552-4a8b-ab62-e3df1b93a039,Ntra. Sra. del Carmen,Rosario,,"Ntra. Sra. del Carmen, Rosario, Santa Fe, Argentina",-32.8995987,-60.7974805,ok
+9213b686-e3e6-4b68-b9af-16f99a9eb769,Ntra. Sra. del Pilar,Rosario,,"Ntra. Sra. del Pilar, Rosario, Santa Fe, Argentina",,,no_encontrado
+44bffc93-3a19-4295-9cf1-73e75ed0167c,Ntra. Sra. del Rosario Catedral,Rosario,,"Ntra. Sra. del Rosario Catedral, Rosario, Santa Fe, Argentina",,,no_encontrado
+c0bacbc5-e7b1-4cb9-9c76-e3182c92c19d,San Cayetano,Rosario,,"San Cayetano, Rosario, Santa Fe, Argentina",-32.9305423,-60.7566687,ok
+276eb5df-d0d2-441c-9ab1-476969c1b13f,San Jorge,Rosario,,"San Jorge, Rosario, Santa Fe, Argentina",-32.9581485,-60.6371666,ok
+8b10147c-a917-4dc1-a141-b8069d8731a7,Santa Rosa de Lima,Rosario,,"Santa Rosa de Lima, Rosario, Santa Fe, Argentina",-32.991734,-60.6341061,ok
+760bfc74-dc55-47f9-b5b6-5ad8a0eeee2f,María de Nazaret,Rosario,,"María de Nazaret, Rosario, Santa Fe, Argentina",-32.8818222,-60.7317951,ok
+8822b3ad-3828-421d-b9f2-5dac88fc94a5,Natividad del Señor,Rosario,,"Natividad del Señor, Rosario, Santa Fe, Argentina",-32.8875762,-60.7129319,ok
+94ea85ec-d8aa-426d-8bf8-b5de778fa11d,Ntra Sra. de la Medalla Milagrosa,Rosario,,"Ntra Sra. de la Medalla Milagrosa, Rosario, Santa Fe, Argentina",,,no_encontrado
+2895f18f-76d9-4456-9c90-f051642aaca0,Ntra. Sra. de los Dolores,Rosario,,"Ntra. Sra. de los Dolores, Rosario, Santa Fe, Argentina",,,no_encontrado
+6bc038b0-002d-48fa-86a1-cf370921a493,Ntra. Sra. del Perpetuo Socorro,Rosario,,"Ntra. Sra. del Perpetuo Socorro, Rosario, Santa Fe, Argentina",-32.9210426,-60.6804468,ok
+1b709f64-5c7a-4232-993c-dd3b1752447d,Nuestra Señora de Guadalupe,Rosario,,"Nuestra Señora de Guadalupe, Rosario, Santa Fe, Argentina",-33.0739145,-60.5756884,ok
+709e8e01-f852-4e91-84f6-5b35bedae950,Resurrección del Señor,Rosario,,"Resurrección del Señor, Rosario, Santa Fe, Argentina",,,no_encontrado
+1f6c2c2c-fd51-4f36-a1bf-7819680b43e9,Sagrada Familia,Rosario,,"Sagrada Familia, Rosario, Santa Fe, Argentina",-32.9512446,-60.6627771,ok
+8cbda5c4-4333-4c18-8834-3288db847628,Sagrado Corazón de Jesús,Rosario,,"Sagrado Corazón de Jesús, Rosario, Santa Fe, Argentina",-32.8941545,-60.6905626,ok
+9d7c0a1a-ead6-4058-807a-ed51302dc45a,San Guillermo Abad,Rosario,,"San Guillermo Abad, Rosario, Santa Fe, Argentina",-32.8999251,-60.710782,ok
+ae8aad15-641b-4bd4-89e8-3fc0a43ffb40,San José Obrero,Rosario,,"San José Obrero, Rosario, Santa Fe, Argentina",-31.3029512,-60.6641804,ok
+99bc800e-d8a1-4921-82fa-426dbc5dc03f,San Juan Evangelista,Rosario,,"San Juan Evangelista, Rosario, Santa Fe, Argentina",-32.9229423,-60.6734029,ok
+b56d3f1e-5ce8-4cf7-ad59-984d2bdcab78,San Ramón Nonato,Rosario,,"San Ramón Nonato, Rosario, Santa Fe, Argentina",-32.886289,-60.6926172,ok
+1f2295a2-c399-46b1-8d3d-d6da466f1e25,Santa Agripina,Rosario,,"Santa Agripina, Rosario, Santa Fe, Argentina",,,no_encontrado
+6c57bdbe-d60f-4c57-aad1-aab4fd0fa8cc,Santísimo Redentor,Rosario,,"Santísimo Redentor, Rosario, Santa Fe, Argentina",,,no_encontrado
+286411ad-0bba-4d3b-bc22-17c2d5ced698,Santo Domingo Savio,Rosario,,"Santo Domingo Savio, Rosario, Santa Fe, Argentina",-32.9125451,-60.7999219,ok
+a83e5477-8cfc-4210-bdb9-924dc1c01632,Asunción de la Virgen María,Rosario,,"Asunción de la Virgen María, Rosario, Santa Fe, Argentina",,,no_encontrado
+1f1fa833-2cb1-4ddb-adc3-e2d3fbb82abf,Cristo Redentor,Rosario,,"Cristo Redentor, Rosario, Santa Fe, Argentina",-33.0568958,-60.6144269,ok
+6da7ec08-f6f6-44de-a618-8d591e8b9197,Cristo Rey,Rosario,,"Cristo Rey, Rosario, Santa Fe, Argentina",-33.0255306,-60.7648298,ok
+384a46c0-593d-4dd4-8c52-a293324d1fec,Espíritu Santo,Rosario,,"Espíritu Santo, Rosario, Santa Fe, Argentina",-32.9495598,-60.7082717,ok
+d35d98ec-0272-4a2f-9ae5-f2739e6a50e4,María Reina,Rosario,,"María Reina, Rosario, Santa Fe, Argentina",-32.9168275,-60.7190827,ok
+93f14b0f-6aef-40db-9125-20b3132d95db,Ntra. Sra. de la Rocca,Rosario,,"Ntra. Sra. de la Rocca, Rosario, Santa Fe, Argentina",,,no_encontrado
+50c5ecc6-c062-467a-aba3-d82a648811ba,Ntra. Sra. de la Salud,Rosario,,"Ntra. Sra. de la Salud, Rosario, Santa Fe, Argentina",-32.9711208,-60.6938538,ok
+ccbe18e4-377d-46e6-baff-490276024ecf,Ntra. Sra. de Luján,Rosario,,"Ntra. Sra. de Luján, Rosario, Santa Fe, Argentina",-32.9560247,-60.6729225,ok
+ef759326-3de1-4457-8539-b84320c603ce,Ntra. Sra. de Pompeya,Rosario,,"Ntra. Sra. de Pompeya, Rosario, Santa Fe, Argentina",-32.9412175,-60.6953954,ok
+daa95e0c-b52c-48d7-9ef1-e0a0df34553e,San Francisco de las Llagas,Rosario,,"San Francisco de las Llagas, Rosario, Santa Fe, Argentina",,,no_encontrado
+939b7e31-dddf-4975-a82a-d5240689575e,San Francisco Solano,Rosario,,"San Francisco Solano, Rosario, Santa Fe, Argentina",-33.0071756,-60.6705282,ok
+3a70ec82-b7ef-48fa-b542-21ef1c35534f,San Miguel Arcángel,Rosario,,"San Miguel Arcángel, Rosario, Santa Fe, Argentina",-32.9484039,-60.6736306,ok
+95013721-69cb-41f2-99fc-a8c5db3c4d33,Santa María Josefa Rosello,Rosario,,"Santa María Josefa Rosello, Rosario, Santa Fe, Argentina",,,no_encontrado
+2874ff22-b6ab-4072-a30c-3c2cf23dfc05,Santísima Trinidad,Rosario,,"Santísima Trinidad, Rosario, Santa Fe, Argentina",-32.9436221,-60.726078,ok
+86cb40c9-774c-4574-90b8-14e17e979cd5,Ntra. Sra. de Itatí,Rosario,,"Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",-33.0371521,-60.6204654,ok
+fa65da0b-7b9b-41ab-a121-065a20edaf8a,Ntra. Sra. de la Consolata,Rosario,,"Ntra. Sra. de la Consolata, Rosario, Santa Fe, Argentina",-32.9997638,-60.6712809,ok
+92c93fd7-93cd-4e70-97b9-f0d5c55887ce,Ntra. Sra. de la Merced,Rosario,,"Ntra. Sra. de la Merced, Rosario, Santa Fe, Argentina",-32.9987701,-60.6310553,ok
+22764d0f-4db6-43bd-9e8e-a110068af1e1,Ntra. Sra. de la Paz,Rosario,,"Ntra. Sra. de la Paz, Rosario, Santa Fe, Argentina",-32.9025633,-60.7093422,ok
+75126475-7df0-4428-bd86-8baa532a19fd,Ntra. Sra. de las Nieves,Rosario,,"Ntra. Sra. de las Nieves, Rosario, Santa Fe, Argentina",-32.9944302,-60.6442308,ok
+ed6cf717-faeb-4a4a-86a9-e43bde378b8b,Ntra. Sra. del Valle,Rosario,,"Ntra. Sra. del Valle, Rosario, Santa Fe, Argentina",-33.008612,-60.660708,ok
+c64fd9e0-149f-4cd3-baf5-1496e0dc4a38,San Casimiro,Rosario,,"San Casimiro, Rosario, Santa Fe, Argentina",-32.9997779,-60.6554623,ok
+fcfedab5-c3e6-4277-9eac-a82a17f9ad16,San Diego de Alcalá,Rosario,,"San Diego de Alcalá, Rosario, Santa Fe, Argentina",,,no_encontrado
+82f8bf8e-7d6d-48dc-a777-9ecbc099f7e1,San Enrique,Rosario,,"San Enrique, Rosario, Santa Fe, Argentina",-33.0276921,-60.6338227,ok
+4200f73f-97fa-43a0-a3d0-1adbb1f72b93,San Martín de Porres,Rosario,,"San Martín de Porres, Rosario, Santa Fe, Argentina",-33.0179287,-60.651546,ok
+ab495774-7b66-40cd-8d9f-a033bb61cca7,San Vicente de Paúl,Rosario,,"San Vicente de Paúl, Rosario, Santa Fe, Argentina",-33.0280552,-60.6874225,ok
+f43f1287-4900-4256-b24b-90535578d8cf,Ntra. Sra. de Luján,Fray Luis Beltran,,"Ntra. Sra. de Luján, Fray Luis Beltran, Santa Fe, Argentina",,,no_encontrado
+9575e6e1-e682-45f0-86e1-594801fc176c,San Antonio de Padua,San Lorenzo,,"San Antonio de Padua, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+f8a6cc8e-7038-44fa-82ce-c9b30b1b90e8,San José,Serodino,,"San José, Serodino, Santa Fe, Argentina",-32.6043806,-60.9468269,ok
+af1a06c8-b918-4a05-a480-410c767c9a4d,San José Obrero,Capitán Bermúdez,,"San José Obrero, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+90cc7e02-ba70-4c03-a019-943ef547697c,San Lorenzo Mártir,San Lorenzo,,"San Lorenzo Mártir, San Lorenzo, Santa Fe, Argentina",-32.7461504,-60.7315395,ok
+fdd56321-50e5-41b0-9e43-e2e8549a7969,San Pedro Apóstol,Granadero Baigorria,,"San Pedro Apóstol, Granadero Baigorria, Santa Fe, Argentina",,,no_encontrado
+e47867bf-f3cb-476f-aeaa-5031373f1d0b,San Roque,Capitán Bermúdez,,"San Roque, Capitán Bermúdez, Santa Fe, Argentina",-32.8126388,-60.724245,ok
+3c5c6c9c-e535-40e4-ac45-2764bbaa8f3c,Santa Catalina de Alejandría,Capitán Bermúdez,,"Santa Catalina de Alejandría, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+3d90b840-ee17-4bd4-8724-92e9b9e73d50,Santa Rita de Cascia,Ibarlucea,,"Santa Rita de Cascia, Ibarlucea, Santa Fe, Argentina",,,no_encontrado
+afa0d7c5-cb0d-44c1-a2b0-867e5ffeb701,Santa Rosa de Lima,Oliveros,,"Santa Rosa de Lima, Oliveros, Santa Fe, Argentina",,,no_encontrado
+d81e55fc-bb5b-40c1-a546-cbaae9f17a44,Virgen Niña,San Lorenzo,,"Virgen Niña, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+497ab9ba-c3d7-48b8-a5b3-9972d6b90c43,Inmaculado Corazón de María,La Vanguardia,,"Inmaculado Corazón de María, La Vanguardia, Santa Fe, Argentina",,,no_encontrado
+c6a4b35e-2838-465d-af41-de9c64c4e245,Ntra. Sra. de Luján,Peyrano,,"Ntra. Sra. de Luján, Peyrano, Santa Fe, Argentina",-33.5383925,-60.8006754,ok
+fbd2ce5d-8b1d-407f-92cb-78eafe520aaa,Sagrado Corazón de Jesús,Coronel Bogado,,"Sagrado Corazón de Jesús, Coronel Bogado, Santa Fe, Argentina",-33.3163618,-60.6035561,ok
+92bb9b7e-9ba3-4fb7-8154-1ec4b8793eda,San Nicolás de Tolentino,Álvarez,,"San Nicolás de Tolentino, Álvarez, Santa Fe, Argentina",-33.1277034,-60.8071189,ok
+f88d365a-687a-4daf-87ee-726b75037185,Santa Teresa de Jesús,Santa Teresa,,"Santa Teresa de Jesús, Santa Teresa, Santa Fe, Argentina",-31.5476233,-60.8124685,ok
+a961e26f-9114-40a3-9a3c-ab2f22034d06,Santo Domingo de Guzmán,Acebal,,"Santo Domingo de Guzmán, Acebal, Santa Fe, Argentina",-33.241508,-60.8374411,ok
+4bdc7f1c-b6cc-4a84-bcd1-172834913259,María Madre de Dios,Rosario,,"María Madre de Dios, Rosario, Santa Fe, Argentina",,,no_encontrado
+6a99c7ed-55c6-4f20-9a74-af352b84a414,María Madre de la Iglesia,Rosario,,"María Madre de la Iglesia, Rosario, Santa Fe, Argentina",,,no_encontrado
+e12e00cd-d662-4a79-ae16-6cc1b7c2aa62,Ntra. Sra. de Fátima,Rosario,,"Ntra. Sra. de Fátima, Rosario, Santa Fe, Argentina",-32.9985387,-60.7690998,ok
+767397bf-7a04-4c4f-9d5d-3f4892e76573,Ntra. Sra. de la Guardia,Rosario,,"Ntra. Sra. de la Guardia, Rosario, Santa Fe, Argentina",-32.9898367,-60.6558929,ok
+1740ad9d-cdca-4834-9e15-2f533b839323,San Antonio María Gianelli,Rosario,,"San Antonio María Gianelli, Rosario, Santa Fe, Argentina",,,no_encontrado
+c096f234-2b3b-42c3-86f3-63b2600fe148,Santa Isabel de Hungría,Rosario,,"Santa Isabel de Hungría, Rosario, Santa Fe, Argentina",-32.9805777,-60.6800107,ok
+d2b0a5bb-56e3-408a-8df9-68f6d3aa4940,Santa Lucía,Rosario,,"Santa Lucía, Rosario, Santa Fe, Argentina",-32.9544422,-60.7263643,ok
+9f463a91-02ff-4760-a395-8a04036292ef,Santa Teresa del Niño Jesús,Rosario,,"Santa Teresa del Niño Jesús, Rosario, Santa Fe, Argentina",,,no_encontrado
+45bb6687-9f4e-447a-89e5-08e66f2a3a6b,Santísimo Sacramento,Rosario,,"Santísimo Sacramento, Rosario, Santa Fe, Argentina",-32.9747993,-60.6606122,ok
+f637afaf-0999-42ee-8733-51c8382a982c,Asunción de la Virgen María,Arroyo Seco,,"Asunción de la Virgen María, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+bf06a7b2-5edc-4116-95e5-28db9945165d,Ntra. Sra. de Fátima,Villa Constitución,,"Ntra. Sra. de Fátima, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+3bb52e75-6469-49be-8fe2-0b8f50e2f869,San Antonio de Padua,Rosario,,"San Antonio de Padua, Rosario, Santa Fe, Argentina",-32.9386566,-60.7132536,ok
+1c7ffe56-4173-4b72-beef-9c853ce30963,Ntra. Sra. del Carmen,Rosario,,"Ntra. Sra. del Carmen, Rosario, Santa Fe, Argentina",-32.8995987,-60.7974805,ok
+2ea04ca8-372b-44f7-8d54-33dde73b4621,María Mediadora de todas las Gracias,Rosario,,"María Mediadora de todas las Gracias, Rosario, Santa Fe, Argentina",,,no_encontrado
+6976d7f6-67bc-4a03-b7da-4e486fa63bc4,Ntra. Sra. del Carmen Timbúes,Timbues,,"Ntra. Sra. del Carmen Timbúes, Timbues, Santa Fe, Argentina",,,no_encontrado
+4d7881ad-99db-47ca-9764-5cd4cab69da8,Ntra. Sra. de Fátima,Puerto General San Martín,,"Ntra. Sra. de Fátima, Puerto General San Martín, Santa Fe, Argentina",,,no_encontrado
+4366e4ca-c2e9-4480-8ef8-c31c3ff96c12,Ntra. Sra. de Guadalupe,Pueblo Esther,,"Ntra. Sra. de Guadalupe, Pueblo Esther, Santa Fe, Argentina",-33.0739145,-60.5756884,ok
+0372aacd-ad16-419a-b175-4011604007c6,Ntra. Sra. de Luján,Villa Constitución,,"Ntra. Sra. de Luján, Villa Constitución, Santa Fe, Argentina",-33.2263095,-60.3419207,ok
+6b2e6dd9-bc3e-4423-8d4e-b5690369d2b0,Ntra. Sra. de Luján,Fighiera,,"Ntra. Sra. de Luján, Fighiera, Santa Fe, Argentina",,,no_encontrado
+386d9786-2cb8-4f31-8691-c7e307788e5b,Ntra. Sra. del Carmen,Godoy,,"Ntra. Sra. del Carmen, Godoy, Santa Fe, Argentina",,,no_encontrado
+acbf86f9-02d2-4b0d-8c81-b07d8e440bc9,San Pablo,Villa Constitución,,"San Pablo, Villa Constitución, Santa Fe, Argentina",-33.2278407,-60.3302436,ok
+121de8ff-c477-49b1-8762-ad856a8200d8,Sta. Teresita,Empalme V.C.,,"Sta. Teresita, Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+25d9b6b0-7a8b-4e92-b504-dffa35862711,Capilla San José,Arroyo Seco,Belgrano 634,"Capilla San José, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+23797583-6cfd-4db5-8ce4-87286652365f,Capilla Medalla Milagrosa,Arroyo Seco,"Bº Güemes (plaza),","Capilla Medalla Milagrosa, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+0b2ee923-fd3f-4fd1-a575-85dfd8eabff2,Capilla María Auxiliadora,Arroyo Seco,Paraje “El Ombú,"Capilla María Auxiliadora, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+e19bb7e6-5b99-49b6-9597-1d411394a21f,Capilla San Cayetano,Arroyo Seco,Ctda. Filiberti y Ruta 21,"Capilla San Cayetano, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+5fc7f044-6e87-4298-8e4b-6f5edf2daa02,Capilla Ntra. Sra. de Lourdes,Arroyo Seco,H. Primo e Infante,"Capilla Ntra. Sra. de Lourdes, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+d1083ce4-441c-428a-8b77-e0ac8883c19a,Capilla Santa Rita,Arroyo Seco,Moreno 1300,"Capilla Santa Rita, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+6f629a10-5b84-409d-aa1a-6db43e627e6b,Capilla Santa Lucía,Arroyo Seco,Gálvez y Sarmiento,"Capilla Santa Lucía, Arroyo Seco, Santa Fe, Argentina",,,no_encontrado
+bd2ffd1b-faf4-476d-81d9-80faaea10fcf,Capilla María Madre de la Solidaridad,Rosario,Fisherton,"Capilla María Madre de la Solidaridad, Rosario, Santa Fe, Argentina",,,no_encontrado
+62b4284b-e9e0-48b4-9ae3-21bd8352e7ed,Capilla Ntra. Sra. de los Milagros,Rosario,,"Capilla Ntra. Sra. de los Milagros, Rosario, Santa Fe, Argentina",,,no_encontrado
+2f82c072-eced-462b-8397-cfbb2d50b893,Capilla Ntra. Sra. de La Merced,Sanford,Zona rural,"Capilla Ntra. Sra. de La Merced, Sanford, Santa Fe, Argentina",,,no_encontrado
+50e89580-474c-4686-888d-ff5e8c4600d4,Capilla Ntra. Sra. del Trabajo,Rosario,Colombres 1350 bis,"Capilla Ntra. Sra. del Trabajo, Rosario, Santa Fe, Argentina",,,no_encontrado
+f34f1401-fdae-4ef1-810f-d4ec7f45c8f8,Capilla Jesús Obrero,Rosario,Pasco 7209,"Capilla Jesús Obrero, Rosario, Santa Fe, Argentina",,,no_encontrado
+01e61d52-36e6-45bb-8b3b-2de8c9f8f8b6,Capilla San Antonio,Arteaga,Zona rural,"Capilla San Antonio, Arteaga, Santa Fe, Argentina",-33.1600499,-61.9298229,ok_fallback
+bfbf4b06-a6b3-4ec9-9513-e1e6d2f0bf2d,Capilla Virgen de Lourdes,Arteaga,Zona rural,"Capilla Virgen de Lourdes, Arteaga, Santa Fe, Argentina",,,no_encontrado
+0cde1e90-a610-4c4c-9996-c2a3c45c5d07,Oratorio Santa Ana,Arteaga,Bº Chaco,"Oratorio Santa Ana, Arteaga, Santa Fe, Argentina",,,no_encontrado
+7dbf629d-b44a-4366-adb1-5615b45db05d,Capilla del Hospital de Niños V. Vilela,Rosario,Virasoro 1855,"Capilla del Hospital de Niños V. Vilela, Rosario, Santa Fe, Argentina",,,no_encontrado
+2ef30a98-42a6-47ae-b4c6-9075f3710656,Capilla del Hospital Italiano Garibaldi,Rosario,Virasoro 1249,"Capilla del Hospital Italiano Garibaldi, Rosario, Santa Fe, Argentina",,,no_encontrado
+a82deb98-3eea-4ddc-abba-701ddf39b42e,Iglesia Inmaculada Concepción,La Vanguardia,"San Martín 600, URANGA","Iglesia Inmaculada Concepción, La Vanguardia, Santa Fe, Argentina",,,no_encontrado
+504d794f-e04a-47b5-82f5-2d60a7c52a52,Iglesia Ntra. Sra. de Luján,La Vanguardia,CEPEDA,"Iglesia Ntra. Sra. de Luján, La Vanguardia, Santa Fe, Argentina",,,no_encontrado
+2f0a4100-d3db-4ee6-8938-ddb6687cc35b,Iglesia Sagrado Corazón,La Vanguardia,SARGENTO CABRAL,"Iglesia Sagrado Corazón, La Vanguardia, Santa Fe, Argentina",,,no_encontrado
+15f31725-ba6d-42ce-bbc7-bdc64afa4924,"Capilla Ntra. Sra. de los Ángeles,",Rosario,"Tucumán y Pje. Saguier,","Capilla Ntra. Sra. de los Ángeles,, Rosario, Santa Fe, Argentina",,,no_encontrado
+c1793d65-8cd1-4f96-8c2c-2a694d22879e,Capilla María Madre de los Pobres,Rosario,Dorrego 3980,"Capilla María Madre de los Pobres, Rosario, Santa Fe, Argentina",,,no_encontrado
+495c65cc-9a53-4ebe-b3c5-d238c3b7aa6d,Santa Cruz,Rosario,Gorriti 6950,"Santa Cruz, Gorriti 6950, Rosario, Santa Fe, Argentina",-32.9242507,-60.7163873,ok
+88c4b839-cdf0-465d-bfea-9d1973665bb5,San Francisco Javier,Rosario,Ab. Grandoli 3460 y Pje. Urraco,"San Francisco Javier, Rosario, Santa Fe, Argentina",,,no_encontrado
+0fab2781-e4b1-4fa9-841f-98638fbfedac,Capilla San Cayetano,Las Parejas,calle 23 nº 200,"Capilla San Cayetano, Las Parejas, Santa Fe, Argentina",,,no_encontrado
+32f193b9-e10b-40a0-b833-c1ce09d10427,Capilla Jesús Misericordioso,Casilda,Bº Nueva Roma,"Capilla Jesús Misericordioso, Casilda, Santa Fe, Argentina",,,no_encontrado
+61d79b99-6fd3-47d4-bfdf-10a1b870c15b,"San Pablo,",Rosario,Necochea y Ameghino,"San Pablo,, Rosario, Santa Fe, Argentina",-32.9042707,-60.7544543,ok_fallback
+6a96508a-2c90-4934-8654-1e36171ff12a,Capilla Sagrado Corazón de Jesús,Villa Constitución,,"Capilla Sagrado Corazón de Jesús, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+00a9cb61-05ce-4f42-8adf-421eb74b6dc4,San Antonio de Padua,Rosario,,"San Antonio de Padua, Rosario, Santa Fe, Argentina",-32.9386566,-60.7132536,ok
+5a637116-b959-48ab-95e6-56eb05494a21,Capilla Dios Padre y Ntra. Sra. de la Divina Providencia,Rosario,José Ingeniero y Acevedo,"Capilla Dios Padre y Ntra. Sra. de la Divina Providencia, Rosario, Santa Fe, Argentina",,,no_encontrado
+77f7e633-1f3b-4f87-8049-a836e8dd45a3,Capilla Ntra. Sra. de Itatí,Rosario,– Bº Unidad,"Capilla Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",-32.8869651,-60.7048855,ok_fallback
+b7888d58-c547-40a5-b4ff-16831e9af34e,Capilla Ntro. Señor de los Milagros de Mailín,Las Parejas,calle 25 nº 1400,"Capilla Ntro. Señor de los Milagros de Mailín, Las Parejas, Santa Fe, Argentina",,,no_encontrado
+7d31ae2f-4cfb-4ba7-878a-fe6492a9cd70,"Capilla San Francisco de Asís – Hospital Centenario,",Rosario,Urquiza 3101,"Capilla San Francisco de Asís – Hospital Centenario,, Rosario, Santa Fe, Argentina",,,no_encontrado
+98de0018-8aba-4b97-9bcb-d1d741adebea,Iglesia San Roque,Cañada de Gomez,Rucci s/n - LUIS PALACIOS,"Iglesia San Roque, Cañada de Gomez, Santa Fe, Argentina",,,no_encontrado
+ac9c9c00-1ff3-47b5-b476-9f7d6a6f2652,Iglesia Santa Rosa de Lima,Lucio Lopez,LUCIO LÓPEZ,"Iglesia Santa Rosa de Lima, LUCIO LÓPEZ, Lucio Lopez, Santa Fe, Argentina",-32.7153954,-61.0175514,ok
+6113f078-6f21-47be-aa54-3cb2a4250193,Ermita María Auxiliadora,Colonia Medici,COLONIA MEDICI,"Ermita María Auxiliadora, Colonia Medici, Santa Fe, Argentina",,,no_encontrado
+6c9e2c81-5610-42f7-9652-492551b25d1d,Capilla San José,Villa Constitución,,"Capilla San José, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+978e8396-91a4-4755-90f0-0cf1ba37172a,Capilla San Lorenzo Mártir,Villa Constitución,,"Capilla San Lorenzo Mártir, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+e52427f3-3206-4d7d-9c6c-73483946e071,Capilla Ntra. Sra. de Fátima,Pueblo Esther,MONTE FLORES,"Capilla Ntra. Sra. de Fátima, Pueblo Esther, Santa Fe, Argentina",,,no_encontrado
+09145ae9-4767-475e-ab63-1f4cfb1c7e1a,Capilla Ntra. Sra. de la Merced,Pueblo Esther,"Plaza Central, ALVEAR","Capilla Ntra. Sra. de la Merced, Pueblo Esther, Santa Fe, Argentina",,,no_encontrado
+7941d099-0fa2-44c0-bfe8-6c881abfcfa0,Iglesia San José,Pueblo Esther,"San José 277, GENERAL LAGOS","Iglesia San José, Pueblo Esther, Santa Fe, Argentina",,,no_encontrado
+01cac7d4-f049-4204-93e0-cd11c7e3bcab,Capilla San Francisco Solano,Rosario,Callao s/n,"Capilla San Francisco Solano, Rosario, Santa Fe, Argentina",,,no_encontrado
+c8514412-59c3-4a82-81e4-bbddfe83c1ad,Capilla San Juan Bautista,Rosario,Av. N.S. del Rosario e Iriondo,"Capilla San Juan Bautista, Rosario, Santa Fe, Argentina",,,no_encontrado
+66c9bc8b-b4b1-485c-9041-7804cd3723d5,Capilla sede de OSCUS,Rosario,Santiago 5129,"Capilla sede de OSCUS, Rosario, Santa Fe, Argentina",,,no_encontrado
+e84eac03-44df-41aa-9560-ce8e7ff462f9,Oratorio Ntra. Sra. de Itatí,Rosario,Constitución 5334,"Oratorio Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",,,no_encontrado
+7b7d8a1c-c9c9-45d1-93ac-235f82079f5f,Capilla Sagrado Corazón de Jesús.,Rosario,"Lamadrid 20,","Capilla Sagrado Corazón de Jesús., Rosario, Santa Fe, Argentina",-32.9794951,-60.6321856,ok_fallback
+ec9174d0-ec22-455a-b688-415bba9c7a65,Capilla Asunción de la Santísima Virgen,Correa,"zona rural, BERRETA","Capilla Asunción de la Santísima Virgen, Correa, Santa Fe, Argentina",,,no_encontrado
+a27a7a42-3e2f-483d-8558-d6261f7f226f,Capilla Ntra. Sra. de Luján,Armstrong,Belville s/n,"Capilla Ntra. Sra. de Luján, Armstrong, Santa Fe, Argentina",,,no_encontrado
+95c280ea-d351-4915-8ade-3ec71581e668,Capilla Ntra. Sra. de Luján,Correa,Belgrano y 1º de Mayo,"Capilla Ntra. Sra. de Luján, Correa, Santa Fe, Argentina",,,no_encontrado
+e06b8c4e-846a-4f48-b4bd-56bf3aa546bd,Ermita Virgen de Schöenstatt,Armstrong,Plaza Flotron,"Ermita Virgen de Schöenstatt, Armstrong, Santa Fe, Argentina",,,no_encontrado
+a52f7694-74ca-40e0-84e3-eed01d886e52,Capilla María Madre de los niños,Rosario,Bº Mangrullo,"Capilla María Madre de los niños, Rosario, Santa Fe, Argentina",,,no_encontrado
+8ac68e1a-47b7-4168-9e76-9fdd5c6947f9,Gruta Virgen de la Natividad del Señor,Rosario,Av. Arijón y Arroyo,"Gruta Virgen de la Natividad del Señor, Rosario, Santa Fe, Argentina",,,no_encontrado
+72100c2c-cd33-47c0-89ef-7528d01817f3,Capilla Virgen Niña,Rosario,3 de Febrero y Mendoza,"Capilla Virgen Niña, Rosario, Santa Fe, Argentina",,,no_encontrado
+d164fdd4-ee6f-462d-a893-40225e916d2b,Capilla San Roque,Rosario,Rouillón 2040,"Capilla San Roque, Rosario, Santa Fe, Argentina",-31.4177421,-64.1785544,ok_fallback
+fd31a75a-558f-49f5-857a-40d4daed6108,Oratorio Sagrado Corazón,Rosario,Pje. Curupaití 5800,"Oratorio Sagrado Corazón, Rosario, Santa Fe, Argentina",,,no_encontrado
+e0cc2e10-dfe9-49eb-9261-0430ab14c612,Iglesia San Pedro Apóstol,Montes de Oca,"Moreno 164, BOUQUET","Iglesia San Pedro Apóstol, Montes de Oca, Santa Fe, Argentina",,,no_encontrado
+09968323-1cda-43bc-9095-4a26fc26e550,Capilla del Hogar de ancianos,Montes de Oca,Calle Buenos Aires s/n,"Capilla del Hogar de ancianos, Montes de Oca, Santa Fe, Argentina",,,no_encontrado
+a470713d-ba78-4976-ab83-c905176be970,Capilla Ntra. Sra. del Pilar,Montes de Oca,Paraje Campo La Amistad,"Capilla Ntra. Sra. del Pilar, Montes de Oca, Santa Fe, Argentina",,,no_encontrado
+cb39fafc-62ea-43d6-a3f1-ff956558b71c,Iglesia Santa Teresa del Niño Jesús,Zavalla,Av.Colón s/n CORONEL ARNOLD,"Iglesia Santa Teresa del Niño Jesús, Zavalla, Santa Fe, Argentina",,,no_encontrado
+d2be9beb-8525-418d-9305-e6c02e7edc85,Capilla del Hospital Roque Sáenz Peña,Rosario,Laprida 5381,"Capilla del Hospital Roque Sáenz Peña, Rosario, Santa Fe, Argentina",,,no_encontrado
+2cc45ced-9e11-4587-8963-149a06aa3b23,Capilla Jesús Misericordioso,Rosario,Braille 1999,"Capilla Jesús Misericordioso, Rosario, Santa Fe, Argentina",,,no_encontrado
+e58b13f6-0643-42d6-ae6a-2dbc279f5c0e,Capilla Santa María Goretti,Villa Constitución,"Dorrego Vallese, Bº Evita","Capilla Santa María Goretti, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+7a05fc38-9969-45f4-8c0e-b8caeb2d846b,Capilla Cristo Rey,Villa Constitución,Vallese y Bolivar s/n Bº San Miguel Arcángel,"Capilla Cristo Rey, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+c7686278-053c-4123-a5d4-63c306d906f8,Capilla Ntra. Sra. de la Consolación,Rosario,Cerrito y Servando Bayo,"Capilla Ntra. Sra. de la Consolación, Rosario, Santa Fe, Argentina",,,no_encontrado
+d0fdf171-769a-434b-b4d5-5178b94b355e,Capilla Santa Teresita,Villa Constitución,Bº Santa Teresita,"Capilla Santa Teresita, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+c8411295-2a90-4797-816d-538e1545e068,Capilla San Antonio de Padua,Bigand,Zona rural,"Capilla San Antonio de Padua, Bigand, Santa Fe, Argentina",,,no_encontrado
+ed945d6e-f254-4a13-8ccc-abaafcc5a893,Capilla Santa Rita de Casia,Rosario,Cochabamba 4000,"Capilla Santa Rita de Casia, Rosario, Santa Fe, Argentina",,,no_encontrado
+1bd0c04d-a941-4bd4-af15-97dfd37734c6,Capilla Ntra. Sra. de la Merced,Fray Luis Beltran,,"Capilla Ntra. Sra. de la Merced, Fray Luis Beltran, Santa Fe, Argentina",,,no_encontrado
+33c5251d-c036-4e82-b290-041a71b39fd5,Capilla San Cayetano,Fray Luis Beltran,"Las Heras 236, Bº 3 de Febrero","Capilla San Cayetano, Fray Luis Beltran, Santa Fe, Argentina",,,no_encontrado
+fe38f3c6-ed87-432b-b85a-39546b1733a0,Capilla San Ignacio de Loyola,Fray Luis Beltran,Bº Gral. Savio de la Fábrica Militar,"Capilla San Ignacio de Loyola, Fray Luis Beltran, Santa Fe, Argentina",,,no_encontrado
+2c41b81c-0dc0-495c-a869-ac5164e02053,Capilla Santa Rita,Fray Luis Beltran,Bº Remedios de Escalada de San Martín,"Capilla Santa Rita, Fray Luis Beltran, Santa Fe, Argentina",-32.7807344,-60.7225959,ok_fallback
+9d6e267c-e0ae-4442-bf83-1b0eaa5de6db,Iglesia Ntra. Sra. del Rosario,Peyrano,GENERAL GELLY,"Iglesia Ntra. Sra. del Rosario, Peyrano, Santa Fe, Argentina",,,no_encontrado
+7ab57ce2-2fcd-4dae-9105-64a7b5e766aa,Capilla Ntra. Sra. de Luján,Fighiera,"La Costa, Zona Rural","Capilla Ntra. Sra. de Luján, Fighiera, Santa Fe, Argentina",,,no_encontrado
+06c5ee33-0f71-445e-81f0-339f8c26db90,Capilla del Monasterio de Carmelitas Descalzas,Pueblo Esther,Reconquista s/n,"Capilla del Monasterio de Carmelitas Descalzas, Pueblo Esther, Santa Fe, Argentina",,,no_encontrado
+5ab0b0d3-1ac3-44ea-95b8-67022e0b8ad9,Capilla Ntra. Sra. de Itatí,Rosario,Córdoba y San Juan,"Capilla Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",-32.8869651,-60.7048855,ok_fallback
+e4d583db-2f56-4dfd-8502-a68fe9707e48,Centro pastoral Ntra. Sra. de Lourdes,Villa Constitución,,"Centro pastoral Ntra. Sra. de Lourdes, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+e16b44b8-393a-41c0-9b5b-2cc33fd59ba7,Iglesia Ntra. Sra. de Luján,Fighiera,ALBARELLOS,"Iglesia Ntra. Sra. de Luján, Fighiera, Santa Fe, Argentina",,,no_encontrado
+37d496a1-446e-4ae0-9d04-1c2b05b4f148,Iglesia San Esteban,Fighiera,VILLA AMELIA,"Iglesia San Esteban, Fighiera, Santa Fe, Argentina",,,no_encontrado
+a0c54c2b-0be0-4d30-9cee-f874c1081a1c,Capilla Medalla Milagrosa,Pérez,"Pueyrredón 748, Bº Talleres Nuevos","Capilla Medalla Milagrosa, Pérez, Santa Fe, Argentina",,,no_encontrado
+6554ab54-fd60-49de-9f3f-098a8417d099,"Capilla Ntra. Sra. de la Paz, Cementerio El Prado",Pérez,Ruta 33,"Capilla Ntra. Sra. de la Paz, Cementerio El Prado, Pérez, Santa Fe, Argentina",,,no_encontrado
+9d166f76-3b85-418e-ab1a-8661be0d256a,Capilla Ntra. Sra. de Luján,Pérez,"San Sebastián 2180, Bº Talleres","Capilla Ntra. Sra. de Luján, Pérez, Santa Fe, Argentina",,,no_encontrado
+4f9e0a2b-cec2-45e2-84d3-bf55c93be27e,Capilla Ntra. Sra. del Rosario,Pérez,"Neuquén 1453, Bº Guardia Nacional","Capilla Ntra. Sra. del Rosario, Pérez, Santa Fe, Argentina",,,no_encontrado
+95882a79-7c2f-4541-99c0-5d299bdbe94f,Capilla Ntra. Sra. del Rosario de San Nicolás,Pujato,Lavalle 1047,"Capilla Ntra. Sra. del Rosario de San Nicolás, Pujato, Santa Fe, Argentina",,,no_encontrado
+730bac2d-b2e6-408b-9881-1e9df9f252c7,Capilla Perpetuo socorro,Pérez,"Juan XXIII 1756, Bº Mitre","Capilla Perpetuo socorro, Pérez, Santa Fe, Argentina",,,no_encontrado
+6675271b-9546-460d-ac94-67719bc0a182,Capilla Sagrado Corazón,Pérez,"Rivadavia 560,Bº Norte","Capilla Sagrado Corazón, Pérez, Santa Fe, Argentina",,,no_encontrado
+c769c3ee-f9e0-4d5d-b659-b8bb776c76bd,Capilla San Juan María Vianney,Pérez,"El Sauce y El Hornero, Bº Cabin 9","Capilla San Juan María Vianney, Pérez, Santa Fe, Argentina",,,no_encontrado
+b6f99d26-1e1a-4b27-9840-3a7e2d460956,Capilla Virgen Niña,Pérez,"Esquivel s/n, Bº Villa América","Capilla Virgen Niña, Pérez, Santa Fe, Argentina",,,no_encontrado
+21ddf78e-9311-45f7-add8-b4963948bf18,Capilla Ntra. Sra. de los Remedios,Godoy,Paraje ORATORIO MORANTE,"Capilla Ntra. Sra. de los Remedios, Godoy, Santa Fe, Argentina",,,no_encontrado
+09517ed7-3f5a-4b48-9ac5-b05c8899261a,Capilla Sagrado Corazón de Jesús,Godoy,Sara Rueda s/n – RUEDA,"Capilla Sagrado Corazón de Jesús, Godoy, Santa Fe, Argentina",,,no_encontrado
+b7b04c1c-f43c-4f6a-a433-6c6ca7341a9e,Capilla Santa Teresita del Niño Jesús,Godoy,Chacabuco s/n - J. B. MOLINA,"Capilla Santa Teresita del Niño Jesús, Godoy, Santa Fe, Argentina",,,no_encontrado
+191edc37-7125-49b6-a7cd-4249eef6ec10,Capilla de PAMI II (Ex hospital Freyre,Rosario,,"Capilla de PAMI II (Ex hospital Freyre, Rosario, Santa Fe, Argentina",,,no_encontrado
+307503b7-f6cb-4287-b404-5d42bbb7afed,Capilla Ntra. Sra. de Fátima,Carcarañá,Bermejo s/n,"Capilla Ntra. Sra. de Fátima, Carcarañá, Santa Fe, Argentina",,,no_encontrado
+6395fe84-619d-414d-a055-a277cd129dce,Capilla Sagrado Corazón de Jesús,Carcarañá,25 de Mayo s/n,"Capilla Sagrado Corazón de Jesús, Carcarañá, Santa Fe, Argentina",,,no_encontrado
+eaf18e4e-7dea-4f48-a83b-69d592e241b4,"Capilla del Pensionado de Franciscanas,",Rosario,1º de Mayo 1557 y Montevideo,"Capilla del Pensionado de Franciscanas,, Rosario, Santa Fe, Argentina",,,no_encontrado
+ad7ec086-cf5d-48de-b615-0a9e92c8eb92,Capilla Ntra. Sra. de la Esperanza,Rosario,Cerrito y Beruti.,"Capilla Ntra. Sra. de la Esperanza, Rosario, Santa Fe, Argentina",,,no_encontrado
+53f3b1fd-51b9-4cd4-ae0e-f9e5821d6834,Capilla San José del Hospital Provincial,Rosario,Alem y 9 de Julio,"Capilla San José del Hospital Provincial, Rosario, Santa Fe, Argentina",,,no_encontrado
+4d374aba-1d5a-466f-821f-1471931cf014,Capilla del Colegio Ntra. Sra. del Rosario,Arequito,9 de Julio 1120,"Capilla del Colegio Ntra. Sra. del Rosario, Arequito, Santa Fe, Argentina",,,no_encontrado
+ccc3abeb-ca9b-4b2e-8095-2fadebb37307,Capilla María Auxiliadora,Arequito,9 de Julio y Mecozzi,"Capilla María Auxiliadora, Arequito, Santa Fe, Argentina",,,no_encontrado
+5f891f65-1132-4a98-8763-2caf7d3f1ab1,Capilla Ntra. Sra. de Fátima,Arequito,Manino y San Juan,"Capilla Ntra. Sra. de Fátima, Arequito, Santa Fe, Argentina",,,no_encontrado
+7ac0a981-321c-4f69-8f0d-0e89cabaa3be,Capilla San Juan Bautista de La Salle,Rosario,Bv. Oroño 770,"Capilla San Juan Bautista de La Salle, Rosario, Santa Fe, Argentina",,,no_encontrado
+fffbe532-5ba1-4fca-b0ba-655b6c6b7cda,"Capilla Sagrado Corazón, Padres Escolapios",Rosario,Maipú 1300,"Capilla Sagrado Corazón, Padres Escolapios, Rosario, Santa Fe, Argentina",,,no_encontrado
+f8e35538-b2be-4598-a6e9-f10752975a06,"Capilla San Antonio María Gianelli,",Rosario,San Juan 556,"Capilla San Antonio María Gianelli,, Rosario, Santa Fe, Argentina",,,no_encontrado
+3d0302eb-9795-4ee8-bcd3-be84ea4db804,"Capilla San José, Círculo Católico de Obreros,",Rosario,Buenos Aires 900,"Capilla San José, Círculo Católico de Obreros,, Rosario, Santa Fe, Argentina",,,no_encontrado
+01b9fe68-bce1-4fde-97b3-cfc8e5bf3cbc,Capilla María Madre de las Vocaciones,Rosario,Moreno y Arrieta,"Capilla María Madre de las Vocaciones, Rosario, Santa Fe, Argentina",,,no_encontrado
+0d254a8b-a373-4dec-9dd8-b69c36aeed32,Capilla Ntra. Sra. de la Granada,Rosario,"Pje. 514, nº 6474","Capilla Ntra. Sra. de la Granada, Rosario, Santa Fe, Argentina",,,no_encontrado
+d43db0f1-861e-4b9c-a091-2a5dcce1fbc0,Capilla Ntra. Sra. de las Flores,Rosario,Pte. Roca y  KHANTUTA,"Capilla Ntra. Sra. de las Flores, Rosario, Santa Fe, Argentina",,,no_encontrado
+6d267e3c-9837-4523-8cad-f6fd53be4d12,Oratorio Jesús Misericordioso,Rosario,Italia y Vías FF.CC.,"Oratorio Jesús Misericordioso, Rosario, Santa Fe, Argentina",,,no_encontrado
+fce2506c-2563-4faa-a6c1-b55d18f65d55,Capilla Ntra. Sra. de Luján,Sn. José de la Esquina,Av. Belgrano 1289,"Capilla Ntra. Sra. de Luján, Sn. José de la Esquina, Santa Fe, Argentina",,,no_encontrado
+31e92995-430f-41b4-9fc7-cfeadb2b1ece,"Capilla María Auxiliadora del Instituto ""Ceferino Namuncurá """,Rosario,,"Capilla María Auxiliadora del Instituto ""Ceferino Namuncurá "", Rosario, Santa Fe, Argentina",,,no_encontrado
+e2bb065d-e4de-4444-a6c6-1018f7109b43,Capilla Ntra. Sra. de Itatí,Pérez,"Santa Fe 1008, Bº Terraplén","Capilla Ntra. Sra. de Itatí, Pérez, Santa Fe, Argentina",,,no_encontrado
+32c8ff94-05fd-4e17-90a1-5edcbdc895fa,Capilla Ntra. Sra. de Itatí,Carcarañá,La Plata s/n,"Capilla Ntra. Sra. de Itatí, Carcarañá, Santa Fe, Argentina",,,no_encontrado
+b471e5bc-1bd7-4c1b-b472-a4fcb4f40415,"Capilla Ntra. Sra. de la Misericordia, Hnas. de Ntra. Sra. de la Misericordia",Sn. José de la Esquina,25 de Mayo 150,"Capilla Ntra. Sra. de la Misericordia, Hnas. de Ntra. Sra. de la Misericordia, Sn. José de la Esquina, Santa Fe, Argentina",,,no_encontrado
+2a7968a6-de93-4654-a3b4-d395ea0bc9c3,Capilla Sagrado Corazón de Jesús - Hijas de María Auxiliadora,Rosario,,"Capilla Sagrado Corazón de Jesús - Hijas de María Auxiliadora, Rosario, Santa Fe, Argentina",,,no_encontrado
+8c16935b-aeb5-49a0-bd3d-2496b6692f19,Iglesia San Jerónimo,Aldao,ALDAO,"Iglesia San Jerónimo, ALDAO, Aldao, Santa Fe, Argentina",-32.7043506,-60.8134179,ok
+1d7d391e-791d-4f79-81ca-54a3fe747657,Iglesia San Juan Bautista,Andino,ANDINO,"Iglesia San Juan Bautista, Andino, Santa Fe, Argentina",,,no_encontrado
+bed89882-363e-40d2-9f47-4b95427ee9b4,Capilla Santa Teresa de Ávila,Sn. José de la Esquina,"Wheelwrigth s/n, 2183 – LOS NOGALES","Capilla Santa Teresa de Ávila, Sn. José de la Esquina, Santa Fe, Argentina",,,no_encontrado
+4708e0be-79ea-4083-a950-fee141352095,Capilla Santiago Apóstol,Rosario,Juan B. Justo y Cullen,"Capilla Santiago Apóstol, Rosario, Santa Fe, Argentina",-32.9146551,-60.7098413,ok_fallback
+5db18d7f-e703-45e0-9ae2-57dc549b01d6,Capilla San Joaquín y Santa Ana,Rosario,Dr. J.J. Pérez 2851,"Capilla San Joaquín y Santa Ana, Rosario, Santa Fe, Argentina",,,no_encontrado
+372de17f-6bb6-4c37-b1ce-8ae353f96225,"Capilla del Hospital Español,",Rosario,Sarmiento 3150,"Capilla del Hospital Español,, Rosario, Santa Fe, Argentina",,,no_encontrado
+264483df-d5cd-4a2b-a287-d41b7d78cd41,Capilla San Héctor Valdivielso,Rosario,"Ecuador y Casilda, Bº Fisherton Este","Capilla San Héctor Valdivielso, Rosario, Santa Fe, Argentina",,,no_encontrado
+8a55080f-0f89-44e5-9940-db685a2350a0,Capilla Jesús Misericordioso,San Lorenzo,"E. del Vidal y H. del Carril, Bº Fonavi Oeste","Capilla Jesús Misericordioso, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+382f033c-8239-4701-ba9a-48d55ba25d18,Capilla Ntra. Sra. de la Asunción,San Lorenzo,Bolivia 2640,"Capilla Ntra. Sra. de la Asunción, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+4ce47703-46a8-4a85-8589-1f67f7f2e917,Capilla Sagrado Corazón de Jesús,San Lorenzo,"Houssay 2780, Bº 3 de Febrero","Capilla Sagrado Corazón de Jesús, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+24154ea0-3f15-4d4d-bb36-a8fb402c0102,Capilla San Cayetano,San Lorenzo,Uriburu y 3 de Febrero,"Capilla San Cayetano, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+77be9d79-a38f-46c0-bc69-52cd072070ab,Capilla San Francisco,San Lorenzo,"Islas Malvinas y España, Bº Norte","Capilla San Francisco, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+c61d3b26-f11c-486a-af78-64972ca0250f,Capilla Ntra. Sra. del Rosario - Hospital IPAM,Rosario,,"Capilla Ntra. Sra. del Rosario - Hospital IPAM, Rosario, Santa Fe, Argentina",,,no_encontrado
+31a2bed7-5c84-4ab1-9d3b-524cfc9356c6,Capilla María Auxiliadora,Rosario,Av. De los Inmigrantes y San Luis,"Capilla María Auxiliadora, Rosario, Santa Fe, Argentina",,,no_encontrado
+dbbca31e-ca3d-4d22-b36d-3fe057f89224,Capilla Santa Cecilia,VGG,Bv.San Diego y 17 de Octubre,"Capilla Santa Cecilia, VGG, Santa Fe, Argentina",,,no_encontrado
+27428690-3482-4a08-b06b-a99690b1fc40,Iglesia Sagrado Corazón de Jesús,VGG,Bv.San Diego 1056,"Iglesia Sagrado Corazón de Jesús, VGG, Santa Fe, Argentina",,,no_encontrado
+4e16ea98-c4a1-4b46-9e66-040aad5c40ef,Capilla de la casa Betania,Rosario,Santa María de Oro 1276,"Capilla de la casa Betania, Rosario, Santa Fe, Argentina",,,no_encontrado
+41a40ab4-1c33-4dc2-a25b-0096b4546686,Capilla Ntra. Sra. de la Esperanza,VGG,Peñaloza s/n Bº La Esperanza,"Capilla Ntra. Sra. de la Esperanza, VGG, Santa Fe, Argentina",,,no_encontrado
+0f81ecbf-0b8d-4be0-a044-6bc28b323df3,Capilla Nuestra Sra. del Rosario de San Nicolás,Rosario,"Suipacha y Bordabehere, Bº Alto Verde","Capilla Nuestra Sra. del Rosario de San Nicolás, Rosario, Santa Fe, Argentina",,,no_encontrado
+17caa915-6761-423e-ab93-eb77103a5f8f,Capilla San Francisco.,VGG,Libertador y Pavón Bº Parque,"Capilla San Francisco., VGG, Santa Fe, Argentina",,,no_encontrado
+45f5d5b3-5c17-4186-808e-87bfc631c133,Capilla Virgén de Itatí,Rosario,Bº Triángulo,"Capilla Virgén de Itatí, Rosario, Santa Fe, Argentina",,,no_encontrado
+cb7a7bae-4386-4e9d-81aa-e1de599997a5,Capilla Virgen de Lourdes,VGG,García González s/n Bº Ghiglione,"Capilla Virgen de Lourdes, VGG, Santa Fe, Argentina",,,no_encontrado
+6283a5a4-f59f-4d3c-8248-5db4332d9dda,Iglesia San Enrique la Antigua,VGG,Cafferata Pje.2,"Iglesia San Enrique la Antigua, VGG, Santa Fe, Argentina",,,no_encontrado
+c64b1db9-fa45-4aa7-9093-521e0788a3ca,Iglesia Santa María de los Ángeles,VGG,,"Iglesia Santa María de los Ángeles, VGG, Santa Fe, Argentina",,,no_encontrado
+98cbfa9d-d861-422c-8fa7-4f4bbba9bc54,Capilla María Madre de la Civilización del Amor,Rosario,", Uruguay 4051y Bv. Avellaneda","Capilla María Madre de la Civilización del Amor, Rosario, Santa Fe, Argentina",,,no_encontrado
+6b41e8a1-d93d-400c-8b25-a5b6abb2dbc6,Centro comunitario “Mensajeros de Jesús”,Rosario,,"Centro comunitario “Mensajeros de Jesús”, Rosario, Santa Fe, Argentina",,,no_encontrado
+8390a100-dccf-43fe-b2b9-327eb6fe724b,Capilla María Madre,Rosario,Bv. Avellaneda y Bordabehere,"Capilla María Madre, Rosario, Santa Fe, Argentina",-32.9333457,-60.6776759,ok_fallback
+7f0b09f2-533f-4d47-96c1-8e901e31c734,Capilla Ntra. Sra. de Caacupé,Rosario,Pascual de Rosas y Av. Pellegrini,"Capilla Ntra. Sra. de Caacupé, Rosario, Santa Fe, Argentina",,,no_encontrado
+0b38474e-8bfe-4468-a832-d09bba6464f8,Capilla Ntra. Sra. de Fátima,Rosario,Pascual de Rosas y San Lorenzo,"Capilla Ntra. Sra. de Fátima, Rosario, Santa Fe, Argentina",,,no_encontrado
+7f6473a9-8711-4d85-9f50-780a79baf442,"Oratorio Santo Tomás Moro, UCA",Rosario,"Edificio 1, Pellegrini 3314","Oratorio Santo Tomás Moro, UCA, Rosario, Santa Fe, Argentina",,,no_encontrado
+3c72eb0a-a7cd-4244-ac01-ef0113fffeaa,Capilla María Madre Nuestra,San Jerónimo Sud,"Estanislao López s/n,","Capilla María Madre Nuestra, San Jerónimo Sud, Santa Fe, Argentina",,,no_encontrado
+247c04cd-4764-4698-85e0-0d714f07baf1,Capilla Madre del Salvador,Roldán,"calle 12 s/n, Villa Flores","Capilla Madre del Salvador, Roldán, Santa Fe, Argentina",,,no_encontrado
+119906eb-36d7-40c9-b197-bfea0f0ae51a,Capilla San Benito,Roldán,Namuncurá s/n,"Capilla San Benito, Roldán, Santa Fe, Argentina",-32.9150197,-60.8700353,ok_fallback
+b4da51f1-9e0b-4bd7-9f2f-eab119b59772,Capilla Virgen del Rosario,Chabás,Gral. López y Mitre,"Capilla Virgen del Rosario, Chabás, Santa Fe, Argentina",,,no_encontrado
+154c8cc4-9cd1-4554-863e-b19300532cba,Iglesia San Carlos Borromeo,Chabás,"Belgrano y San Miguel, VILLADA","Iglesia San Carlos Borromeo, Chabás, Santa Fe, Argentina",,,no_encontrado
+17a1b28b-0c92-49c0-8fd5-0650c68e5dd3,Capilla Ntra. Sra. de Lourdes,Serodino,"Zona rural, CARRIZALES","Capilla Ntra. Sra. de Lourdes, Serodino, Santa Fe, Argentina",,,no_encontrado
+6a9e0b65-52c0-4970-a81b-07ed659e6272,Capilla Ntra. Sra. de la Esperanza,Rosario,Méjico 1526 A,"Capilla Ntra. Sra. de la Esperanza, Rosario, Santa Fe, Argentina",,,no_encontrado
+95540495-c0ce-42c6-901f-7058bc518c1d,Capilla Virgén de Itatí,VGG,"Pje. Ferrari y Crespo, Bº Tassone","Capilla Virgén de Itatí, VGG, Santa Fe, Argentina",,,no_encontrado
+d225a68c-c5e5-40b5-82e2-f583e34101ea,Capilla Virgén de Itatí,VGG,"San Rafael y Pablo VI, Bº Mortelari","Capilla Virgén de Itatí, VGG, Santa Fe, Argentina",,,no_encontrado
+8dde448e-cfee-47e2-8c79-902013843b8d,Capilla Ntra. Sra. de Itatí,Roldán,Las Heras s/n,"Capilla Ntra. Sra. de Itatí, Roldán, Santa Fe, Argentina",,,no_encontrado
+84d4a6ff-3ecf-4fe3-8fe0-ca6e8dcc13fb,"Capilla San Roque, Hospital Intendente Carrasco",Rosario,Zeballos y Río de Janeiro,"Capilla San Roque, Hospital Intendente Carrasco, Rosario, Santa Fe, Argentina",,,no_encontrado
+518b7105-1e09-499b-8b36-381b9ce7ee83,"Capilla del Vicariato Castrense, Gendarmería Nacional Argentina",Rosario,"San Martín 2900,","Capilla del Vicariato Castrense, Gendarmería Nacional Argentina, Rosario, Santa Fe, Argentina",,,no_encontrado
+218fe7d3-c36c-453d-8878-1c8ef2aba26a,Capilla San Roque,VGG,Liniers y Av. Temporelli,"Capilla San Roque, VGG, Santa Fe, Argentina",,,no_encontrado
+e33b9010-c635-44f6-a88a-aee1ca104e19,Iglesia San Miguel Arcángel,Serodino,"Zona rural, CARRIZALES","Iglesia San Miguel Arcángel, Serodino, Santa Fe, Argentina",,,no_encontrado
+a0cfef68-1518-445c-815b-503a8bd5138a,Capilla Ntra. Sra. de América,Rosario,Mtro. Massa y Fco. Miranda,"Capilla Ntra. Sra. de América, Rosario, Santa Fe, Argentina",,,no_encontrado
+b1535084-76cc-47a7-9dc1-79acc8772972,Capilla Ntra. Sra. de los Milagros,Capitán Bermúdez,Sarmiento y Venezuela,"Capilla Ntra. Sra. de los Milagros, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+be5d3f19-58d0-4f51-80ec-5b785f149d9d,Capilla de Bº Fonavi Sur,San Lorenzo,,"Capilla de Bº Fonavi Sur, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+d59eb5a6-0924-4fa5-9552-e360f85bb1bb,Capilla Bta. Laura Vicuña,Rosario,Outes 6551,"Capilla Bta. Laura Vicuña, Rosario, Santa Fe, Argentina",,,no_encontrado
+662a2e6e-2359-4165-af82-3db16cc34371,Capilla Ntra. Sra. del Rosario de San Nicolás,Rosario,Laprida 6700,"Capilla Ntra. Sra. del Rosario de San Nicolás, Rosario, Santa Fe, Argentina",,,no_encontrado
+c7b83172-bac2-45f4-bbd8-4547c0acd860,Capilla Santa María de los Ángeles,Rosario,San Martín 6500,"Capilla Santa María de los Ángeles, Rosario, Santa Fe, Argentina",,,no_encontrado
+7fb773ee-d61b-43df-be5c-732a407f333e,Oratorio San Pantaleón,Rosario,Av. Francia 932,"Oratorio San Pantaleón, Rosario, Santa Fe, Argentina",,,no_encontrado
+1adef44e-f0ee-497e-8c73-71a051ced7a6,Capilla Ntra. Sra. de Fátima,Villa Mugueta,"Zona rural, MAIZALES","Capilla Ntra. Sra. de Fátima, Villa Mugueta, Santa Fe, Argentina",,,no_encontrado
+75a73db1-7666-48be-82a8-e2409f298446,Iglesia San Antonio de Padua,Villa Mugueta,"Belgrano 668, ARMINDA","Iglesia San Antonio de Padua, Villa Mugueta, Santa Fe, Argentina",,,no_encontrado
+6cc60478-0813-4ab1-ada3-bff1c9ef487e,"Iglesia “Santa Rita”,",Álvarez,ÁLVAREZ,"Iglesia “Santa Rita”,, Álvarez, Santa Fe, Argentina",,,no_encontrado
+24af06cc-1b44-4ef7-ac76-b33e3c5a80c5,Capilla Jesús Misericordioso,Villa Constitución,Bv. Seguí s/n,"Capilla Jesús Misericordioso, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+7f3552e9-9826-4b01-aa7c-8e4079f6e789,Capilla Stella Maris,Villa Constitución,,"Capilla Stella Maris, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+ef744f9e-9d9f-4ecd-a587-f4ed7b4ca85c,Templo Ntra. Sra. del Carmen,Villa Constitución,"San Luis 2102, Bº Amelong","Templo Ntra. Sra. del Carmen, Villa Constitución, Santa Fe, Argentina",,,no_encontrado
+ccf28638-05e7-44db-94f0-de6b4b41f4cb,Capilla Colegio San Antonio,Cañada de Gómez,,"Capilla Colegio San Antonio, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+0c0cbcb9-6a5b-41b7-b64f-3756b3bf14df,Capilla San Cayetano,Cañada de Gómez,Rawson 840,"Capilla San Cayetano, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+118a0d09-bddc-4fda-a59e-d31735d2d85a,Capilla San José Obrero,Cañada de Gómez,Córdoba 450,"Capilla San José Obrero, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+edb3d628-4184-48f7-924e-f0d866c32745,Capilla Stella Maris,Cañada de Gómez,Quintana y Primera Junta,"Capilla Stella Maris, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+c0bc3531-a4bf-4887-9830-0b22af6c408d,Capilla Virgen del Rosario,Cañada de Gómez,,"Capilla Virgen del Rosario, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+08fe9e0e-1cd1-415b-aa83-3fbc3abefde3,Capilla Sagrada Familia,Casilda,Bº Yapeyú,"Capilla Sagrada Familia, Casilda, Santa Fe, Argentina",,,no_encontrado
+2b4cefab-4834-4269-a2c0-c4a4c81907d6,Capilla Virgen de Lourdes,Casilda,Bº Granaderos a Caballo,"Capilla Virgen de Lourdes, Casilda, Santa Fe, Argentina",,,no_encontrado
+18130e2a-00fe-444f-a8f7-348177da6fb8,Capilla Virgen del Rosario de San Nicolás,Casilda,Bº Barracas,"Capilla Virgen del Rosario de San Nicolás, Casilda, Santa Fe, Argentina",,,no_encontrado
+ca3f73f4-ef68-42ae-a49d-b8ab41283e87,"Capilla del Instituto “San Miguel Arcángel”, Hnas. Inmaculada de Génova",Rosario,,"Capilla del Instituto “San Miguel Arcángel”, Hnas. Inmaculada de Génova, Rosario, Santa Fe, Argentina",,,no_encontrado
+b1cb84dd-d6ee-477f-9269-ace558fd5a25,"Capilla Ntra. Sra. del Carmen, Hospital Granaderos a Caballo",San Lorenzo,,"Capilla Ntra. Sra. del Carmen, Hospital Granaderos a Caballo, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+d9cc7adf-602e-4e41-b83b-9ef11f8de7ba,Capilla Ntra. Sra. de Itatí,Rosario,Molino Blanco,"Capilla Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",-32.8869651,-60.7048855,ok_fallback
+57bdb746-af80-4320-ab3e-04ab39a86866,Capilla Ntra. Sra. de Guadalupe,Cañada de Gómez,Bv. Centenario 50 bis,"Capilla Ntra. Sra. de Guadalupe, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+a89a77f8-a267-45d5-8fa3-c70bfa9db711,"Capilla Ntra. Sra. de Luján, Jefatura de Policía",San Lorenzo,Bv. Urquiza 749,"Capilla Ntra. Sra. de Luján, Jefatura de Policía, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+535e3140-15c6-44b5-affb-4bc82ae8f8ae,"Capilla Ntra. Sra. de la Misericordia, Colegio Ntra. Sra. de la Misericordia",Casilda,Av. Ovidio Lagos 1827,"Capilla Ntra. Sra. de la Misericordia, Colegio Ntra. Sra. de la Misericordia, Casilda, Santa Fe, Argentina",,,no_encontrado
+a8e0dbfe-f686-4884-90b2-1b932046579d,Capilla Ntra. Sra. de la Esperanza,Granadero Baigorria,Marcos Paz 3150,"Capilla Ntra. Sra. de la Esperanza, Granadero Baigorria, Santa Fe, Argentina",,,no_encontrado
+36dc3488-40be-4ada-9284-977a3de16911,"Capilla San Carlos Borromeo, Hospital San Carlos",Casilda,Bv. 9 de Julio 2351,"Capilla San Carlos Borromeo, Hospital San Carlos, Casilda, Santa Fe, Argentina",,,no_encontrado
+0529cf0b-e82e-4f51-8fc3-f3bc851cf838,"Capilla San Ignacio de Loyola, Cementerio",Cañada de Gómez,,"Capilla San Ignacio de Loyola, Cementerio, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+8eccdfe3-253c-45d0-8624-adc61619aa8d,"Capilla San José, Hospital Provincial",Cañada de Gómez,,"Capilla San José, Hospital Provincial, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+499bbd3a-3bce-4a9e-8a5a-c47ba0e47d64,"Capilla Sagrada Familia, Colegio Sagrada Familia",Casilda,Zeballos 1850,"Capilla Sagrada Familia, Colegio Sagrada Familia, Casilda, Santa Fe, Argentina",,,no_encontrado
+063fc2c1-8bb1-4ffe-ae62-e5d23a22b770,"Capilla Sagrado Corazón, Instituto Razetto",Cañada de Gómez,Necochea 1095,"Capilla Sagrado Corazón, Instituto Razetto, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+baddc019-a61e-441f-889c-95130cf4feb8,"Capilla Santa Rosa de Viterbo, Hnas . Franciscanas Educacionistas",San Lorenzo,Sgto. Cabral 1873,"Capilla Santa Rosa de Viterbo, Hnas . Franciscanas Educacionistas, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+ed10be9d-0e4c-4218-8cdc-0b04d855f715,Oratorio Ntra. Sra. de Schöenstatt,Cañada de Gómez,Campo Mosca,"Oratorio Ntra. Sra. de Schöenstatt, Cañada de Gómez, Santa Fe, Argentina",,,no_encontrado
+eca878fc-6f07-4d3a-9cac-d0f7fc9eb6c6,Capilla Santa Teresa del Niño Jesús,La Carolina,LA CAROLINA,"Capilla Santa Teresa del Niño Jesús, La Carolina, Santa Fe, Argentina",,,no_encontrado
+02959472-dc15-4365-bf70-34587f6b2c28,Iglesia “Ntra. Sra. de Luján,Pueblo Muñoz,PUEBLO MUÑOZ,"Iglesia “Ntra. Sra. de Luján, Pueblo Muñoz, Santa Fe, Argentina",,,no_encontrado
+24ec3279-14c1-4a29-9998-57735d09731f,Iglesia Sagrado Corazón,Piñero,PIÑERO,"Iglesia Sagrado Corazón, Piñero, Santa Fe, Argentina",,,no_encontrado
+e4f301c7-045a-4014-af26-49fd1bb4f903,Capilla San Marcos,Granadero Baigorria,Eva Perón y J.B. González,"Capilla San Marcos, Granadero Baigorria, Santa Fe, Argentina",,,no_encontrado
+50c37448-6ffb-4b67-9f38-a76cd8d442a0,Capilla San Mateo,Granadero Baigorria,Tierra del Fuego y El Rosedal,"Capilla San Mateo, Granadero Baigorria, Santa Fe, Argentina",,,no_encontrado
+d92605d3-1ea5-4c92-bad1-78fbd4c7f86b,Ermita de Schöenstatt,Granadero Baigorria,Padre Kentenich s/n,"Ermita de Schöenstatt, Granadero Baigorria, Santa Fe, Argentina",,,no_encontrado
+3c99a004-9766-4880-8779-3e83529026d8,Capilla Sagrados Corazones de Jesús y María,Capitán Bermúdez,Independencia 100,"Capilla Sagrados Corazones de Jesús y María, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+910e982a-3481-4079-9aa0-c44a91e8cf54,"Capilla del “Espíritu Santo”,",Capitán Bermúdez,Santa Fe 335,"Capilla del “Espíritu Santo”,, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+b59a995d-a074-42cc-b583-527a6a197d9f,Capilla Ntra. Sra. de los Dolores,Capitán Bermúdez,La Pampa 258,"Capilla Ntra. Sra. de los Dolores, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+c827097f-9767-4ba4-aacd-10b13c7305bc,Capilla Jesús Buen Pastor,Rosario,Constitución 5880,"Capilla Jesús Buen Pastor, Rosario, Santa Fe, Argentina",,,no_encontrado
+992b771c-f649-4db3-b40a-ee1690f26482,Capilla Ntra. Sra. del Carmen,Rosario,"Calle 2125, Nº 3824","Capilla Ntra. Sra. del Carmen, Rosario, Santa Fe, Argentina",,,no_encontrado
+ea36eb57-cd16-4b9a-8e21-d830191d255d,Capilla San Cayetano,Rosario,Piamonte s/n,"Capilla San Cayetano, Rosario, Santa Fe, Argentina",,,no_encontrado
+10c2f380-7dee-455f-810a-b0a3e435cf90,Capilla Ntra. Sra. de Pentecostés,Rosario,Washington y Casiano Casas,"Capilla Ntra. Sra. de Pentecostés, Rosario, Santa Fe, Argentina",,,no_encontrado
+81a38bdd-6149-4706-916a-1b1beb9d4f03,"Hogarcito “San Roque”,",Capitán Bermúdez,"Los Inmigrantes 374,","Hogarcito “San Roque”,, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+fa93d991-5ecb-4875-97f4-f2d5e19504b9,Capilla Ntra. Sra. del Encuentro,Rosario,"Calle Brandaza y Rueda,","Capilla Ntra. Sra. del Encuentro, Rosario, Santa Fe, Argentina",,,no_encontrado
+6b2e46b3-2074-424b-acf4-79635975f322,Capilla del Cementerio “La Piedad,Rosario,Av. Provincias Unidas 2652,"Capilla del Cementerio “La Piedad, Rosario, Santa Fe, Argentina",,,no_encontrado
+1d4e0c27-6319-4dd4-a174-4595d8b9ba33,"Capilla Niño Dios, Casa del Clero",Rosario,España 972,"Capilla Niño Dios, Casa del Clero, Rosario, Santa Fe, Argentina",,,no_encontrado
+919e6fea-63b9-4282-847c-62396982362f,Capilla Sagrado Corazón de Jesús,Las Rosas,Guillermo Benitz 465,"Capilla Sagrado Corazón de Jesús, Las Rosas, Santa Fe, Argentina",,,no_encontrado
+cf4062c9-6cda-48bf-ac4d-0da59c465ef4,Capilla San José Obrero,Las Rosas,Gral. López 850,"Capilla San José Obrero, Las Rosas, Santa Fe, Argentina",,,no_encontrado
+f04a5356-fe90-4a63-8a4c-95c4023dfaff,Capilla Ntra. Sra. de Lourdes,Oliveros,LA RIBERA,"Capilla Ntra. Sra. de Lourdes, Oliveros, Santa Fe, Argentina",,,no_encontrado
+98c8d183-082a-48d8-8773-a0dc241e1cb0,Capilla Ntra. Sra. de Luján,Totoras,calle Fray Luis Beltrán,"Capilla Ntra. Sra. de Luján, Totoras, Santa Fe, Argentina",,,no_encontrado
+2e213615-61a0-4ec7-a7c0-aed45235635f,Capilla San Francisco de Asís,Santa Teresa,FRANCISCO PAZ,"Capilla San Francisco de Asís, Santa Teresa, Santa Fe, Argentina",,,no_encontrado
+943150bf-9856-4454-9298-e72b8f5fc1cc,Iglesia San Antonio de Padua,Santa Teresa,CAÑADA RICA,"Iglesia San Antonio de Padua, Santa Teresa, Santa Fe, Argentina",,,no_encontrado
+eff36dc0-312a-4911-9c80-72d90441e205,Oratorio Ntra. Sra. de la Asunción,Rosario,,"Oratorio Ntra. Sra. de la Asunción, Rosario, Santa Fe, Argentina",,,no_encontrado
+26408aa0-2f95-4945-acd2-cf5f6af2f12f,Capilla de la Vicaría Sagrado Corazón,Rosario,Humberto Primo 2401 y Aldao,"Capilla de la Vicaría Sagrado Corazón, Rosario, Santa Fe, Argentina",,,no_encontrado
+9ae373ee-eac8-4cca-a5e2-8d7fc23437ce,Ermita Rosa Mística,Rosario,Casilda y Nueva York,"Ermita Rosa Mística, Rosario, Santa Fe, Argentina",,,no_encontrado
+635a1fce-6db4-4a92-8000-d123a63e4b97,Capilla Ntra. Sra. de Luján,Empalme V.C.,"Buenos Aires 175, PAVÓN","Capilla Ntra. Sra. de Luján, Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+7e7559dd-ec5e-4e38-8e93-076664890e43,Capilla Santa Ana,Empalme V.C.,THEOBALD,"Capilla Santa Ana, Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+196fedd4-cde5-4ae0-899a-b0bba1710b41,Capilla de la Medalla Milagrosa,San Lorenzo,Moreno 1024,"Capilla de la Medalla Milagrosa, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+5b00a210-aeb6-4e1f-92e7-fa6c986b75e7,Capilla Ntra. Sra. de la Esperanza,San Lorenzo,"Gaboto 650, Bº Villa Felisa","Capilla Ntra. Sra. de la Esperanza, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+92a726a4-3376-4a59-bd2b-0c1b18ebf403,Capilla San José Obrero,San Lorenzo,", Gutemberg  Santa Cruz, Bº José Hernández","Capilla San José Obrero, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+e7206f1f-0620-4ff5-a094-333f0736ef4d,Capilla San Juan Bautista,San Lorenzo,RICARDONE,"Capilla San Juan Bautista, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+8eadf36f-1402-44e5-a213-e49e5ee4a8a9,"Capilla Inmaculado Corazón de María, Hnas. Adoratrices",Rosario,Italia 733,"Capilla Inmaculado Corazón de María, Hnas. Adoratrices, Rosario, Santa Fe, Argentina",,,no_encontrado
+a668e70a-0228-48b7-839f-a656fa8b5e71,Capilla Ntra. Sra. de Itatí,Rosario,Santiago y Centeno,"Capilla Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",-32.8869651,-60.7048855,ok_fallback
+1e236c0f-2e1c-4bf2-9308-034e38885ba8,Capilla Ntra. Sra. de Itatí,San Lorenzo,Urquiza s/n,"Capilla Ntra. Sra. de Itatí, San Lorenzo, Santa Fe, Argentina",,,no_encontrado
+4b898657-6d4b-41e3-8381-a0cb454655bd,Capilla Ntra. Sra. de la Medalla Milagrosa,Empalme V.C.,Saavedra s/n,"Capilla Ntra. Sra. de la Medalla Milagrosa, Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+030a82f5-e224-4550-ad68-cdd12d12b778,Capilla Ntra. Sra. de la Medalla Milagrosa,Las Rosas,Salta s/n,"Capilla Ntra. Sra. de la Medalla Milagrosa, Las Rosas, Santa Fe, Argentina",,,no_encontrado
+9babb692-2d72-46bc-988e-0eff85ed40a6,Capilla Ntra. Sra. de la Medalla Milagrosa,Villa Eloisa,"Mitre y San Martín, Bº Oeste","Capilla Ntra. Sra. de la Medalla Milagrosa, Villa Eloisa, Santa Fe, Argentina",,,no_encontrado
+fcbec9fb-57bb-461e-a9dd-3bbcabb40d2b,Capilla Ntra. Sra. del Rosario de San Nicolás,Empalme V.C.,"Bº Mitre, PAVÓN","Capilla Ntra. Sra. del Rosario de San Nicolás, Empalme V.C., Santa Fe, Argentina",,,no_encontrado
+2a3fed98-10da-4873-bded-442eefddd0dc,"Capilla San Lucas, Hospital Eva Perón",Granadero Baigorria,Av. San Martín 1645,"Capilla San Lucas, Hospital Eva Perón, Granadero Baigorria, Santa Fe, Argentina",,,no_encontrado
+86fce629-83a9-4313-b359-0e3f9b855c1f,Iglesia Santa Clara de Asís,Coronel Dominguez,CORONEL DOMÍNGUEZ,"Iglesia Santa Clara de Asís, CORONEL DOMÍNGUEZ, Coronel Dominguez, Santa Fe, Argentina",-33.1839882,-60.7230611,ok
+46825c4b-c4e6-4f05-805c-c2449852c1f5,Iglesia Ntra. Sra. del Carmen,Carmen del Sauce,CARMEN DEL SAUCE,"Iglesia Ntra. Sra. del Carmen, Carmen del Sauce, Santa Fe, Argentina",,,no_encontrado
+32402196-f014-4c77-8df4-d05ed87da964,"Capilla Sagrado Corazón de Jesús,",Rosario,Ayolas 141,"Capilla Sagrado Corazón de Jesús,, Ayolas 141, Rosario, Santa Fe, Argentina",-32.9794951,-60.6321856,ok
+5298ae78-40c1-48d8-b445-0aed10f05f29,Capilla Ntra. Sra. de Fátima,Rosario,Cavia 1200,"Capilla Ntra. Sra. de Fátima, Rosario, Santa Fe, Argentina",,,no_encontrado
+972b2676-4d60-4c89-890f-f22213ef3b2a,Sagrado Corazón de Jesús,Rosario,,"Sagrado Corazón de Jesús, Rosario, Santa Fe, Argentina",-32.8941545,-60.6905626,ok
+a5836a48-a57f-4ae4-969b-3f61123c6ce8,Capilla San Francisco Solano,Rosario,Maiztegui y Miramar,"Capilla San Francisco Solano, Rosario, Santa Fe, Argentina",,,no_encontrado
+2cf84b6c-b3e8-4100-bc53-2d2e22ea0a8e,"Capilla del centro Misión católica italmigrante,",Rosario,Buenos Aires 1563,"Capilla del centro Misión católica italmigrante,, Rosario, Santa Fe, Argentina",,,no_encontrado
+e692045b-d34e-4003-8b32-ab97a88ac1e3,Capilla del Hogarcito “San José Obrero”,Capitán Bermúdez,,"Capilla del Hogarcito “San José Obrero”, Capitán Bermúdez, Santa Fe, Argentina",,,no_encontrado
+3c550b76-d781-408d-98c3-9033b0729d9e,Capilla Milagroso Niño Jesús de Praga,Pueblo Esther,Parque Bernaza,"Capilla Milagroso Niño Jesús de Praga, Pueblo Esther, Santa Fe, Argentina",,,no_encontrado
+5d7b93e5-6557-4d3d-b043-5f61fadc8f2f,"Capilla Ntra. Sra. del Huerto, Hijas de Ntra. Sra. del Huerto",Rosario,J. Manuel de Rosas 1093,"Capilla Ntra. Sra. del Huerto, Hijas de Ntra. Sra. del Huerto, Rosario, Santa Fe, Argentina",,,no_encontrado
+068025ab-be65-43bc-9a52-6d2675d8a8d5,Capilla Ntra. Sra. de Itatí,Rosario,Molina y Pje. 1,"Capilla Ntra. Sra. de Itatí, Rosario, Santa Fe, Argentina",-32.8869651,-60.7048855,ok_fallback
+1aca7f18-2589-449d-ac61-55e8f868d053,Natividad de la Santísima Virgen María,Cañada de Gomez,,"Natividad de la Santísima Virgen María, Cañada de Gomez, Santa Fe, Argentina",,,no_encontrado
