@@ -170,22 +170,38 @@ type ContactGroup = {
           )}
         </div>
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          {parish.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={parish.logo_url}
-              alt=""
-              className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-primary"
-            >
-              {parish.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+          {(() => {
+            const avatar = parish.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={parish.logo_url}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div
+                aria-hidden="true"
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-primary"
+              >
+                {parish.name.charAt(0).toUpperCase()}
+              </div>
+            );
+            return parish.latitude && parish.longitude ? (
+              <a
+                href={`https://www.google.com/maps?q=${parish.latitude},${parish.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Ver ubicación en Google Maps"
+                aria-label="Ver ubicación en Google Maps"
+                className="shrink-0 rounded-full transition-opacity hover:opacity-80"
+              >
+                {avatar}
+              </a>
+            ) : (
+              avatar
+            );
+          })()}
           <h1 className="min-w-0 text-3xl text-page-title">{parish.name}</h1>
         </div>
 
