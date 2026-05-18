@@ -15,6 +15,9 @@ export type Parish = {
   latitude: number | null;
   longitude: number | null;
   status: ParishStatus;
+  decanato: string | null;
+  parent_id: string | null;
+  parent: { name: string } | null;
 };
 
 export type AnimState = "entering" | "leaving";
@@ -25,6 +28,8 @@ type Props = {
   isMember: boolean;
   isPrimary: boolean;
   animState?: AnimState;
+  canSeeMeta: boolean;
+  showDescription: boolean;
   onAdd: (parishId: string) => void | Promise<void>;
   onRemove: (parishId: string) => void | Promise<void>;
   onTogglePrimary: (parishId: string) => void | Promise<void>;
@@ -43,6 +48,8 @@ export function ParishCard({
   isMember,
   isPrimary,
   animState,
+  canSeeMeta,
+  showDescription,
   onAdd,
   onRemove,
   onTogglePrimary,
@@ -73,8 +80,17 @@ export function ParishCard({
         >
           <span className="text-lg text-song-title">{parish.name}</span>
           {(parish.address || parish.city) && (
-            <span className="text-xs normal-case text-muted-foreground">
-              {[parish.address, parish.city].filter(Boolean).join(" · ")}
+            <span className="text-sm normal-case text-muted-foreground">
+              {[parish.address, parish.city].filter(Boolean).join(", ")}
+            </span>
+          )}
+          {canSeeMeta && (parish.decanato || (parish.parent_id && parish.parent?.name)) && (
+            <span className="text-[10px] normal-case text-muted-foreground/70">
+              {parish.decanato && <>Decanato: {parish.decanato}</>}
+              {parish.decanato && parish.parent_id && parish.parent?.name && " · "}
+              {parish.parent_id && parish.parent?.name && (
+                <>Sede: {parish.parent.name}</>
+              )}
             </span>
           )}
         </Link>
@@ -139,7 +155,7 @@ export function ParishCard({
         )}
       </div>
 
-      {parish.description && (
+      {showDescription && parish.description && (
         <p className="text-sm normal-case text-muted-foreground">
           {parish.description}
         </p>

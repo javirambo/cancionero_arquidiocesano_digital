@@ -9,6 +9,7 @@ type Props = {
   initialMemberIds: string[];
   initialPrimaryId: string | null;
   userId: string | null;
+  canSeeMeta: boolean;
 };
 
 const ANIM_MS = 300;
@@ -33,7 +34,12 @@ function sortByDistance(parishes: Parish[], origin: { lat: number; lon: number }
   const withCoords: Array<Parish & { _d: number }> = [];
   const withoutCoords: Parish[] = [];
   for (const p of parishes) {
-    if (p.latitude !== null && p.longitude !== null) {
+    if (
+      p.latitude !== null &&
+      p.longitude !== null &&
+      p.latitude !== 0 &&
+      p.longitude !== 0
+    ) {
       withCoords.push({
         ...p,
         _d: haversineKm(origin, { lat: p.latitude, lon: p.longitude }),
@@ -46,14 +52,21 @@ function sortByDistance(parishes: Parish[], origin: { lat: number; lon: number }
   return [...withCoords.map(({ _d, ...rest }) => rest as Parish), ...withoutCoords];
 }
 
+function normalize(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
 function filterByQuery(parishes: Parish[], q: string): Parish[] {
-  const needle = q.trim().toLowerCase();
+  const needle = normalize(q.trim());
   if (!needle) return parishes;
   return parishes.filter(
     (p) =>
-      p.name.toLowerCase().includes(needle) ||
-      (p.address?.toLowerCase().includes(needle) ?? false) ||
-      (p.city?.toLowerCase().includes(needle) ?? false)
+      normalize(p.name).includes(needle) ||
+      (p.address ? normalize(p.address).includes(needle) : false) ||
+      (p.city ? normalize(p.city).includes(needle) : false)
   );
 }
 
@@ -62,6 +75,7 @@ export function ParishList({
   initialMemberIds,
   initialPrimaryId,
   userId,
+  canSeeMeta,
 }: Props) {
   const [memberIds, setMemberIds] = useState<Set<string>>(
     () => new Set(initialMemberIds)
@@ -194,7 +208,7 @@ export function ParishList({
 
   const isLogged = Boolean(userId);
 
-  function renderCard(p: Parish) {
+  function renderCard(p: Parish, showDescription: boolean) {
     return (
       <ParishCard
         key={p.id}
@@ -203,6 +217,8 @@ export function ParishList({
         isMember={memberIds.has(p.id)}
         isPrimary={primaryId === p.id}
         animState={anim.get(p.id)}
+        canSeeMeta={canSeeMeta}
+        showDescription={showDescription}
         onAdd={handleAdd}
         onRemove={handleRemove}
         onTogglePrimary={handleTogglePrimary}
@@ -231,7 +247,7 @@ export function ParishList({
           </p>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {othersFiltered.map(renderCard)}
+            {othersFiltered.map((p) => renderCard(p, false))}
           </ul>
         )}
       </>
@@ -271,7 +287,7 @@ export function ParishList({
                 </p>
               ) : (
                 <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {mineFiltered.map(renderCard)}
+                  {mineFiltered.map((p) => renderCard(p, true))}
                 </ul>
               )}
             </div>
@@ -305,7 +321,7 @@ export function ParishList({
                 </p>
               ) : (
                 <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {othersFiltered.map(renderCard)}
+                  {othersFiltered.map((p) => renderCard(p, false))}
                 </ul>
               )}
             </div>

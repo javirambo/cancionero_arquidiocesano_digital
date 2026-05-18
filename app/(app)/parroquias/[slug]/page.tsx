@@ -11,6 +11,7 @@ export default async function ParroquiaPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  if (slug === "arquidiocesis") notFound();
   const parish = await getParishBySlug(slug);
   if (!parish) notFound();
 
@@ -60,7 +61,7 @@ export default async function ParroquiaPage({
     isAdmin = roleNames.includes("admin");
     isEditor = roleNames.includes("editor");
   }
-  const canEdit = isAdmin || isEditor;
+  const canEdit = isAdmin || isEditor || isCoordinatorOfThisParish;
 
   // Reglas de "Contacto" (CU-06.2). Todos los contactos salen de DB
   // (parish_members.role='coordinator' o user_roles editor/admin); no
@@ -77,83 +78,184 @@ export default async function ParroquiaPage({
     email: string;
     avatar_url: string | null;
   };
-  let contacts: ContactRow[] = [];
-  let contactRoleLabel: "coordinator" | "editor" | "admin" | null =
-    "coordinator";
+type ContactGroup = {
+    role: "coordinator" | "editor" | "admin";
+    message: string;
+    contacts: ContactRow[];
+  };
+  const contactGroups: ContactGroup[] = [];
+  const seenUserIds = new Set<string>();
+  const seenEmails = new Set<string>();
+  function pushGroup(group: ContactGroup) {
+    const fresh: ContactRow[] = [];
+    for (const c of group.contacts) {
+      const emailKey = c.email.trim().toLowerCase();
+      if (seenUserIds.has(c.user_id) || seenEmails.has(emailKey)) continue;
+      seenUserIds.add(c.user_id);
+      seenEmails.add(emailKey);
+      fresh.push(c);
+    }
+    if (fresh.length > 0) {
+      contactGroups.push({ ...group, contacts: fresh });
+    }
+  }
 
-  if (isAdmin) {
-    contactRoleLabel = null;
-  } else if (isEditor) {
+  // 1) Coordinadores de la parroquia — siempre para todos los roles.
+  const { data: coordsRaw } = await supabase.rpc("get_parish_coordinators", {
+    p_parish_id: parish.id,
+  });
+  const coordinators = (coordsRaw ?? []) as ContactRow[];
+  pushGroup({
+    role: "coordinator",
+    message:
+      "Por cualquier sugerencia puede contactarse con el Coordinador Parroquial",
+    contacts: coordinators,
+  });
+
+  // 2) Bloque por rol del visitante (suma a lo anterior, sin duplicar).
+  if (isEditor) {
     const { data } = await supabase.rpc("get_users_by_global_role", {
       p_role: "admin",
     });
-    contacts = (data ?? []) as ContactRow[];
-    contactRoleLabel = "admin";
+    pushGroup({
+      role: "admin",
+      message:
+        "Para cuestiones administrativas puede contactarse con un Administrador",
+      contacts: (data ?? []) as ContactRow[],
+    });
   } else if (isCoordinatorOfThisParish) {
     const [eds, ads] = await Promise.all([
       supabase.rpc("get_users_by_global_role", { p_role: "editor" }),
       supabase.rpc("get_users_by_global_role", { p_role: "admin" }),
     ]);
-    const all = [
-      ...((eds.data ?? []) as ContactRow[]),
-      ...((ads.data ?? []) as ContactRow[]),
-    ];
-    const seen = new Set<string>();
-    contacts = all.filter((c) => {
-      if (seen.has(c.user_id)) return false;
-      seen.add(c.user_id);
-      return true;
+    pushGroup({
+      role: "editor",
+      message:
+        "Para cuestiones editoriales puede contactarse con un Editor o Administrador",
+      contacts: [
+        ...((eds.data ?? []) as ContactRow[]),
+        ...((ads.data ?? []) as ContactRow[]),
+      ],
     });
-    contactRoleLabel = "editor";
-  } else {
-    const { data } = await supabase.rpc("get_parish_coordinators", {
-      p_parish_id: parish.id,
-    });
-    contacts = (data ?? []) as ContactRow[];
-    contactRoleLabel = "coordinator";
-    if (contacts.length === 0) {
-      if (!user) {
-        // Invitado sin coordinador: ocultar.
-        contactRoleLabel = null;
-      } else {
-        // Member común sin coordinador: caer a editores.
-        const { data: eds } = await supabase.rpc("get_users_by_global_role", {
-          p_role: "editor",
-        });
-        contacts = (eds ?? []) as ContactRow[];
-        contactRoleLabel = "editor";
-      }
+  } else if (user && !isAdmin) {
+    // member común: editores como fallback.
+    if (coordinators.length === 0) {
+      const { data: eds } = await supabase.rpc("get_users_by_global_role", {
+        p_role: "editor",
+      });
+      pushGroup({
+        role: "editor",
+        message:
+          "Para cuestiones editoriales puede contactarse con un Editor o Administrador",
+        contacts: (eds ?? []) as ContactRow[],
+      });
     }
   }
 
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
-      <header className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-          Parroquia
-        </p>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-3xl text-page-title">{parish.name}</h1>
+      <header className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+            Parroquia
+          </p>
           {canEdit && (
             <Link
-              href={`/admin/parroquias/${parish.id}`}
+              href={`/parroquias/${parish.slug}/editar`}
               className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
             >
               Editar
             </Link>
           )}
         </div>
-        {(parish.address || parish.city) && (
-          <p className="text-sm normal-case text-muted-foreground">
-            {[parish.address, parish.city].filter(Boolean).join(" · ")}
-          </p>
-        )}
-        {parish.description && (
-          <p className="max-w-2xl text-base normal-case text-muted-foreground">
-            {parish.description}
-          </p>
-        )}
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          {parish.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={parish.logo_url}
+              alt=""
+              className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-primary"
+            >
+              {parish.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <h1 className="min-w-0 text-3xl text-page-title">{parish.name}</h1>
+        </div>
+
+        <dl className="flex flex-col gap-1 text-sm normal-case text-muted-foreground">
+          {(parish.address || parish.city) && (
+            <div>{[parish.address, parish.city].filter(Boolean).join(", ")}</div>
+          )}
+          {parish.description && (
+            <div className="max-w-2xl whitespace-pre-line border-l-2 border-destructive pl-3 text-base italic">
+              {parish.description}
+            </div>
+          )}
+          {parish.parent_id && parish.parent?.name && (
+            <div>Sede: {parish.parent.name}</div>
+          )}
+          {(parish.email || parish.phone) && (
+            <div className="flex flex-wrap items-center gap-x-2">
+              {parish.email && (
+                <span>
+                  Correo:{" "}
+                  <a
+                    href={`mailto:${parish.email}`}
+                    className="hover:text-primary hover:underline"
+                  >
+                    {parish.email}
+                  </a>
+                </span>
+              )}
+              {parish.email && parish.phone && <span aria-hidden="true">·</span>}
+              {parish.phone && (
+                <span>
+                  Tel:{" "}
+                  <a
+                    href={`tel:${parish.phone}`}
+                    className="hover:text-primary hover:underline"
+                  >
+                    {parish.phone}
+                  </a>
+                </span>
+              )}
+            </div>
+          )}
+          {parish.url && (
+            <div>
+              <a
+                href={parish.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 hover:text-primary hover:underline"
+              >
+                <span>{prettyHost(parish.url)}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3.5 w-3.5"
+                  aria-hidden="true"
+                >
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            </div>
+          )}
+        </dl>
       </header>
 
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">
@@ -161,14 +263,24 @@ export default async function ParroquiaPage({
           <h2 id="playlists-heading" className="text-xl">
             Listas
           </h2>
-          {playlists.length > previewPlaylists.length && (
-            <Link
-              href={`/parroquias/${parish.slug}/playlists`}
-              className="text-sm normal-case text-primary hover:underline"
-            >
-              Ver todas ({playlists.length})
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            {playlists.length > previewPlaylists.length && (
+              <Link
+                href={`/parroquias/${parish.slug}/playlists`}
+                className="text-sm normal-case text-primary hover:underline"
+              >
+                Ver todas ({playlists.length})
+              </Link>
+            )}
+            {isCoordinatorOfThisParish && (
+              <Link
+                href={`/parroquias/${parish.slug}/playlists`}
+                className="rounded-full border border-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                Editar
+              </Link>
+            )}
+          </div>
         </div>
         {previewPlaylists.length === 0 ? (
           <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
@@ -205,25 +317,41 @@ export default async function ParroquiaPage({
         )}
       </section>
 
-      {parishAnnouncements.items.length > 0 && (
+      {(parishAnnouncements.items.length > 0 || isCoordinatorOfThisParish) && (
         <section
           aria-labelledby="anuncios-heading"
           className="flex flex-col gap-4"
         >
-          <h2 id="anuncios-heading" className="text-xl">
-            Anuncios
-          </h2>
-          <ul className="grid gap-3">
-            {parishAnnouncements.items.map((item, i) => (
-              <li key={i}>
-                <AnnouncementCard item={item} />
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 id="anuncios-heading" className="text-xl">
+              Avisos
+            </h2>
+            {isCoordinatorOfThisParish && (
+              <Link
+                href={`/parroquias/${parish.slug}/anuncios`}
+                className="rounded-full border border-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                Editar
+              </Link>
+            )}
+          </div>
+          {parishAnnouncements.items.length === 0 ? (
+            <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
+              Esta parroquia todavía no publicó avisos.
+            </p>
+          ) : (
+            <ul className="grid gap-3">
+              {parishAnnouncements.items.map((item, i) => (
+                <li key={i}>
+                  <AnnouncementCard item={item} />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 
-      {contactRoleLabel !== null && (
+      {contactGroups.length > 0 && (
         <section
           aria-labelledby="contacto-heading"
           className="flex flex-col gap-4"
@@ -233,23 +361,21 @@ export default async function ParroquiaPage({
               Contacto
             </h2>
             <p className="text-sm normal-case text-muted-foreground">
-              {contactRoleLabel === "coordinator" &&
-                "Por cualquier sugerencia puede contactarse con el Coordinador Parroquial"}
-              {contactRoleLabel === "editor" &&
-                "Para cuestiones editoriales puede contactarse con un Editor o Administrador"}
-              {contactRoleLabel === "admin" &&
-                "Para cuestiones administrativas puede contactarse con un Administrador"}
+              Estos son los contactos por si necesita comunicarse con un
+              coordinador parroquial o de la comisión arquidiocesana.
             </p>
           </div>
-          {contacts.length === 0 ? (
-            <p className="rounded-xl border border-border bg-background p-6 text-base normal-case text-muted-foreground">
-              No hay contactos disponibles.
-            </p>
-          ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {contacts.map((c) => {
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {contactGroups.flatMap((group) =>
+              group.contacts.map((c) => {
                 const name = c.display_name ?? c.email;
                 const initial = name.charAt(0).toUpperCase();
+                const roleLabel =
+                  group.role === "coordinator"
+                    ? "Coordinador Parroquial"
+                    : group.role === "editor"
+                    ? "Editor"
+                    : "Administrador";
                 return (
                   <li
                     key={c.user_id}
@@ -271,7 +397,10 @@ export default async function ParroquiaPage({
                         {initial}
                       </div>
                     )}
-                    <div className="flex min-w-0 flex-col gap-1">
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+                        {roleLabel}
+                      </span>
                       <span className="truncate text-lg text-primary">
                         {name}
                       </span>
@@ -284,11 +413,19 @@ export default async function ParroquiaPage({
                     </div>
                   </li>
                 );
-              })}
-            </ul>
-          )}
+              })
+            )}
+          </ul>
         </section>
       )}
     </main>
   );
+}
+
+function prettyHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }

@@ -417,33 +417,49 @@ export type Parish = {
   name: string;
   address: string | null;
   city: string | null;
+  phone: string | null;
+  email: string | null;
+  logo_url: string | null;
   description: string | null;
   latitude: number | null;
   longitude: number | null;
   status: ParishStatus;
+  decanato: string | null;
+  parent_id: string | null;
+  url: string | null;
+  parent: { name: string } | null;
 };
+
+const PARISH_SELECT =
+  "id, slug, name, address, city, phone, email, logo_url, description, latitude, longitude, status, decanato, parent_id, url, parent:parent_id(name)";
 
 export async function listParishes(): Promise<Parish[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parishes")
-    .select("id, slug, name, address, city, description, latitude, longitude, status")
+    .select(PARISH_SELECT)
     .eq("status", "active")
     .order("name", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as Parish[];
+  return (data ?? []).map(normalizeParish);
 }
 
 export async function getParishBySlug(slug: string): Promise<Parish | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parishes")
-    .select("id, slug, name, address, city, description, latitude, longitude, status")
+    .select(PARISH_SELECT)
     .eq("slug", slug)
     .eq("status", "active")
     .maybeSingle();
   if (error) throw error;
-  return (data as Parish | null) ?? null;
+  return data ? normalizeParish(data) : null;
+}
+
+function normalizeParish(row: Record<string, unknown>): Parish {
+  const rel = row.parent as { name: string } | { name: string }[] | null;
+  const parent = Array.isArray(rel) ? (rel[0] ?? null) : rel;
+  return { ...(row as Omit<Parish, "parent">), parent } as Parish;
 }
 
 // =====================================================================

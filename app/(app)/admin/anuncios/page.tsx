@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { loadSchedules } from "@/lib/schedule.server";
@@ -15,8 +16,9 @@ type AnnouncementRow = {
 type ParishRow = { id: string; slug: string; name: string };
 
 export default async function AdminAnunciosPage() {
-  const supabase = await createClient();
   const access = await getAdminAccess();
+  if (!access.isAdmin && !access.isEditor) redirect("/admin");
+  const supabase = await createClient();
 
   const [annRes, apRes, parishesRes] = await Promise.all([
     supabase
@@ -27,7 +29,7 @@ export default async function AdminAnunciosPage() {
     supabase.from("parishes").select("id, slug, name"),
   ]);
 
-  const allAnnouncements = (annRes.data ?? []) as AnnouncementRow[];
+  const announcements = (annRes.data ?? []) as AnnouncementRow[];
   const links = (apRes.data ?? []) as Array<{ announcement_id: string; parish_id: string }>;
   const parishes = (parishesRes.data ?? []) as ParishRow[];
   const parishById = new Map(parishes.map((p) => [p.id, p]));
@@ -40,25 +42,6 @@ export default async function AdminAnunciosPage() {
     arr.push(parish);
     destByAnnouncement.set(link.announcement_id, arr);
   }
-
-  let coordinatorParishIds = new Set<string>();
-  if (!access.isAdmin && !access.isEditor && access.userId) {
-    const { data: members } = await supabase
-      .from("parish_members")
-      .select("parish_id")
-      .eq("user_id", access.userId)
-      .eq("role", "coordinator");
-    coordinatorParishIds = new Set(
-      (members ?? []).map((m) => m.parish_id as string)
-    );
-  }
-  const announcements =
-    access.isAdmin || access.isEditor
-      ? allAnnouncements
-      : allAnnouncements.filter((a) => {
-          const dests = destByAnnouncement.get(a.id) ?? [];
-          return dests.some((p) => coordinatorParishIds.has(p.id));
-        });
 
   const sched = await loadSchedules(
     "announcement",

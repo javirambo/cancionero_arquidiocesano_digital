@@ -31,7 +31,7 @@ const secciones: Seccion[] = [
     href: "/admin/anuncios",
     titulo: "Anuncios",
     descripcion: "Anuncios y novedades destacadas en la home, con destino global o multi-parroquia.",
-    show: (a) => a.isAdmin || a.isEditor || a.isAnyCoordinator,
+    show: (a) => a.isAdmin || a.isEditor,
   },
   {
     href: "/admin/usuarios",

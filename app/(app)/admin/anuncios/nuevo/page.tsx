@@ -1,13 +1,13 @@
+import { redirect } from "next/navigation";
 import { AnuncioForm } from "../anuncio-form";
 import { listScopedParishes } from "../scoped-parishes";
 import { getAdminAccess } from "../../access";
 
 export default async function NuevoAnuncioPage() {
-  const [parishes, access] = await Promise.all([
-    listScopedParishes(),
-    getAdminAccess(),
-  ]);
-  const allowGlobal = access.isAdmin || access.isEditor;
+  const access = await getAdminAccess();
+  if (!access.isAdmin && !access.isEditor) redirect("/admin");
+  const parishes = await listScopedParishes();
+  const allowGlobal = true;
 
   return (
     <main className="flex flex-col gap-6">
