@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { HeroContent } from "@/app/components/home-hero";
 import { loadContactEmails } from "@/lib/contact-emails";
 import { CopyEmailButton } from "./copy-email-button";
 
@@ -30,8 +30,12 @@ export default async function CreditosPage() {
   ]);
   const contactEmail = creditsEmails[0] ?? null;
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-16">
-      <HeroContent />
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 bg-[#ffffff] px-4 py-16">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <h1 className="text-4xl leading-tight text-primary sm:text-5xl">
+          Cancionero Arquidiocesano
+        </h1>
+      </div>
       <header className="flex flex-col">
         <h1 className="text-3xl leading-tight text-page-title">Créditos</h1>
       </header>
@@ -48,6 +52,16 @@ export default async function CreditosPage() {
           personas y herramientas que hicieron posible este proyecto.
         </p>
       </section>
+
+      <div className="flex justify-center">
+        <Image
+          src="/logo-comision.png"
+          alt="Logo Comisión de Música Litúrgica"
+          width={1855}
+          height={926}
+          className="h-auto w-full max-w-sm"
+        />
+      </div>
 
       <section
         className="relative overflow-hidden rounded-xl border border-border bg-sidebar p-6 normal-case"
