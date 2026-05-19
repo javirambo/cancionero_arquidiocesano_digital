@@ -1,4 +1,3 @@
-import { SiteFooter } from "@/app/components/site-footer";
 import { MergeFavoritesDialog } from "@/app/components/merge-favorites-dialog";
 
 export default function SongLayout({
@@ -9,7 +8,6 @@ export default function SongLayout({
   return (
     <>
       <div className="flex flex-1 flex-col">{children}</div>
-      <SiteFooter />
       <MergeFavoritesDialog />
     </>
   );

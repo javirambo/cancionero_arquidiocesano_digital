@@ -47,6 +47,17 @@ type Props = {
 const STORAGE_KEY_PREFIX = "song:transpose:";
 const HEADER_BG = "#436bb0";
 
+// Dispara un flash visual de ~220ms al tocar un botón (definido en globals.css
+// como `.tap-flash` + keyframe `tap-flash`). Quita y re-agrega la clase para
+// reanimar en taps rápidos.
+function flashButton(e: React.PointerEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  el.classList.remove("tap-flash");
+  // Forzar reflow para reiniciar la animación.
+  void el.offsetWidth;
+  el.classList.add("tap-flash");
+}
+
 export function SongView({
   songId,
   songSlug,
@@ -320,13 +331,14 @@ export function SongView({
         )}
       </div>
 
-      {!hideToolbar && (
+      {!hideToolbar && portalReady && createPortal(
         <AutoScrollPanel
           on={autoScrollOn}
           toggle={() => setAutoScrollOn((v) => !v)}
           speed={scrollSpeed}
           setSpeed={setScrollSpeed}
-        />
+        />,
+        document.body
       )}
     </div>
   );
@@ -535,11 +547,12 @@ function ToolbarButton({
     <button
       type="button"
       onClick={onClick}
+      onPointerDown={flashButton}
       disabled={disabled}
       aria-pressed={pressed}
       aria-label={label}
       title={label}
-      className={`flex h-10 w-10 items-center justify-center rounded-full border border-white text-white transition-colors enabled:hover:bg-white enabled:hover:text-[color:var(--toolbar-bg,#436bb0)] disabled:opacity-50 ${
+      className={`flex h-10 w-10 items-center justify-center rounded-full border border-white text-white transition-colors focus:outline-none enabled:hover:bg-white enabled:hover:text-[color:var(--toolbar-bg,#436bb0)] disabled:opacity-50 ${
         pressed ? "bg-white text-[color:#436bb0]" : ""
       }`}
       style={pressed ? { color: HEADER_BG } : undefined}
@@ -608,10 +621,11 @@ function ChordsCycleButton({
     <button
       type="button"
       onClick={onCycle}
+      onPointerDown={flashButton}
       aria-pressed={on}
       aria-label={label}
       title={label}
-      className={`relative flex h-10 w-14 items-center justify-center rounded-full border border-white text-white transition-colors hover:bg-white hover:text-[color:#436bb0] ${
+      className={`relative flex h-10 w-14 items-center justify-center rounded-full border border-white text-white transition-colors focus:outline-none hover:bg-white hover:text-[color:#436bb0] ${
         on ? "bg-white" : ""
       }`}
       style={on ? { color: HEADER_BG } : undefined}
@@ -879,11 +893,12 @@ function SongHamburgerMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        onPointerDown={flashButton}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Menú"
         title="Menú"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-white text-white transition-colors hover:bg-white hover:text-[color:#436bb0]"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-white text-white transition-colors focus:outline-none hover:bg-white hover:text-[color:#436bb0]"
       >
         <HamburgerIcon />
       </button>
@@ -1264,7 +1279,7 @@ function AutoScrollPanel({
     <div
       role="group"
       aria-label="Desplazamiento automático"
-      className="fixed bottom-4 right-4 z-30 flex flex-col items-center gap-2"
+      className="fixed bottom-[70px] right-4 z-30 flex flex-col items-center gap-2"
     >
       <button
         type="button"
@@ -1272,7 +1287,9 @@ function AutoScrollPanel({
         disabled={!canUp}
         aria-label={`Aumentar velocidad (actual ${speed})`}
         title={`Aumentar velocidad (actual ${speed})`}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-primary bg-sidebar text-primary shadow-lg transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:opacity-40"
+        onPointerDown={flashButton}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-opacity focus:outline-none enabled:hover:opacity-90 disabled:opacity-40"
+        style={{ backgroundColor: "#436bb0" }}
       >
         <span className="text-lg font-semibold leading-none">+</span>
       </button>
@@ -1290,11 +1307,9 @@ function AutoScrollPanel({
             ? `Detener desplazamiento automático (velocidad ${speed})`
             : `Iniciar desplazamiento automático (velocidad ${speed})`
         }
-        className={`relative flex h-10 w-10 items-center justify-center rounded-full border border-primary shadow-lg transition-colors ${
-          on
-            ? "bg-primary text-white hover:bg-primary-hover"
-            : "bg-sidebar text-primary hover:bg-primary hover:text-white"
-        }`}
+        onPointerDown={flashButton}
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-opacity focus:outline-none hover:opacity-90"
+        style={{ backgroundColor: on ? "#1f3f73" : "#436bb0" }}
       >
         <svg
           width="22"
@@ -1324,7 +1339,9 @@ function AutoScrollPanel({
         disabled={!canDown}
         aria-label={`Reducir velocidad (actual ${speed})`}
         title={`Reducir velocidad (actual ${speed})`}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-primary bg-sidebar text-primary shadow-lg transition-colors enabled:hover:bg-primary enabled:hover:text-white disabled:opacity-40"
+        onPointerDown={flashButton}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-opacity focus:outline-none enabled:hover:opacity-90 disabled:opacity-40"
+        style={{ backgroundColor: "#436bb0" }}
       >
         <span className="text-lg font-semibold leading-none">−</span>
       </button>

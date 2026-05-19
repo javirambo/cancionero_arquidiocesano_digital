@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import Link from "next/link";
 
 import { SongView } from "./song-view";
 import { FavoriteHeartInline } from "./favorite-heart-inline";
-import { PlaylistNav } from "./playlist-nav";
 
 type SongInPlaylist = {
   id: string;
@@ -61,6 +62,11 @@ export function PlaylistSongPager({ songs, initialSlug, playlistId }: Props) {
   const song = songs[index];
   const prev = index > 0 ? songs[index - 1] : null;
   const next = index < songs.length - 1 ? songs[index + 1] : null;
+
+  const [portalReady, setPortalReady] = useState(false);
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   // dx = desplazamiento desde la posición centrada. Strip queda en -100% + dx.
   const [dx, setDx] = useState(0);
@@ -222,6 +228,48 @@ export function PlaylistSongPager({ songs, initialSlug, playlistId }: Props) {
         <Panel song={song} plQuery={plQuery} songs={songs} isCurrent />
         <Panel song={next} plQuery={plQuery} songs={songs} />
       </div>
+      {portalReady &&
+        createPortal(
+          <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-between px-4">
+            {prev ? (
+              <Link
+                href={`/canciones/${prev.slug}${plQuery}`}
+                onPointerDown={(e) => {
+                const el = e.currentTarget;
+                el.classList.remove("tap-flash");
+                void el.offsetWidth;
+                el.classList.add("tap-flash");
+              }}
+              className="pointer-events-auto inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-lg transition-opacity focus:outline-none hover:opacity-90"
+              style={{ backgroundColor: "#436bb0" }}
+              >
+                <span aria-hidden="true">◀</span>
+                Anterior
+              </Link>
+            ) : (
+              <span />
+            )}
+            {next ? (
+              <Link
+                href={`/canciones/${next.slug}${plQuery}`}
+                onPointerDown={(e) => {
+                const el = e.currentTarget;
+                el.classList.remove("tap-flash");
+                void el.offsetWidth;
+                el.classList.add("tap-flash");
+              }}
+              className="pointer-events-auto inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-lg transition-opacity focus:outline-none hover:opacity-90"
+              style={{ backgroundColor: "#436bb0" }}
+              >
+                Siguiente
+                <span aria-hidden="true">▶</span>
+              </Link>
+            ) : (
+              <span />
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -240,9 +288,6 @@ function Panel({
   if (!song) {
     return <div style={{ width: "100vw", flex: "0 0 100vw" }} aria-hidden />;
   }
-  const idx = songs.findIndex((s) => s.id === song.id);
-  const p = idx > 0 ? songs[idx - 1] : null;
-  const n = idx < songs.length - 1 ? songs[idx + 1] : null;
   return (
     <div
       style={{ width: "100vw", flex: "0 0 100vw" }}
@@ -298,13 +343,6 @@ function Panel({
           }
         />
 
-        {isCurrent && (
-          <PlaylistNav
-            prev={p ? { slug: p.slug, title: p.title } : null}
-            next={n ? { slug: n.slug, title: n.title } : null}
-            plQuery={plQuery}
-          />
-        )}
       </div>
     </div>
   );
