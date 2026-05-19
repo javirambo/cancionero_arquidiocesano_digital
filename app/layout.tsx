@@ -55,10 +55,10 @@ export default function RootLayout({
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
-        <ThemeProvider>
-          <SessionProvider>
-            <UserRolesProvider>
-              <PreferencesProvider>
+        <SessionProvider>
+          <UserRolesProvider>
+            <PreferencesProvider>
+              <ThemeProvider>
                 <FavoritesProvider>
                   <ToastProvider>
                     <WakeLockProvider>
@@ -68,10 +68,10 @@ export default function RootLayout({
                     </WakeLockProvider>
                   </ToastProvider>
                 </FavoritesProvider>
-              </PreferencesProvider>
-            </UserRolesProvider>
-          </SessionProvider>
-        </ThemeProvider>
+              </ThemeProvider>
+            </PreferencesProvider>
+          </UserRolesProvider>
+        </SessionProvider>
       </body>
     </html>
   );

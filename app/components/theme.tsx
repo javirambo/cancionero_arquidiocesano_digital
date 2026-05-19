@@ -5,12 +5,14 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
   type ReactNode,
 } from "react";
+import { usePreferences } from "./preferences";
 
 export type Theme = "light" | "dark";
 
+// Key legacy: el script inline anti-flash la lee antes del primer paint.
+// PreferencesProvider también la mantiene en sync.
 const STORAGE_KEY = "theme";
 
 type ThemeContextValue = {
@@ -28,26 +30,18 @@ function applyTheme(t: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const { theme, setPreference } = usePreferences();
 
-  // Sincronizar con lo que el script inline ya aplicó al <html>.
   useEffect(() => {
-    const initial: Theme =
-      document.documentElement.getAttribute("data-theme") === "dark"
-        ? "dark"
-        : "light";
-    setThemeState(initial);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
-  const setTheme = useCallback((t: Theme) => {
-    setThemeState(t);
-    applyTheme(t);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, t);
-    } catch {
-      // ignorar (modo privado, etc.)
-    }
-  }, []);
+  const setTheme = useCallback(
+    (t: Theme) => {
+      void setPreference("theme", t);
+    },
+    [setPreference]
+  );
 
   const toggle = useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark");

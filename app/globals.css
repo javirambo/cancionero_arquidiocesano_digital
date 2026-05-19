@@ -159,3 +159,29 @@ select {
 .rich-doc u { text-decoration: underline; }
 .rich-doc s { text-decoration: line-through; }
 .rich-doc img { max-width: 100%; height: auto; }
+
+/* Flash de retroalimentación al hacer click en un botón.
+ * Se dispara con la clase .tap-flash al disparar onPointerDown — la JS quita
+ * y agrega la clase para reanimar en clicks rápidos.
+ *
+ * Usa un pseudo-elemento ::after que se superpone con fondo blanco y se
+ * desvanece. Así funciona aunque el botón tenga background-color inline. */
+@keyframes tap-flash-overlay {
+  0%   { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+.tap-flash {
+  position: relative;
+  isolation: isolate;
+}
+.tap-flash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #ffffff;
+  pointer-events: none;
+  opacity: 0;
+  animation: tap-flash-overlay 220ms ease-out;
+  z-index: 1;
+}

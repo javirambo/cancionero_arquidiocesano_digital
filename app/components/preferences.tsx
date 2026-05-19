@@ -14,17 +14,23 @@ import { useSession } from "./session";
 
 type Preferences = {
   // Mantener la pantalla encendida (Screen Wake Lock).
-  // Sólo aplica a usuarios autenticados; al recargar requiere un gesto del
-  // usuario para reactivarse (limitación de la Web API).
+  // Al recargar requiere un gesto del usuario para reactivarse
+  // (limitación de la Web API).
   keepScreenOn: boolean;
   // Mostrar acordes en la vista de canción. Default false: la primera vez
   // que un usuario entra (aunque tenga parroquia) los acordes están ocultos.
   showChords: boolean;
+  // Tema visual.
+  theme: "light" | "dark";
+  // Velocidad del desplazamiento automático en la vista de canción (1..7).
+  scrollSpeed: number;
 };
 
 const DEFAULTS: Preferences = {
   keepScreenOn: false,
   showChords: false,
+  theme: "light",
+  scrollSpeed: 4,
 };
 
 type Ctx = Preferences & {
@@ -38,6 +44,49 @@ type Ctx = Preferences & {
 
 const PreferencesContext = createContext<Ctx | null>(null);
 
+// Claves de localStorage para invitados (y como fallback antes de cargar BD).
+// "theme" se mantiene con su nombre legacy porque el script inline anti-flash
+// en theme.tsx lee esa misma key antes del primer paint.
+const LS_KEYS: Record<keyof Preferences, string> = {
+  keepScreenOn: "prefs:keepScreenOn",
+  showChords: "prefs:showChords",
+  theme: "theme",
+  scrollSpeed: "prefs:scrollSpeed",
+};
+
+function readLocalPrefs(): Preferences {
+  if (typeof window === "undefined") return DEFAULTS;
+  const out: Preferences = { ...DEFAULTS };
+  try {
+    const sc = window.localStorage.getItem(LS_KEYS.showChords);
+    if (sc !== null) out.showChords = sc === "true";
+    const ks = window.localStorage.getItem(LS_KEYS.keepScreenOn);
+    if (ks !== null) out.keepScreenOn = ks === "true";
+    const th = window.localStorage.getItem(LS_KEYS.theme);
+    if (th === "dark" || th === "light") out.theme = th;
+    const ss = window.localStorage.getItem(LS_KEYS.scrollSpeed);
+    if (ss !== null) {
+      const n = Number.parseInt(ss, 10);
+      if (Number.isFinite(n) && n >= 1 && n <= 7) out.scrollSpeed = n;
+    }
+  } catch {
+    // ignorar (modo privado, etc.)
+  }
+  return out;
+}
+
+function writeLocalPref<K extends keyof Preferences>(
+  key: K,
+  value: Preferences[K]
+) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LS_KEYS[key], String(value));
+  } catch {
+    // ignorar
+  }
+}
+
 async function loadFromDb(userId: string): Promise<Preferences> {
   const supabase = createClient();
   const { data } = await supabase
@@ -49,31 +98,30 @@ async function loadFromDb(userId: string): Promise<Preferences> {
   return { ...DEFAULTS, ...raw };
 }
 
-// El invitado persiste `showChords` en localStorage (CU-02.2/CU-03).
-// `keepScreenOn` queda solo para autenticados.
-const GUEST_SHOW_CHORDS_KEY = "prefs:showChords";
-
-function loadGuestPrefs(): Preferences {
-  if (typeof window === "undefined") return DEFAULTS;
-  const raw = window.localStorage.getItem(GUEST_SHOW_CHORDS_KEY);
-  if (raw === null) return DEFAULTS;
-  return { ...DEFAULTS, showChords: raw === "true" };
-}
-
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const { user } = useSession();
+  // Hidratamos siempre con localStorage primero para evitar flash:
+  // el invitado mantiene sus prefs; el member las usa como fallback hasta
+  // que termine la lectura de BD.
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const local = readLocalPrefs();
     if (!user) {
-      setPrefs(loadGuestPrefs());
+      setPrefs(local);
       setLoading(false);
       return;
     }
+    setPrefs(local);
     setLoading(true);
     loadFromDb(user.id).then((p) => {
       setPrefs(p);
+      // Reflejamos en localStorage para mantener consistencia local
+      // (el script anti-flash del theme depende de esto).
+      (Object.keys(p) as Array<keyof Preferences>).forEach((k) =>
+        writeLocalPref(k, p[k])
+      );
       setLoading(false);
     });
   }, [user]);
@@ -82,12 +130,8 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     async (key, value) => {
       const next = { ...prefs, [key]: value };
       setPrefs(next);
-      if (!user) {
-        if (key === "showChords" && typeof window !== "undefined") {
-          window.localStorage.setItem(GUEST_SHOW_CHORDS_KEY, String(value));
-        }
-        return;
-      }
+      writeLocalPref(key, value);
+      if (!user) return;
       const supabase = createClient();
       await supabase
         .from("users")

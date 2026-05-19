@@ -101,7 +101,7 @@ export default async function CancionPage({
   const plQuery = playlistCtx ? `?pl=${playlistCtx.playlistId}` : "";
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-12">
       {playlistCtx ? (
         <PlaylistSongPager
           songs={playlistCtx.preloadedSongs}
@@ -109,9 +109,18 @@ export default async function CancionPage({
           playlistId={playlistCtx.playlistId}
         />
       ) : (
-        <>
-          <header className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex flex-col gap-2">
+        <SongView
+          songId={song.id}
+          songSlug={slug}
+          songTitle={song.title}
+          body={song.body}
+          originalKey={song.original_key}
+          youtubeEmbed={embed}
+          hasFiles={song.hasFiles}
+          playlistKeyOverride={null}
+          inPlaylistContext={false}
+          titleSlot={
+            <header className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-xs uppercase tracking-[0.2em] text-secondary">
                   {song.number !== null ? `Nº ${song.number}` : "Canto"}
@@ -124,33 +133,26 @@ export default async function CancionPage({
                     {c}
                   </span>
                 ))}
+                <span className="ml-auto">
+                  <FavoriteHeartInline
+                    songId={song.id}
+                    songTitle={song.title}
+                    songSlug={slug}
+                    subtitle={song.categories.join(" · ") || undefined}
+                  />
+                </span>
               </div>
               <h1 className="text-3xl leading-tight text-song-title">
-                <span className="relative inline-block">
-                  {song.title}
-                  <FavoriteHeartInline songId={song.id} />
-                </span>
+                {song.title}
               </h1>
               {song.author && (
                 <p className="text-sm normal-case text-muted-foreground">
                   Autor: {song.author}
                 </p>
               )}
-            </div>
-          </header>
-
-          <SongView
-            songId={song.id}
-            songSlug={slug}
-            songTitle={song.title}
-            body={song.body}
-            originalKey={song.original_key}
-            youtubeEmbed={embed}
-            hasFiles={song.hasFiles}
-            playlistKeyOverride={null}
-            inPlaylistContext={false}
-          />
-        </>
+            </header>
+          }
+        />
       )}
     </main>
   );
