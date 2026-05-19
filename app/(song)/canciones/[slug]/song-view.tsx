@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import QRCode from "qrcode";
 import {
   detectSystem,
@@ -195,36 +196,57 @@ export function SongView({
 
   const chordsDisabled = !chordsAvailable;
 
+  const [portalReady, setPortalReady] = useState(false);
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  const toolbarEl = !hideToolbar ? (
+    <SongToolbar
+      songId={songId}
+      songSlug={songSlug}
+      songTitle={songTitle}
+      chordsAvailable={chordsAvailable}
+      showChords={showChords}
+      toggleShowChords={toggleShowChords}
+      effectiveSystem={effectiveSystem}
+      setSystem={setSystem}
+      semitones={semitones}
+      setSemitones={setSemitones}
+      originalKey={originalKey}
+      inPlaylistContext={inPlaylistContext}
+      playlistKeyOverride={playlistKeyOverride}
+      letterScale={letterScale}
+      adjustLetterScale={adjustLetterScale}
+      system={system}
+      hasFiles={hasFiles}
+      youtubeEmbed={youtubeEmbed}
+      media={media}
+      setMedia={setMedia}
+      canEdit={canEdit}
+    />
+  ) : null;
+
   return (
     <div className="flex flex-col gap-6">
-      {!hideToolbar && (
+      {/*
+        En contexto playlist el toolbar va por portal a document.body para
+        escapar del strip transformado del pager (un transform crea
+        containing-block para descendientes `fixed`). En el flujo dejamos un
+        placeholder h-14 que reserva el espacio y mantiene el título alineado
+        entre el panel actual y los paneles laterales del swipe.
+      */}
+      {inPlaylistContext ? (
         <>
-        <SongToolbar
-          songId={songId}
-          songSlug={songSlug}
-          songTitle={songTitle}
-          chordsAvailable={chordsAvailable}
-          showChords={showChords}
-          toggleShowChords={toggleShowChords}
-          effectiveSystem={effectiveSystem}
-          setSystem={setSystem}
-          semitones={semitones}
-          setSemitones={setSemitones}
-          originalKey={originalKey}
-          inPlaylistContext={inPlaylistContext}
-          playlistKeyOverride={playlistKeyOverride}
-          letterScale={letterScale}
-          adjustLetterScale={adjustLetterScale}
-          system={system}
-          hasFiles={hasFiles}
-          youtubeEmbed={youtubeEmbed}
-          media={media}
-          setMedia={setMedia}
-          canEdit={canEdit}
-        />
-        {titleSlot}
+          <div aria-hidden="true" className="h-14" />
+          {portalReady && toolbarEl && createPortal(toolbarEl, document.body)}
         </>
+      ) : !hideToolbar ? (
+        toolbarEl
+      ) : (
+        <div aria-hidden="true" className="h-14" />
       )}
+      {titleSlot}
 
       {media?.type === "youtube" && youtubeEmbed && (
         youtubeEmbed.includes("open.spotify.com") ? (
@@ -374,91 +396,94 @@ function SongToolbar({
       role="toolbar"
       aria-label="Controles de la canción"
       style={{ backgroundColor: HEADER_BG }}
-      className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-white/20 px-3 py-2 sm:-mx-0 sm:rounded-xl sm:px-4"
+      className={
+        inPlaylistContext
+          ? "fixed inset-x-0 top-0 z-40 flex flex-col gap-2 border-b border-white/20 px-3 py-2 sm:px-4"
+          : "sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-white/20 px-3 py-2 sm:-mx-0 sm:rounded-xl sm:px-4"
+      }
     >
       {/* Fila superior */}
       <div className="flex flex-nowrap items-center justify-between gap-1">
         <div className="flex flex-nowrap items-center gap-1">
-          {chordsAvailable && (
-            <>
-              <ChordsCycleButton
-                showChords={showChords}
-                effectiveSystem={effectiveSystem}
-                onCycle={() => {
-                  // Off → Latín On → Inglés On → Off
-                  if (!showChords) {
-                    toggleShowChords();
-                    setSystem("latin");
-                    return;
-                  }
-                  if (effectiveSystem === "latin") {
-                    setSystem("english");
-                    return;
-                  }
+          <div
+            className={`flex w-[184px] flex-nowrap items-center justify-start gap-1 ${
+              chordsAvailable ? "" : "invisible"
+            }`}
+            aria-hidden={!chordsAvailable}
+          >
+            <ChordsCycleButton
+              showChords={showChords}
+              effectiveSystem={effectiveSystem}
+              onCycle={() => {
+                // Off → Latín On → Inglés On → Off
+                if (!showChords) {
                   toggleShowChords();
-                }}
-              />
-
-              <div
-                className="flex items-center gap-0.5"
-                aria-label="Transposición"
-              >
-                {inPlaylistContext && playlistKeyOverride && (
-                  <span
-                    aria-hidden="true"
-                    className="mr-0.5 text-xs text-white/90"
-                    title="Tono sugerido por la playlist"
-                  >
-                    ★
-                  </span>
-                )}
-                <ToolbarButton
-                  onClick={() =>
-                    setSemitones((s) => (s <= -5 ? 6 : s - 1))
-                  }
-                  disabled={!showChords}
-                  label="Bajar un semitono"
-                >
-                  <span className="text-base font-semibold leading-none">
-                    ♪−
-                  </span>
-                </ToolbarButton>
-                <button
-                  type="button"
-                  onClick={() => semitones !== 0 && setSemitones(() => 0)}
-                  disabled={!showChords || semitones === 0}
-                  aria-label={
-                    semitones === 0 ? "Tono original" : "Restablecer tono original"
-                  }
-                  title={
-                    semitones === 0
-                      ? "Tono original"
-                      : "Restablecer tono original"
-                  }
-                  className="min-w-8 rounded-full px-1 text-center text-sm normal-case text-white transition-opacity disabled:opacity-60"
-                >
-                  {semitones === 0
-                    ? originalKey ?? "Tono"
-                    : `${semitones > 0 ? "+" : ""}${semitones}`}
-                </button>
-                <ToolbarButton
-                  onClick={() => setSemitones((s) => (s >= 6 ? -5 : s + 1))}
-                  disabled={!showChords}
-                  label="Subir un semitono"
-                >
-                  <span className="text-base font-semibold leading-none">
-                    ♪+
-                  </span>
-                </ToolbarButton>
-              </div>
-            </>
-          )}
-          {chordsAvailable && (
-            <span
-              aria-hidden="true"
-              className="mx-2 h-6 w-px bg-white/30"
+                  setSystem("latin");
+                  return;
+                }
+                if (effectiveSystem === "latin") {
+                  setSystem("english");
+                  return;
+                }
+                toggleShowChords();
+              }}
             />
-          )}
+
+            <div
+              className="flex items-center gap-0.5"
+              aria-label="Transposición"
+            >
+              {inPlaylistContext && playlistKeyOverride && (
+                <span
+                  aria-hidden="true"
+                  className="mr-0.5 text-xs text-white/90"
+                  title="Tono sugerido por la playlist"
+                >
+                  ★
+                </span>
+              )}
+              <ToolbarButton
+                onClick={() => setSemitones((s) => (s <= -5 ? 6 : s - 1))}
+                disabled={!showChords}
+                label="Bajar un semitono"
+              >
+                <span className="text-base font-semibold leading-none">
+                  ♪−
+                </span>
+              </ToolbarButton>
+              <button
+                type="button"
+                onClick={() => semitones !== 0 && setSemitones(() => 0)}
+                disabled={!showChords || semitones === 0}
+                aria-label={
+                  semitones === 0 ? "Tono original" : "Restablecer tono original"
+                }
+                title={
+                  semitones === 0
+                    ? "Tono original"
+                    : "Restablecer tono original"
+                }
+                className="min-w-8 rounded-full px-1 text-center text-sm normal-case text-white transition-opacity disabled:opacity-60"
+              >
+                {semitones === 0
+                  ? originalKey ?? "Tono"
+                  : `${semitones > 0 ? "+" : ""}${semitones}`}
+              </button>
+              <ToolbarButton
+                onClick={() => setSemitones((s) => (s >= 6 ? -5 : s + 1))}
+                disabled={!showChords}
+                label="Subir un semitono"
+              >
+                <span className="text-base font-semibold leading-none">
+                  ♪+
+                </span>
+              </ToolbarButton>
+            </div>
+          </div>
+          <span
+            aria-hidden="true"
+            className="mx-2 h-6 w-px bg-white/30"
+          />
           <ToolbarButton
             onClick={() => adjustLetterScale(-LETTER_SCALE_STEP)}
             disabled={letterScale <= LETTER_SCALE_MIN}

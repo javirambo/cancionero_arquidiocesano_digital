@@ -3,15 +3,39 @@
 import { useFavorites } from "@/app/components/favorites";
 import { HeartIcon } from "@/app/components/icons";
 
-export function FavoriteHeartInline({ songId }: { songId: string }) {
-  const { isFavorite } = useFavorites();
-  if (!isFavorite("song", songId)) return null;
+type Props = {
+  songId: string;
+  songTitle: string;
+  songSlug: string;
+  subtitle?: string;
+};
+
+export function FavoriteHeartInline({
+  songId,
+  songTitle,
+  songSlug,
+  subtitle,
+}: Props) {
+  const { isFavorite, toggle } = useFavorites();
+  const favorited = isFavorite("song", songId);
   return (
-    <span
-      title="En tus favoritos"
-      className="absolute -top-1 left-full ml-1 text-song-title [&_svg]:h-3 [&_svg]:w-3"
+    <button
+      type="button"
+      onClick={() =>
+        void toggle("song", songId, {
+          title: songTitle,
+          href: `/canciones/${songSlug}`,
+          subtitle,
+        })
+      }
+      aria-pressed={favorited}
+      aria-label={favorited ? "Quitar de favoritos" : "Agregar a favoritos"}
+      title={favorited ? "Quitar de favoritos" : "Agregar a favoritos"}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-sidebar ${
+        favorited ? "text-song-title" : "text-muted-foreground"
+      }`}
     >
-      <HeartIcon filled />
-    </span>
+      <HeartIcon filled={favorited} />
+    </button>
   );
 }

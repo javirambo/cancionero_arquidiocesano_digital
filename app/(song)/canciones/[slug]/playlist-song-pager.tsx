@@ -262,33 +262,38 @@ function Panel({
           inPlaylistContext
           hideToolbar={!isCurrent}
           titleSlot={
-            <header className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-                    {song.number !== null ? `Nº ${song.number}` : "Canto"}
-                  </p>
-                  {song.categories.map((c) => (
-                    <span
-                      key={c}
-                      className="rounded-full border border-secondary bg-card px-2 py-px text-[10px] uppercase tracking-wide text-secondary"
-                    >
-                      {c}
-                    </span>
-                  ))}
-                </div>
-                <h1 className="text-3xl leading-tight text-song-title">
-                  <span className="relative inline-block">
-                    {song.title}
-                    {isCurrent && <FavoriteHeartInline songId={song.id} />}
+            <header className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+                  {song.number !== null ? `Nº ${song.number}` : "Canto"}
+                </p>
+                {song.categories.map((c) => (
+                  <span
+                    key={c}
+                    className="rounded-full border border-secondary bg-card px-2 py-px text-[10px] uppercase tracking-wide text-secondary"
+                  >
+                    {c}
                   </span>
-                </h1>
-                {song.author && (
-                  <p className="text-sm normal-case text-muted-foreground">
-                    Autor: {song.author}
-                  </p>
+                ))}
+                {isCurrent && (
+                  <span className="ml-auto">
+                    <FavoriteHeartInline
+                      songId={song.id}
+                      songTitle={song.title}
+                      songSlug={song.slug}
+                      subtitle={song.categories.join(" · ") || undefined}
+                    />
+                  </span>
                 )}
               </div>
+              <h1 className="text-3xl leading-tight text-song-title">
+                {song.title}
+              </h1>
+              {song.author && (
+                <p className="text-sm normal-case text-muted-foreground">
+                  Autor: {song.author}
+                </p>
+              )}
             </header>
           }
         />
