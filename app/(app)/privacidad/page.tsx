@@ -136,21 +136,6 @@ export default async function PrivacidadPage() {
         </p>
       </section>
 
-      <div className="flex flex-col items-center gap-4">
-        <Image
-          src="/logo-arquidiocesis.png"
-          alt="Logo Arquidiócesis"
-          width={1280}
-          height={1365}
-          className="h-auto w-full max-w-xs"
-        />
-        <p
-          className="text-3xl sm:text-4xl font-sans text-foreground text-center"
-          style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
-        >
-          Arzobispado de Rosario
-        </p>
-      </div>
     </main>
   );
 }
