@@ -22,13 +22,37 @@ const CTA_LABEL: Record<string, string> = {
   document: "Abrir indicaciones",
 };
 
+const DISMISS_TTL_MS = 15 * 60 * 1000;
+const dismissKey = (id: string) => `featured-popup-dismissed:${id}`;
+
 export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(dismissKey(item.id));
+      const ts = raw ? Number(raw) : 0;
+      if (!ts || Date.now() - ts > DISMISS_TTL_MS) {
+        setOpen(true);
+      }
+    } catch {
+      setOpen(true);
+    }
+  }, [item.id]);
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(dismissKey(item.id), String(Date.now()));
+    } catch {
+      // ignore
+    }
+    setOpen(false);
+  };
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") dismiss();
     };
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -37,6 +61,7 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;
@@ -55,7 +80,7 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
       <div
         aria-hidden="true"
         className="fixed inset-0 -z-10 bg-black/60"
-        onClick={() => setOpen(false)}
+        onClick={dismiss}
       />
       <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
         <div className="flex-1 overflow-y-auto">
@@ -110,7 +135,7 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
       <button
         type="button"
         aria-label="Cerrar"
-        onClick={() => setOpen(false)}
+        onClick={dismiss}
         className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-lg font-semibold text-foreground shadow-md backdrop-blur hover:border-primary hover:text-primary"
       >
         ✕

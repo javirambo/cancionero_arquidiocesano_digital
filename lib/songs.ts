@@ -671,6 +671,7 @@ async function listAnnouncementsByKindFilter(
   let query = supabase
     .from("announcements")
     .select("id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at")
+    .order("priority", { ascending: false })
     .order("created_at", { ascending: false });
   if (kindFilter === "null") query = query.is("kind", null);
   else if (kindFilter === "not-null") query = query.not("kind", "is", null);
