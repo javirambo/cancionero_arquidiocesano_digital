@@ -212,6 +212,12 @@ const AboutIcon = () => (
   </svg>
 );
 
+const HamburgerIcon = () => (
+  <svg {...iconProps}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
@@ -307,7 +313,7 @@ export function SiteHeader() {
       style={{ backgroundColor: "#436bb0" }}
       className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border`}
     >
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-1">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between py-1 pl-6 pr-2">
         <Link href="/" className="-ml-3.5 flex items-center gap-3" aria-label={displayTitle}>
           <Image
             src="/logo-comis-cordero.png"
@@ -327,7 +333,7 @@ export function SiteHeader() {
           />
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <CircleButton
             label="Inicio"
             onClick={() => router.push("/")}
@@ -341,11 +347,7 @@ export function SiteHeader() {
           <CircleButton
             label="Favoritos"
             onClick={() => setFavOpen(true)}
-            icon={
-              <span className={favorites.length > 0 ? "text-song-title" : undefined}>
-                <HeartIcon filled={favorites.length > 0} />
-              </span>
-            }
+            icon={<HeartIcon filled={favorites.length > 0} />}
           />
 
           <div ref={menuRef} className="relative">
@@ -635,12 +637,9 @@ function CircleButton({
       aria-haspopup={ariaHaspopup}
       aria-expanded={ariaExpanded}
       onClick={onClick}
-      className="group flex flex-col items-center gap-0.5 text-white transition-colors hover:text-white/80"
+      className="flex h-12 w-9 items-center justify-center text-white transition-opacity hover:opacity-80 [&_svg]:h-6 [&_svg]:w-6"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary">
-        {icon}
-      </span>
-      <span className="text-[10px] leading-none">{label}</span>
+      {icon}
     </button>
   );
 }
@@ -715,7 +714,6 @@ function ProfileSummary({
 }
 
 function AccountButton({
-  user,
   onClick,
   ariaExpanded,
 }: {
@@ -723,45 +721,13 @@ function AccountButton({
   onClick: () => void;
   ariaExpanded: boolean;
 }) {
-  const meta = user?.user_metadata as
-    | { avatar_url?: string; picture?: string }
-    | undefined;
-  const avatarUrl = meta?.avatar_url ?? meta?.picture ?? null;
-  const [imgFailed, setImgFailed] = useState(false);
-
-  if (!avatarUrl || imgFailed) {
-    return (
-      <CircleButton
-        label="Menú"
-        onClick={onClick}
-        icon={<UserIcon />}
-        ariaHaspopup="menu"
-        ariaExpanded={ariaExpanded}
-      />
-    );
-  }
-
   return (
-    <button
-      type="button"
-      title="Menú"
-      aria-label="Menú"
-      aria-haspopup="menu"
-      aria-expanded={ariaExpanded}
+    <CircleButton
+      label="Menú"
       onClick={onClick}
-      className="group flex flex-col items-center gap-0.5 text-white transition-colors hover:text-white/80"
-    >
-      <span className="block h-10 w-10 overflow-hidden rounded-full border border-border bg-background transition-colors group-hover:border-primary">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={avatarUrl}
-          alt=""
-          referrerPolicy="no-referrer"
-          onError={() => setImgFailed(true)}
-          className="h-full w-full object-cover"
-        />
-      </span>
-      <span className="text-[10px] leading-none">Menú</span>
-    </button>
+      icon={<HamburgerIcon />}
+      ariaHaspopup="menu"
+      ariaExpanded={ariaExpanded}
+    />
   );
 }
