@@ -204,6 +204,14 @@ const InstallIcon = () => (
   </svg>
 );
 
+const AboutIcon = () => (
+  <svg {...iconProps}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5" />
+    <path d="M12 8h.01" />
+  </svg>
+);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
@@ -302,7 +310,7 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-1">
         <Link href="/" className="-ml-3.5 flex items-center gap-3" aria-label={displayTitle}>
           <Image
-            src="/logo-cordero.png"
+            src="/logo-comis-cordero.png"
             alt=""
             width={90}
             height={90}
@@ -310,7 +318,7 @@ export function SiteHeader() {
             className="h-10 w-auto"
           />
           <Image
-            src="/logo-comision.png"
+            src="/logo-comis-liturgia.png"
             alt="Comisión de Liturgia"
             width={300}
             height={100}
@@ -456,6 +464,12 @@ export function SiteHeader() {
                       destructive
                     />
                   )}
+                  <MenuItem
+                    href="/about"
+                    icon={<AboutIcon />}
+                    label="¿Quiénes somos?"
+                    onSelect={closeMenu}
+                  />
                 </div>
               </div>
             )}

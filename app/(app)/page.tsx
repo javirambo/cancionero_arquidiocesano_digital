@@ -18,7 +18,6 @@ import { FeaturedAnnouncementPopup } from "@/app/components/featured-announcemen
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
 import { HomeHero } from "@/app/components/home-hero";
-import { HelpHint } from "@/app/components/help-hint";
 import type { PublicCategoryOption } from "@/lib/songs";
 
 const PREVIEW = 3;
@@ -272,7 +271,7 @@ function SongCategoryShortcuts({
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
       {shortcuts.map((c) => (
-        <li key={c.slug} className="relative">
+        <li key={c.slug}>
           <Link
             href={`/canciones?cat=${c.slug}`}
             title={c.description ?? undefined}
@@ -280,13 +279,6 @@ function SongCategoryShortcuts({
           >
             {c.name}
           </Link>
-          {c.description && (
-            <span className="absolute right-2 top-2 text-page-title sm:hidden">
-              <HelpHint label={`Descripción de ${c.name}`}>
-                {c.description}
-              </HelpHint>
-            </span>
-          )}
         </li>
       ))}
     </ul>

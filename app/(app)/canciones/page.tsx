@@ -31,10 +31,21 @@ export default async function CancionesPage({
         .map((slug) => categories.find((c) => c.slug === slug))
         .filter((c): c is (typeof categories)[number] => Boolean(c))
     : [];
-  const lockedDescription = lockedCats
+  const parsedDescriptions = lockedCats
     .map((c) => c.description?.trim())
     .filter((d): d is string => Boolean(d))
+    .map((d) => {
+      const [short, ...rest] = d.split(">>>");
+      return {
+        short: short.trim(),
+        long: rest.join(">>>").trim() || null,
+      };
+    });
+  const lockedShortDescription = parsedDescriptions
+    .map((p) => p.short)
     .join(" · ");
+  const lockedLongDescription =
+    parsedDescriptions.length === 1 ? parsedDescriptions[0].long : null;
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
@@ -54,10 +65,30 @@ export default async function CancionesPage({
             Lista completa de todos los cantos.
           </p>
         ) : (
-          lockedDescription && (
-            <p className="text-base normal-case text-muted-foreground">
-              {lockedDescription}
-            </p>
+          lockedShortDescription && (
+            <div className="text-base normal-case text-muted-foreground">
+              {lockedLongDescription ? (
+                <details className="group inline">
+                  <summary className="inline cursor-pointer list-none">
+                    {lockedShortDescription}{" "}
+                    <span className="ml-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-primary bg-sidebar px-2 py-0.5 text-xs text-primary">
+                      <span className="group-open:hidden">Ver más</span>
+                      <span className="hidden group-open:inline">Ver menos</span>
+                      <span className="inline-block transition-transform group-open:rotate-180">
+                        ▼
+                      </span>
+                    </span>
+                  </summary>
+                  <div className="flex flex-col gap-2 pt-2">
+                    {lockedLongDescription.split(/\n+/).map((para, i) => (
+                      <p key={i}>{para}</p>
+                    ))}
+                  </div>
+                </details>
+              ) : (
+                <p>{lockedShortDescription}</p>
+              )}
+            </div>
           )
         )}
       </header>
