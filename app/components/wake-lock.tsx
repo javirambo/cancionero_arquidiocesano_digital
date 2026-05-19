@@ -31,8 +31,7 @@ const WakeLockContext = createContext<Ctx | null>(null);
 
 export function WakeLockProvider({ children }: { children: ReactNode }) {
   const { show } = useToast();
-  const { keepScreenOn, setPreference, isAuthenticated, loading } =
-    usePreferences();
+  const { keepScreenOn, setPreference, loading } = usePreferences();
   const [active, setActive] = useState(false);
   const [supported, setSupported] = useState<boolean | null>(null);
   const sentinelRef = useRef<WakeLockSentinel | null>(null);
@@ -82,18 +81,18 @@ export function WakeLockProvider({ children }: { children: ReactNode }) {
       await sentinelRef.current?.release().catch(() => undefined);
       sentinelRef.current = null;
       setActive(false);
-      if (isAuthenticated) await setPreference("keepScreenOn", false);
+      await setPreference("keepScreenOn", false);
       return;
     }
     const ok = await acquire();
     if (ok) {
       setActive(true);
       show("Se desactivó el apagado de pantalla");
-      if (isAuthenticated) await setPreference("keepScreenOn", true);
+      await setPreference("keepScreenOn", true);
     } else {
       show("No se pudo activar el modo coro", "error");
     }
-  }, [active, acquire, show, isAuthenticated, setPreference]);
+  }, [active, acquire, show, setPreference]);
 
   // Reactivar al primer gesto del usuario si la preferencia está guardada.
   // La Web API exige un user gesture para wakeLock.request().
