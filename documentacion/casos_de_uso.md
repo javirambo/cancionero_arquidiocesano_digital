@@ -113,7 +113,9 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 - **RF:** RF4
 - **Actor primario:** Visitante / Músico
 - **Precondiciones:** Catálogo de canciones cargado.
-- **Disparador:** El usuario escribe en el campo de búsqueda.
+- **Disparador:** El usuario escribe en el campo de búsqueda. Hay dos puntos de entrada:
+  - El botón 🔍 **Buscar** del header (CU-24), que abre el diálogo modal `SearchDialog`.
+  - El **buscador flotante** (`SearchFab`) fijo en la base de la **vista de canción**: un botón redondo con lupa que, al pulsarlo, se estira en una caja de búsqueda con los resultados desplegados hacia arriba.
 - **Flujo principal:**
   1. El usuario ingresa un término (título, fragmento de letra, número, playlist, nombre de categoría litúrgica, parroquia).
   2. El sistema consulta el catálogo y devuelve resultados ordenados por relevancia.
@@ -126,6 +128,7 @@ Rol global con permisos plenos. Puede todo lo del editor +:
   - 2b. Búsqueda vacía: el sistema muestra el catálogo completo paginado.
   - 2c. **Filtro por categoría litúrgica:** el componente `SongsFrame` (catálogo `/canciones` y bloque "Cantos" de la home) ofrece un botón de filtros (ícono embudo) que despliega chips de categorías. Tocar un chip restringe el listado/búsqueda a las canciones de esa categoría (resuelta server-side cruzando `song_categories` por `slug`); volver a tocarlo lo quita. El filtro convive con la búsqueda y con la paginación, y se transmite como query string `cat=<slug>` a `/api/songs/paged`.
 - **Postcondiciones:** Ninguna persistente.
+- **Notas de implementación:** la búsqueda global con debounce contra `/api/search` está extraída en el hook `useGlobalSearch` (`app/components/use-global-search.ts`), compartido por el `SearchDialog` del header y el `SearchFab` de la vista de canción. El render de resultados (estados vacío/cargando/sin-resultados + secciones Cantos/Listas/Parroquias) es el componente compartido `SearchResultsList` de `search-dialog.tsx`.
 
 ---
 
@@ -359,17 +362,21 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 
 ---
 
-## CU-12: Descargar QR de la página actual
+## CU-12: Compartir página actual (enlace y QR)
 
 - **RF:** RF13
 - **Actor primario:** Coordinador parroquial / Visitante
 - **Precondiciones:** Estar en una página con URL pública (canción, playlist, parroquia).
-- **Disparador:** El usuario elige "Descargar QR".
+- **Disparador:** El usuario elige **"Compartir..."** (desde el menú "..." de la vista de canción, el menú del header o el menú contextual "⋯" de una fila de canción — CU-23).
 - **Flujo principal:**
-  1. El sistema genera un QR con la URL canónica de la página actual.
-  2. El usuario descarga la imagen (PNG/SVG).
-- **Flujos alternativos:** Ninguno.
+  1. El sistema abre el diálogo **"Compartir"** mostrando la URL canónica de la página actual.
+  2. El usuario puede **"Compartir enlace"**: el sistema usa la **Web Share API** (`navigator.share`) si está disponible (menú nativo del SO). Si no, copia la URL al portapapeles y muestra "Enlace copiado"; si tampoco se puede copiar, abre un `prompt` con la URL.
+  3. El sistema genera y muestra un **QR** con la URL canónica.
+  4. El usuario puede **"Descargar QR"**: se descarga la imagen **PNG**. El nombre del archivo se deriva del último segmento (slug) de la URL.
+- **Flujos alternativos:**
+  - 2a. El usuario cancela el menú nativo de compartir: el sistema cae al copiado al portapapeles.
 - **Postcondiciones:** Ninguna persistente.
+- **Notas de implementación:** el diálogo es el componente reusable `QrDialog` (`app/components/qr-button.tsx`), usado por la vista de canción, el header y las filas de canción. Reemplazó las tres copias previas del diálogo de QR (`SongQrDialog`, `HeaderQrDialog` y el inline de `QrButton`). Ya no se ofrece descarga en SVG.
 
 ---
 
@@ -758,7 +765,7 @@ b. **Por búsqueda de texto:** el editor/admin escribe un nombre/dirección (mí
   2. Al final de cada fila, a la derecha del todo, un ícono de **tres puntitos horizontales (⋯)**. Al hacer clic abre un menú desplegable con tooltip "Más acciones":
      - **Agregar a playlist** — abre selector de playlists del usuario; al elegir una, la canción se agrega al final de esa playlist (reusa CU-17.1.a).
      - **Ver canción** — equivale a hacer clic en el título (navega a `/canciones/[slug]`).
-     - **Compartir** — usa `navigator.share` si está disponible; si no, copia la URL canónica al portapapeles y muestra un toast "Enlace copiado".
+     - **Compartir** — abre el diálogo "Compartir" (`QrDialog`, CU-12) con la URL canónica de la canción: botón "Compartir enlace" (Web Share API con fallback a portapapeles) y QR descargable en PNG.
      - **Agregar a Mis favoritos** / **Quitar de Mis favoritos** — toggle del corazón (CU-15).
      - **Quitar de esta playlist** — solo presente si el listado es una playlist y el usuario tiene permisos (CU-17.2).
 - **Flujos alternativos:**
@@ -779,7 +786,7 @@ b. **Por búsqueda de texto:** el editor/admin escribe un nombre/dirección (mí
      - 🔍 **Buscar** (lupa) → tooltip "Buscar".
      - ❤ **Mis favoritos** (corazón) → tooltip "Mis favoritos".
      - 👤 **Menú** (avatar del usuario o silueta si invitado) → tooltip "Menú".
-  2. **Buscar:** abre un overlay/diálogo con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01.
+  2. **Buscar:** abre un overlay/diálogo (`SearchDialog`) con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01 (hook `useGlobalSearch`). La **vista de canción** ofrece además un buscador flotante propio (`SearchFab`) con el mismo motor, sin depender del header (CU-01).
   3. **Mis favoritos:** abre el diálogo popup de CU-22.
   4. **Menú:** abre el menú desplegable con encabezado de perfil read-only (avatar + nombre + email, o "Invitado" + botón "Iniciá sesión") y los items de navegación y configuración.
 - NOTA: Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.      
