@@ -294,3 +294,24 @@ export function ExternalLinkIcon(): ReactElement {
     </svg>
   );
 }
+
+export function QrIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1" />
+    </svg>
+  );
+}
+
+export function LinkIcon(): ReactElement {
+  // Dos eslabones de cadena entrelazados.
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
+      <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
+    </svg>
+  );
+}
