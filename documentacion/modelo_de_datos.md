@@ -8,13 +8,14 @@ Tablas tentativas necesarias para soportar los casos de uso definidos en [`casos
 
 Las **canciones** (`songs`) atraviesan el siguiente flujo. Los **archivos asociados** (`song_files`) no tienen estado propio: heredan visibilidad de la canción a la que pertenecen (ver migración 0017).
 
-1. **`draft`** — un **Coordinador parroquial** (o Editor) crea/edita el recurso. No es visible al público.
-2. **`review`** — el Coordinador envía a revisión. El recurso queda bloqueado para edición salvo por el Editor.
+1. **`draft`** — el Editor/Admin crea/edita el recurso. No es visible al público.
+2. **`review`** — paso opcional: el recurso se envía a revisión cuando un segundo editor valida. Desde `review` solo se puede aprobar o devolver a `draft`.
 3. **`published`** — el **Editor de contenido** aprueba; el recurso pasa a ser público.
-4. **`rejected`** — el Editor rechaza con `review_notes`; vuelve a `draft` editable por el Coordinador.
-5. **`archived`** — baja lógica (no se elimina por integridad referencial con `playlists`).
+4. **`archived`** — baja lógica (no se elimina por integridad referencial con `playlists`).
 
-Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitted_by`, `submitted_at`, `reviewed_by`, `reviewed_at`, `review_notes` registran la traza editorial.
+Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitted_by`, `submitted_at`, `reviewed_by`, `reviewed_at` registran la traza editorial.
+
+> **Cambio (mig. 0048):** se eliminó el estado `rejected` y la columna `review_notes`. Provenían del flujo cuando el Coordinador parroquial cargaba canciones; desde el cambio del 2026-05-15 solo el Editor/Admin gestiona el cantoral, por lo que el rechazo dejó de tener sentido.
 
 ---
 
@@ -27,6 +28,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `categories`           | Categorías litúrgicas                                      | 1    | CU-01, CU-16                  |
 | `songs`                | Canciones (letra, acordes, metadatos)                      | 1    | CU-01, CU-02, CU-16           |
 | `song_versions`        | Historial de versiones de cada canción                     | 1    | CU-16                         |
+| `song_events`          | Bitácora cronológica de eventos de cada canción            | 1    | CU-16                         |
 | `song_files`           | Archivos asociados (partitura PDF, audio)                  | 1/2  | CU-09, CU-16                  |
 | `playlists`            | Listas de canciones por parroquia                          | 1    | CU-05, CU-11, CU-17           |
 | `playlist_songs`       | Relación playlist ↔ canción (ordenada)                     | 1    | CU-05, CU-17                  |
@@ -136,14 +138,13 @@ El `body` también soporta directivas ChordPro de estribillo: las líneas que se
 | `original_key`      | text        | tonalidad original (ej. "G", "Em")                                       |
 | `tempo_bpm`         | int         |                                                                          |
 | `youtube_url`       | text        | link de referencia (CU-04)                                               |
-| `status`            | text        | CHECK in ('draft','review','published','rejected','archived'); default 'draft' |
+| `status`            | text        | CHECK in ('draft','review','published','archived'); default 'draft' (mig. 0048 eliminó 'rejected') |
 | `current_version`   | int         | NOT NULL default 1 — apunta a `song_versions.version`                    |
 | `created_by`        | uuid        | FK → `users.id` — autor del alta (Coordinador o Editor)                  |
 | `submitted_by`      | uuid        | FK → `users.id` — quien envió a revisión                                 |
 | `submitted_at`      | timestamptz |                                                                          |
-| `reviewed_by`       | uuid        | FK → `users.id` — Editor que aprobó/rechazó                              |
+| `reviewed_by`       | uuid        | FK → `users.id` — Editor que aprobó                                      |
 | `reviewed_at`       | timestamptz |                                                                          |
-| `review_notes`      | text        | comentario del Editor (obligatorio si `rejected`)                        |
 | `published_at`      | timestamptz |                                                                          |
 | `created_at`        | timestamptz | default now()                                                            |
 | `updated_at`        | timestamptz | default now()                                                            |
@@ -181,7 +182,13 @@ Historial inmutable de versiones de una canción. Cada vez que el Editor publica
 **PK compuesta:** `(song_id, version)` UNIQUE.
 **Índices:** `song_id`, `(song_id, version DESC)`.
 
-> **Nota:** las ediciones en curso (`draft`/`review`) viven en `songs`. Solo al aprobar se materializa la nueva fila en `song_versions` y se incrementa `songs.current_version`. Las categorías del snapshot se guardan en `song_version_categories` (mig. 0021).
+> **Nota:** las ediciones en curso (`draft`/`review`) viven en `songs`. Se materializa una nueva fila en `song_versions` (incrementando `songs.current_version`) en dos casos: al aprobar desde `review` (`approve_song`) y al guardar una edición directa sobre una canción ya `published` (`save_published_song_version`, mig. 0044). Las categorías del snapshot se guardan en `song_version_categories` (mig. 0021).
+
+> **RPCs de historial (mig. 0044):**
+> - `approve_song(p_song_id uuid, p_change_summary text default null)` — acepta un resumen opcional del cambio. La firma anterior `approve_song(uuid)` fue eliminada.
+> - `save_published_song_version(p_song_id uuid, p_change_summary text default null)` — `security definer`. Inserta un snapshot e incrementa `current_version` al editar directamente una canción `published`.
+> - `restore_song_version(p_song_id uuid, p_version int)` — `security definer`. Copia el contenido de una versión anterior de vuelta a `songs` (incluidas las categorías). **No** cambia `songs.status`.
+> - `get_song_versions(p_song_id uuid)` — `security definer`. Devuelve el historial con el nombre/email del Editor resuelto (necesario por la RLS restrictiva de `users`).
 
 ---
 
@@ -197,6 +204,32 @@ Snapshot de categorías por versión publicada (N:M, mig. 0021). Se completa al 
 **PK compuesta:** `(song_id, version, category_id)`.
 **Índices:** `category_id`.
 **RLS:** lectura abierta; escritura solo `is_editor()` o `is_admin()`.
+
+---
+
+### `song_events`
+Bitácora cronológica e inmutable de toda la vida editorial de una canción (mig. 0045). A diferencia de `song_versions` —que solo guarda snapshots de contenido publicado— `song_events` registra **todas** las transiciones de estado (archivar, despublicar, rechazar, enviar a revisión, etc.), de modo que la fecha "Modificada" de una canción siempre se pueda explicar desde la UI del historial.
+
+| Columna      | Tipo        | Notas                                                                   |
+| ------------ | ----------- | ----------------------------------------------------------------------- |
+| `id`         | uuid        | PK                                                                      |
+| `song_id`    | uuid        | FK → `songs.id` ON DELETE CASCADE                                       |
+| `event`      | text        | CHECK in ('created','submitted','withdrawn','published','edited','unpublished','archived','unarchived','restored') |
+| `version`    | int         | nullable — nº de versión cuando el evento la genera (`published`, `edited`, `restored`) |
+| `summary`    | text        | nullable — resumen autogenerado del cambio o notas de rechazo           |
+| `actor_id`   | uuid        | FK → `users.id` ON DELETE SET NULL — quién ejecutó la acción            |
+| `created_at` | timestamptz | NOT NULL default now()                                                  |
+
+**Índices:** `(song_id, created_at DESC)`.
+**RLS:** lectura abierta; INSERT solo `is_editor()` o `is_admin()`. Sin policy de update/delete (bitácora inmutable).
+
+> **Cómo se completa:** cada RPC de transición de estado (`submit_song_for_review`, `withdraw_song_from_review`, `approve_song`, `save_published_song_version`, `restore_song_version`, `reject_song`, `unpublish_song`, `archive_song`, `unarchive_song`, `create_blank_song`) llama al helper `log_song_event(...)`. El `summary` de los eventos `published`/`edited` se autogenera con `build_change_summary(uuid)`, que compara el contenido vigente contra la última versión publicada.
+
+> **RPCs (mig. 0045 / 0046):**
+> - `log_song_event(p_song_id uuid, p_event text, p_version int, p_summary text)` — `security definer`. Inserta un evento con `actor_id = auth.uid()`.
+> - `build_change_summary(p_song_id uuid)` — `security definer`. Devuelve un texto tipo "Cambió letra, tono, categorías" o "Publicación inicial".
+> - `log_song_edit(p_song_id uuid)` — `security definer` (mig. 0046). Registra un evento `edited` SIN crear versión, para ediciones directas de canciones no publicadas (`draft`/`archived`).
+> - `get_song_events(p_song_id uuid)` — `security definer`. Devuelve la bitácora con el nombre/email del actor resuelto.
 
 ---
 
@@ -510,7 +543,7 @@ Documento rich (HTML) asociado 1:1 a un anuncio (mig. 0034). Solo existe cuando 
 | `parishes`    | logos / imágenes de parroquia   | lectura pública; escritura: admin                                                      |
 | `images`      | imágenes de cards (playlists/anuncios) — mig. 0023, restaurado en mig. 0041 | lectura pública; escritura: editor o coordinator (autenticado, dueño del objeto); update/delete: editor o dueño |
 
-> RLS de Storage verifica que el `song_files` que apunta al objeto pertenezca a una canción en `songs.status = 'published'` (vía join) antes de permitir lectura pública. Si la canción está en `draft`/`review`/`rejected`, los archivos solo son visibles para el uploader y Editor/Admin.
+> RLS de Storage verifica que el `song_files` que apunta al objeto pertenezca a una canción en `songs.status = 'published'` (vía join) antes de permitir lectura pública. Si la canción está en `draft`/`review`/`archived`, los archivos solo son visibles para el uploader y Editor/Admin.
 
 ---
 

@@ -13,13 +13,9 @@ const STYLE: Record<SongStatus, { label: string; className: string }> = {
     label: "Publicado",
     className: "border-success text-success",
   },
-  rejected: {
-    label: "Rechazado",
-    className: "border-destructive text-destructive",
-  },
   archived: {
     label: "Archivado",
-    className: "border-border text-muted-foreground opacity-70",
+    className: "border-primary text-primary",
   },
 };
 

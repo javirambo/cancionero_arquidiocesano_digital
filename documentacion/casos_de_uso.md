@@ -85,7 +85,7 @@ Rol contextual: se asigna por parroquia en `parish_members.role='coordinator'`. 
 Rol global en `user_roles`.
 
 - **Suma sobre coordinator:**
-  - Crear/editar/borrar/archivar **canciones** y todo el flujo editorial `draft → review → published` (CU-16). Puede aprobar/rechazar canciones en review.
+  - Crear/editar/borrar/archivar **canciones** y todo el flujo editorial `draft → review → published` (CU-16). Puede aprobar o devolver a borrador las canciones en review.
   - Crear/editar/borrar **`song_files`** (partituras, audios) asociados a canciones.
   - Crear/editar/borrar **parroquias** (CU-19).
   - Crear **anuncios globales** (sin destinatarios específicos) (CU-21).
@@ -456,21 +456,23 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 4. La canción queda persistida con `status = 'draft'`. El editor puede seguir editándola.
 5. Cuando considera que está lista, puede enviarla a revisión (paso opcional cuando hay un segundo editor que valida) o publicarla directamente.
 6. **Aprobar / publicar:** el sistema cambia `status` a `'published'`, registra `reviewed_by`, `reviewed_at`, `published_at`, inserta snapshot en `song_versions` e incrementa `songs.current_version`. Los archivos asociados (`song_files`) pasan también a `'published'`. La canción aparece en búsquedas (CU-01) y vistas públicas (CU-02).
-7. **Rechazar (cuando se usó review):** el editor escribe `review_notes` (obligatorio); el sistema cambia `status` a `'rejected'` y registra `reviewed_by`/`reviewed_at`. Otro editor puede retomarla.
+7. **Devolver a borrador (cuando se usó review):** el editor puede devolver la canción a `draft` (`withdraw_song_from_review`) si todavía necesita cambios. No existe un estado de rechazo: el flujo solo distingue `draft → review → published` (mig. 0048 eliminó `rejected`).
 
 ### Flujos alternativos
 
 - **2a (validación):** Acordes mal formados → error inline; no se permite enviar a revisión ni publicar.
 - **Sin permisos:** Un usuario sin rol Editor/Admin no puede acceder a `/admin/canciones` (UI redirige + RLS rechaza). El coordinador parroquial queda fuera.
-- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar (RPC `archive_song`, mig. 0022). Se confirma con doble paso (dos `confirm` consecutivos en la UI). La transición es válida desde cualquier estado salvo `archived`. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva. El archivado/Eliminado limpia los campos de flujo (`submitted_*`, `reviewed_*`, `published_at`, `review_notes`).
+- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar (RPC `archive_song`, mig. 0022). Se confirma con doble paso (dos `confirm` consecutivos en la UI). La transición es válida desde cualquier estado salvo `archived`. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva. El archivado/Eliminado limpia los campos de flujo (`submitted_*`, `reviewed_*`, `published_at`).
 - **Reverso (`unarchive_song`):** Editor o Admin pueden desarchivar; la canción vuelve a `draft` y debe pasar por el flujo de revisión si quiere republicarse.
-- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`.
+- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`. Al guardar se registra una nueva fila en `song_versions` (RPC `save_published_song_version`, mig. 0044) para preservar la trazabilidad del contenido publicado.
+- **Historial de versiones:** desde la página de edición (`/admin/canciones/{id}/editar`), el Editor/Admin ve una **bitácora cronológica** de toda la vida editorial de la canción (`song_events`, mig. 0045): creación, envíos a revisión, publicaciones, ediciones, rechazos, despublicaciones, archivado/recuperación y restauraciones. Cada evento muestra fecha, actor y un resumen autogenerado del cambio. Los eventos que generan una versión de contenido (`published`, `edited`, `restored`) permiten además ver el contenido de esa versión, compararlo con otra lado a lado y restaurarlo. La restauración (`restore_song_version`) copia el contenido de esa versión de vuelta a `songs` sin cambiar el `status`; el Editor revisa y guarda/publica después.
 
 ### Postcondiciones
 
 - Canción persistida en `songs` con su estado actual.
-- Si fue aprobada: nueva fila en `song_versions` con `published_at`, `current_version` incrementado, archivos en Storage públicos.
-- Traza completa de la transición editorial (`submitted_by/at`, `reviewed_by/at`, `review_notes`).
+- Si fue aprobada desde `review`, o si se editó directamente estando `published`: nueva fila en `song_versions` con `published_at` y `current_version` incrementado. Al aprobar, además, los archivos en Storage quedan públicos.
+- Traza completa de la transición editorial (`submitted_by/at`, `reviewed_by/at`).
+- El historial de versiones queda disponible para consultar, comparar y restaurar desde la página de edición.
 
 ### CU-16.1: Editar canción (sin acordes)
 
@@ -478,7 +480,7 @@ Edición rápida de una canción cuando solo se modifica la letra y los metadato
 
 - **Disparador:** desde la vista de canción o desde `/admin/canciones`, opción "Editar".
 - **Campos editables:** `title`, `number`, `author_id`, categorías litúrgicas (relación N:M `song_categories`), `body` (solo letra, sin marcadores `[acorde]`), `tempo_bpm`, `youtube_url`.
-- **Flujo:** la edición la realiza el Editor/Admin directamente sobre la canción. Si estaba `published`, sigue `published` (no se re-genera flujo draft→review). Si estaba en `draft`/`rejected`, se sobrescribe.
+- **Flujo:** la edición la realiza el Editor/Admin directamente sobre la canción. Si estaba `published`, sigue `published` (no se re-genera flujo draft→review). Si estaba en `draft`, se sobrescribe.
 - **Flujos alternativos:**
   - 1a. La canción tenía acordes en `body` previos: el editor "sin acordes" preserva los marcadores intactos y solo muestra la letra plana; los acordes no se pierden.
 
