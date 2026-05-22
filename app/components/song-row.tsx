@@ -18,6 +18,7 @@ import {
 import { useFavorites } from "./favorites";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { DownloadFilesPanel } from "./download-files-menu";
+import { QrDialog } from "./qr-button";
 import { createClient } from "@/lib/supabase/client";
 
 export type SongRowItem = {
@@ -174,6 +175,7 @@ function RowMenu({
   canManagePlaylist: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [view, setView] = useState<"main" | "addToPlaylist" | "download">("main");
   const ref = useRef<HTMLDivElement>(null);
 
@@ -198,28 +200,9 @@ function RowMenu({
     setView("main");
   };
 
-  async function share() {
+  function share() {
     close();
-    const url = typeof window !== "undefined" ? window.location.origin + href : href;
-    const data = { title, url };
-    const navAny = navigator as Navigator & {
-      share?: (data: ShareData) => Promise<void>;
-    };
-    if (navAny.share) {
-      try {
-        await navAny.share(data);
-        return;
-      } catch {
-        // si el usuario cancela, caemos al copy
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      alert("Enlace copiado");
-    } catch {
-      // último recurso: prompt
-      window.prompt("Copiá este enlace:", url);
-    }
+    setQrOpen(true);
   }
 
   return (
@@ -353,6 +336,14 @@ function RowMenu({
           )}
         </div>
       )}
+
+      <QrDialog
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        path={`/canciones/${slug}`}
+        title={title}
+        filename={slug}
+      />
     </div>
   );
 }

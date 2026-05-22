@@ -32,7 +32,7 @@ export function Accordion({
         </span>
       </button>
       {open && (
-        <div className="border-t border-border bg-background p-5">
+        <div className="rounded-b-2xl border-t border-border bg-background p-5">
           {children}
         </div>
       )}

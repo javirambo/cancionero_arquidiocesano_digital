@@ -5,10 +5,13 @@ import {
   getSongForAdmin,
   listAuthorOptions,
   listCategoryOptions,
+  listSongEvents,
   listSongFiles,
+  listSongVersions,
 } from "@/lib/songs-admin";
 import { SongForm } from "./song-form";
 import { ReviewActions } from "./review-actions";
+import { VersionHistory } from "./version-history";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +24,15 @@ export default async function EditarCancionPage({
   if (!access.isAdmin && !access.isEditor) redirect("/admin");
 
   const { id } = await params;
-  const [song, authors, categories, files] = await Promise.all([
-    getSongForAdmin(id),
-    listAuthorOptions(),
-    listCategoryOptions(),
-    listSongFiles(id),
-  ]);
+  const [song, authors, categories, files, versions, events] =
+    await Promise.all([
+      getSongForAdmin(id),
+      listAuthorOptions(),
+      listCategoryOptions(),
+      listSongFiles(id),
+      listSongVersions(id),
+      listSongEvents(id),
+    ]);
   if (!song) notFound();
 
   // Una canción se puede borrar definitivamente solo si nunca salió de
@@ -55,9 +61,15 @@ export default async function EditarCancionPage({
       <ReviewActions
         songId={song.id}
         status={song.status}
-        reviewNotes={song.review_notes}
         canReview={access.isEditor || access.isAdmin}
         canDelete={canDelete}
+      />
+
+      <VersionHistory
+        songId={song.id}
+        currentVersion={song.current_version}
+        events={events}
+        versions={versions}
       />
 
       <SongForm

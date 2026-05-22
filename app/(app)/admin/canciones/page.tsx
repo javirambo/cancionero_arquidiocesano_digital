@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminAccess } from "../access";
-import { listSongsForAdmin, type SongStatus } from "@/lib/songs-admin";
+import {
+  countSongsByStatus,
+  listSongsForAdmin,
+  type SongStatus,
+} from "@/lib/songs-admin";
 import { formatearFecha } from "@/lib/dates";
 import {
   ChordsIcon,
@@ -19,7 +23,6 @@ const TABS: { value: EstadoTab; label: string }[] = [
   { value: "draft", label: "Borradores" },
   { value: "review", label: "En revisión" },
   { value: "published", label: "Publicados" },
-  { value: "rejected", label: "Rechazados" },
   { value: "archived", label: "Archivados" },
 ];
 
@@ -38,7 +41,10 @@ export default async function AdminCancionesPage({
   const sp = await searchParams;
   const q = sp.q ?? "";
   const estado: EstadoTab = isEstadoTab(sp.estado) ? sp.estado : "todas";
-  const songs = await listSongsForAdmin(q, estado);
+  const [songs, counts] = await Promise.all([
+    listSongsForAdmin(q, estado),
+    countSongsByStatus(),
+  ]);
 
   return (
     <main className="flex flex-col gap-6">
@@ -74,7 +80,7 @@ export default async function AdminCancionesPage({
                   : "rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
               }
             >
-              {t.label}
+              {t.label} ({counts[t.value]})
             </Link>
           );
         })}

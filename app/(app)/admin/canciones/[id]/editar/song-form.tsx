@@ -152,6 +152,22 @@ export function SongForm({
       }
     }
 
+    // Registramos la edición en la bitácora. Si la canción está
+    // publicada, la edición directa (CU-16.1) materializa una nueva
+    // versión con snapshot; en cualquier otro estado solo se deja el
+    // evento 'edited' (el contenido sigue siendo mutable hasta publicar).
+    const { error: logErr } =
+      song.status === "published"
+        ? await supabase.rpc("save_published_song_version", {
+            p_song_id: song.id,
+          })
+        : await supabase.rpc("log_song_edit", { p_song_id: song.id });
+    if (logErr) {
+      setSaving(false);
+      setError(logErr.message);
+      return;
+    }
+
     setSaving(false);
     setOkMsg("Cambios guardados.");
     router.push("/admin/canciones");

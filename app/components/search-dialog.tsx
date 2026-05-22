@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import type { GlobalSearchResults } from "@/lib/songs";
+import { useEffect, useRef } from "react";
 import { CloseIcon, SearchIcon } from "./icons";
+import { useGlobalSearch } from "./use-global-search";
 
 type Props = {
   open: boolean;
@@ -11,13 +11,8 @@ type Props = {
 };
 
 export function SearchDialog({ open, onClose }: Props) {
-  const [q, setQ] = useState("");
-  const [results, setResults] = useState<GlobalSearchResults>({
-    songs: [],
-    playlists: [],
-    parishes: [],
-  });
-  const [loading, setLoading] = useState(false);
+  const { q, setQ, results, loading, totalResults, reset } =
+    useGlobalSearch(open);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Foco al abrir.
@@ -35,45 +30,10 @@ export function SearchDialog({ open, onClose }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Búsqueda con debounce.
-  useEffect(() => {
-    if (!open) return;
-    const term = q.trim();
-    if (!term) {
-      setResults({ songs: [], playlists: [], parishes: [] });
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `/api/search?q=${encodeURIComponent(term)}`,
-          { signal: AbortSignal.timeout(10_000) }
-        );
-        if (!res.ok) throw new Error("search failed");
-        const data: GlobalSearchResults = await res.json();
-        if (!cancelled) setResults(data);
-      } catch {
-        if (!cancelled) setResults({ songs: [], playlists: [], parishes: [] });
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [q, open]);
-
   if (!open) return null;
 
-  const totalResults =
-    results.songs.length + results.playlists.length + results.parishes.length;
-
   const close = () => {
-    setQ("");
+    reset();
     onClose();
   };
 
@@ -112,80 +72,114 @@ export function SearchDialog({ open, onClose }: Props) {
         </header>
 
         <div className="max-h-[60vh] overflow-y-auto">
-          {q.trim() === "" && (
-            <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
-              Buscá por título, fragmento de letra, nombre de playlist o parroquia.
-            </p>
-          )}
-          {q.trim() !== "" && loading && (
-            <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
-              Buscando…
-            </p>
-          )}
-          {q.trim() !== "" && !loading && totalResults === 0 && (
-            <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
-              No se encontraron resultados.
-            </p>
-          )}
-
-          {results.songs.length > 0 && (
-            <Section title="Cantos">
-              {results.songs.map((s) => (
-                <ResultLink
-                  key={`song-${s.id}`}
-                  href={`/canciones/${s.slug}`}
-                  onClick={close}
-                  title={s.title}
-                  subtitle={
-                    [
-                      s.number !== null ? `Nº ${s.number}` : null,
-                      s.author,
-                      s.category,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || null
-                  }
-                />
-              ))}
-            </Section>
-          )}
-
-          {results.playlists.length > 0 && (
-            <Section title="Listas">
-              {results.playlists.map((p) => (
-                <ResultLink
-                  key={`pl-${p.id}`}
-                  href={`/playlists/${p.id}`}
-                  onClick={close}
-                  title={p.name}
-                  subtitle={p.parish?.name ?? null}
-                />
-              ))}
-            </Section>
-          )}
-
-          {results.parishes.length > 0 && (
-            <Section title="Parroquias">
-              {results.parishes.map((p) => (
-                <ResultLink
-                  key={`pa-${p.id}`}
-                  href={`/parroquias/${p.slug}`}
-                  onClick={close}
-                  title={p.name}
-                  subtitle={
-                    [p.address, p.city].filter(Boolean).join(" · ") || null
-                  }
-                />
-              ))}
-            </Section>
-          )}
+          <SearchResultsList
+            q={q}
+            loading={loading}
+            results={results}
+            totalResults={totalResults}
+            onResultClick={close}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+// Render compartido de resultados (estados vacío/cargando/sin-resultados +
+// secciones Cantos/Listas/Parroquias). Usado por el modal y la caja flotante.
+export function SearchResultsList({
+  q,
+  loading,
+  results,
+  totalResults,
+  onResultClick,
+}: {
+  q: string;
+  loading: boolean;
+  results: import("@/lib/songs").GlobalSearchResults;
+  totalResults: number;
+  onResultClick: () => void;
+}) {
+  return (
+    <>
+      {q.trim() === "" && (
+        <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
+          Buscá por título, fragmento de letra, nombre de playlist o parroquia.
+        </p>
+      )}
+      {q.trim() !== "" && loading && (
+        <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
+          Buscando…
+        </p>
+      )}
+      {q.trim() !== "" && !loading && totalResults === 0 && (
+        <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
+          No se encontraron resultados.
+        </p>
+      )}
+
+      {results.songs.length > 0 && (
+        <Section title="Cantos">
+          {results.songs.map((s) => (
+            <ResultLink
+              key={`song-${s.id}`}
+              href={`/canciones/${s.slug}`}
+              onClick={onResultClick}
+              title={s.title}
+              subtitle={
+                [
+                  s.number !== null ? `Nº ${s.number}` : null,
+                  s.author,
+                  s.category,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || null
+              }
+            />
+          ))}
+        </Section>
+      )}
+
+      {results.playlists.length > 0 && (
+        <Section title="Listas">
+          {results.playlists.map((p) => (
+            <ResultLink
+              key={`pl-${p.id}`}
+              href={`/playlists/${p.id}`}
+              onClick={onResultClick}
+              title={p.name}
+              subtitle={p.parish?.name ?? null}
+            />
+          ))}
+        </Section>
+      )}
+
+      {results.parishes.length > 0 && (
+        <Section title="Parroquias">
+          {results.parishes.map((p) => (
+            <ResultLink
+              key={`pa-${p.id}`}
+              href={`/parroquias/${p.slug}`}
+              onClick={onResultClick}
+              title={p.name}
+              subtitle={
+                [p.address, p.city].filter(Boolean).join(" · ") || null
+              }
+            />
+          ))}
+        </Section>
+      )}
+    </>
+  );
+}
+
+export function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section>
       <h3 className="border-b border-border bg-sidebar px-5 py-2 text-xs uppercase tracking-[0.2em] text-primary">
@@ -196,7 +190,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function ResultLink({
+export function ResultLink({
   href,
   onClick,
   title,

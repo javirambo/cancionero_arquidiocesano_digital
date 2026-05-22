@@ -4,7 +4,6 @@ export type SongStatus =
   | "draft"
   | "review"
   | "published"
-  | "rejected"
   | "archived";
 
 export type AdminSongRow = {
@@ -27,6 +26,7 @@ export type AdminSongDetail = {
   title: string;
   slug: string;
   status: SongStatus;
+  current_version: number;
   body: string;
   original_key: string | null;
   tempo_bpm: number | null;
@@ -34,7 +34,6 @@ export type AdminSongDetail = {
   author_id: string | null;
   author2_id: string | null;
   category_ids: string[];
-  review_notes: string | null;
   submitted_at: string | null;
   reviewed_at: string | null;
 };
@@ -50,6 +49,40 @@ export type AdminSongFile = {
   path: string;
   label: string | null;
   size_bytes: number | null;
+  created_at: string;
+};
+
+export type SongVersion = {
+  version: number;
+  title: string;
+  body: string;
+  original_key: string | null;
+  tempo_bpm: number | null;
+  youtube_url: string | null;
+  change_summary: string | null;
+  published_at: string;
+  reviewed_by_name: string | null;
+  category_names: string[];
+};
+
+export type SongEventKind =
+  | "created"
+  | "submitted"
+  | "withdrawn"
+  | "published"
+  | "edited"
+  | "unpublished"
+  | "archived"
+  | "unarchived"
+  | "restored";
+
+export type SongEvent = {
+  id: string;
+  event: SongEventKind;
+  version: number | null;
+  summary: string | null;
+  actor_id: string | null;
+  actor_name: string | null;
   created_at: string;
 };
 
@@ -136,6 +169,30 @@ export async function listSongsForAdmin(
   });
 }
 
+export type SongStatusCounts = Record<SongStatus, number> & { todas: number };
+
+export async function countSongsByStatus(): Promise<SongStatusCounts> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("songs").select("status");
+  if (error) {
+    console.error("[countSongsByStatus] supabase error", error);
+    throw new Error(error.message);
+  }
+  const counts: SongStatusCounts = {
+    todas: 0,
+    draft: 0,
+    review: 0,
+    published: 0,
+    archived: 0,
+  };
+  for (const row of data ?? []) {
+    const status = row.status as SongStatus;
+    if (status in counts) counts[status] += 1;
+    counts.todas += 1;
+  }
+  return counts;
+}
+
 export async function getSongForAdmin(
   id: string
 ): Promise<AdminSongDetail | null> {
@@ -143,7 +200,7 @@ export async function getSongForAdmin(
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, status, body, original_key, tempo_bpm, youtube_url, author_id, author2_id, review_notes, submitted_at, reviewed_at, song_categories(category_id)"
+      "id, number, title, slug, status, current_version, body, original_key, tempo_bpm, youtube_url, author_id, author2_id, submitted_at, reviewed_at, song_categories(category_id)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -156,6 +213,7 @@ export async function getSongForAdmin(
     title: data.title as string,
     slug: data.slug as string,
     status: data.status as SongStatus,
+    current_version: (data.current_version as number | null) ?? 1,
     body: (data.body as string | null) ?? "",
     original_key: (data.original_key as string | null) ?? null,
     tempo_bpm: (data.tempo_bpm as number | null) ?? null,
@@ -163,7 +221,6 @@ export async function getSongForAdmin(
     author_id: (data.author_id as string | null) ?? null,
     author2_id: (data.author2_id as string | null) ?? null,
     category_ids: cats.map((c) => c.category_id),
-    review_notes: (data.review_notes as string | null) ?? null,
     submitted_at: (data.submitted_at as string | null) ?? null,
     reviewed_at: (data.reviewed_at as string | null) ?? null,
   };
@@ -203,4 +260,26 @@ export async function listSongFiles(
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as AdminSongFile[];
+}
+
+export async function listSongVersions(
+  songId: string
+): Promise<SongVersion[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_song_versions", {
+    p_song_id: songId,
+  });
+  if (error) throw error;
+  return (data ?? []) as SongVersion[];
+}
+
+export async function listSongEvents(
+  songId: string
+): Promise<SongEvent[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_song_events", {
+    p_song_id: songId,
+  });
+  if (error) throw error;
+  return (data ?? []) as SongEvent[];
 }

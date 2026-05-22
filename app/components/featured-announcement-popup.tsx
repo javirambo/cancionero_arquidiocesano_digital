@@ -29,15 +29,25 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(dismissKey(item.id));
-      const ts = raw ? Number(raw) : 0;
-      if (!ts || Date.now() - ts > DISMISS_TTL_MS) {
-        setOpen(true);
+    const shouldOpen = () => {
+      try {
+        const raw = localStorage.getItem(dismissKey(item.id));
+        const ts = raw ? Number(raw) : 0;
+        return !ts || Date.now() - ts > DISMISS_TTL_MS;
+      } catch {
+        return true;
       }
-    } catch {
-      setOpen(true);
-    }
+    };
+
+    setOpen(shouldOpen());
+
+    // Al restaurar desde el bfcache (volver atrás en el navegador) React no
+    // re-monta el componente; re-evaluamos en pageshow para no reabrirlo.
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setOpen(shouldOpen());
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, [item.id]);
 
   const dismiss = () => {

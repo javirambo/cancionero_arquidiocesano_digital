@@ -85,7 +85,7 @@ Rol contextual: se asigna por parroquia en `parish_members.role='coordinator'`. 
 Rol global en `user_roles`.
 
 - **Suma sobre coordinator:**
-  - Crear/editar/borrar/archivar **canciones** y todo el flujo editorial `draft → review → published` (CU-16). Puede aprobar/rechazar canciones en review.
+  - Crear/editar/borrar/archivar **canciones** y todo el flujo editorial `draft → review → published` (CU-16). Puede aprobar o devolver a borrador las canciones en review.
   - Crear/editar/borrar **`song_files`** (partituras, audios) asociados a canciones.
   - Crear/editar/borrar **parroquias** (CU-19).
   - Crear **anuncios globales** (sin destinatarios específicos) (CU-21).
@@ -113,7 +113,9 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 - **RF:** RF4
 - **Actor primario:** Visitante / Músico
 - **Precondiciones:** Catálogo de canciones cargado.
-- **Disparador:** El usuario escribe en el campo de búsqueda.
+- **Disparador:** El usuario escribe en el campo de búsqueda. Hay dos puntos de entrada:
+  - El botón 🔍 **Buscar** del header (CU-24), que abre el diálogo modal `SearchDialog`.
+  - El **buscador flotante** (`SearchFab`) fijo en la base de la **vista de canción**: un botón redondo con lupa que, al pulsarlo, se estira en una caja de búsqueda con los resultados desplegados hacia arriba.
 - **Flujo principal:**
   1. El usuario ingresa un término (título, fragmento de letra, número, playlist, nombre de categoría litúrgica, parroquia).
   2. El sistema consulta el catálogo y devuelve resultados ordenados por relevancia.
@@ -126,6 +128,7 @@ Rol global con permisos plenos. Puede todo lo del editor +:
   - 2b. Búsqueda vacía: el sistema muestra el catálogo completo paginado.
   - 2c. **Filtro por categoría litúrgica:** el componente `SongsFrame` (catálogo `/canciones` y bloque "Cantos" de la home) ofrece un botón de filtros (ícono embudo) que despliega chips de categorías. Tocar un chip restringe el listado/búsqueda a las canciones de esa categoría (resuelta server-side cruzando `song_categories` por `slug`); volver a tocarlo lo quita. El filtro convive con la búsqueda y con la paginación, y se transmite como query string `cat=<slug>` a `/api/songs/paged`.
 - **Postcondiciones:** Ninguna persistente.
+- **Notas de implementación:** la búsqueda global con debounce contra `/api/search` está extraída en el hook `useGlobalSearch` (`app/components/use-global-search.ts`), compartido por el `SearchDialog` del header y el `SearchFab` de la vista de canción. El render de resultados (estados vacío/cargando/sin-resultados + secciones Cantos/Listas/Parroquias) es el componente compartido `SearchResultsList` de `search-dialog.tsx`.
 
 ---
 
@@ -359,17 +362,21 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 
 ---
 
-## CU-12: Descargar QR de la página actual
+## CU-12: Compartir página actual (enlace y QR)
 
 - **RF:** RF13
 - **Actor primario:** Coordinador parroquial / Visitante
 - **Precondiciones:** Estar en una página con URL pública (canción, playlist, parroquia).
-- **Disparador:** El usuario elige "Descargar QR".
+- **Disparador:** El usuario elige **"Compartir..."** (desde el menú "..." de la vista de canción, el menú del header o el menú contextual "⋯" de una fila de canción — CU-23).
 - **Flujo principal:**
-  1. El sistema genera un QR con la URL canónica de la página actual.
-  2. El usuario descarga la imagen (PNG/SVG).
-- **Flujos alternativos:** Ninguno.
+  1. El sistema abre el diálogo **"Compartir"** mostrando la URL canónica de la página actual.
+  2. El usuario puede **"Compartir enlace"**: el sistema usa la **Web Share API** (`navigator.share`) si está disponible (menú nativo del SO). Si no, copia la URL al portapapeles y muestra "Enlace copiado"; si tampoco se puede copiar, abre un `prompt` con la URL.
+  3. El sistema genera y muestra un **QR** con la URL canónica.
+  4. El usuario puede **"Descargar QR"**: se descarga la imagen **PNG**. El nombre del archivo se deriva del último segmento (slug) de la URL.
+- **Flujos alternativos:**
+  - 2a. El usuario cancela el menú nativo de compartir: el sistema cae al copiado al portapapeles.
 - **Postcondiciones:** Ninguna persistente.
+- **Notas de implementación:** el diálogo es el componente reusable `QrDialog` (`app/components/qr-button.tsx`), usado por la vista de canción, el header y las filas de canción. Reemplazó las tres copias previas del diálogo de QR (`SongQrDialog`, `HeaderQrDialog` y el inline de `QrButton`). Ya no se ofrece descarga en SVG.
 
 ---
 
@@ -449,21 +456,23 @@ Rol global con permisos plenos. Puede todo lo del editor +:
 4. La canción queda persistida con `status = 'draft'`. El editor puede seguir editándola.
 5. Cuando considera que está lista, puede enviarla a revisión (paso opcional cuando hay un segundo editor que valida) o publicarla directamente.
 6. **Aprobar / publicar:** el sistema cambia `status` a `'published'`, registra `reviewed_by`, `reviewed_at`, `published_at`, inserta snapshot en `song_versions` e incrementa `songs.current_version`. Los archivos asociados (`song_files`) pasan también a `'published'`. La canción aparece en búsquedas (CU-01) y vistas públicas (CU-02).
-7. **Rechazar (cuando se usó review):** el editor escribe `review_notes` (obligatorio); el sistema cambia `status` a `'rejected'` y registra `reviewed_by`/`reviewed_at`. Otro editor puede retomarla.
+7. **Devolver a borrador (cuando se usó review):** el editor puede devolver la canción a `draft` (`withdraw_song_from_review`) si todavía necesita cambios. No existe un estado de rechazo: el flujo solo distingue `draft → review → published` (mig. 0048 eliminó `rejected`).
 
 ### Flujos alternativos
 
 - **2a (validación):** Acordes mal formados → error inline; no se permite enviar a revisión ni publicar.
 - **Sin permisos:** Un usuario sin rol Editor/Admin no puede acceder a `/admin/canciones` (UI redirige + RLS rechaza). El coordinador parroquial queda fuera.
-- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar (RPC `archive_song`, mig. 0022). Se confirma con doble paso (dos `confirm` consecutivos en la UI). La transición es válida desde cualquier estado salvo `archived`. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva. El archivado/Eliminado limpia los campos de flujo (`submitted_*`, `reviewed_*`, `published_at`, `review_notes`).
+- **Baja lógica (`archived`):** Solo Editor o Admin pueden archivar (RPC `archive_song`, mig. 0022). Se confirma con doble paso (dos `confirm` consecutivos en la UI). La transición es válida desde cualquier estado salvo `archived`. Las playlists que la contenían marcan la canción como "no disponible" y dejan de mostrarla en vistas públicas; el historial de `song_versions` se preserva. El archivado/Eliminado limpia los campos de flujo (`submitted_*`, `reviewed_*`, `published_at`).
 - **Reverso (`unarchive_song`):** Editor o Admin pueden desarchivar; la canción vuelve a `draft` y debe pasar por el flujo de revisión si quiere republicarse.
-- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`.
+- **Edición de canción ya publicada:** la realiza directamente el Editor (o Admin) sin pasar por el flujo `draft → review`. La canción permanece en `published`. Al guardar se registra una nueva fila en `song_versions` (RPC `save_published_song_version`, mig. 0044) para preservar la trazabilidad del contenido publicado.
+- **Historial de versiones:** desde la página de edición (`/admin/canciones/{id}/editar`), el Editor/Admin ve una **bitácora cronológica** de toda la vida editorial de la canción (`song_events`, mig. 0045): creación, envíos a revisión, publicaciones, ediciones, rechazos, despublicaciones, archivado/recuperación y restauraciones. Cada evento muestra fecha, actor y un resumen autogenerado del cambio. Los eventos que generan una versión de contenido (`published`, `edited`, `restored`) permiten además ver el contenido de esa versión, compararlo con otra lado a lado y restaurarlo. La restauración (`restore_song_version`) copia el contenido de esa versión de vuelta a `songs` sin cambiar el `status`; el Editor revisa y guarda/publica después.
 
 ### Postcondiciones
 
 - Canción persistida en `songs` con su estado actual.
-- Si fue aprobada: nueva fila en `song_versions` con `published_at`, `current_version` incrementado, archivos en Storage públicos.
-- Traza completa de la transición editorial (`submitted_by/at`, `reviewed_by/at`, `review_notes`).
+- Si fue aprobada desde `review`, o si se editó directamente estando `published`: nueva fila en `song_versions` con `published_at` y `current_version` incrementado. Al aprobar, además, los archivos en Storage quedan públicos.
+- Traza completa de la transición editorial (`submitted_by/at`, `reviewed_by/at`).
+- El historial de versiones queda disponible para consultar, comparar y restaurar desde la página de edición.
 
 ### CU-16.1: Editar canción (sin acordes)
 
@@ -471,7 +480,7 @@ Edición rápida de una canción cuando solo se modifica la letra y los metadato
 
 - **Disparador:** desde la vista de canción o desde `/admin/canciones`, opción "Editar".
 - **Campos editables:** `title`, `number`, `author_id`, categorías litúrgicas (relación N:M `song_categories`), `body` (solo letra, sin marcadores `[acorde]`), `tempo_bpm`, `youtube_url`.
-- **Flujo:** la edición la realiza el Editor/Admin directamente sobre la canción. Si estaba `published`, sigue `published` (no se re-genera flujo draft→review). Si estaba en `draft`/`rejected`, se sobrescribe.
+- **Flujo:** la edición la realiza el Editor/Admin directamente sobre la canción. Si estaba `published`, sigue `published` (no se re-genera flujo draft→review). Si estaba en `draft`, se sobrescribe.
 - **Flujos alternativos:**
   - 1a. La canción tenía acordes en `body` previos: el editor "sin acordes" preserva los marcadores intactos y solo muestra la letra plana; los acordes no se pierden.
 
@@ -758,7 +767,7 @@ b. **Por búsqueda de texto:** el editor/admin escribe un nombre/dirección (mí
   2. Al final de cada fila, a la derecha del todo, un ícono de **tres puntitos horizontales (⋯)**. Al hacer clic abre un menú desplegable con tooltip "Más acciones":
      - **Agregar a playlist** — abre selector de playlists del usuario; al elegir una, la canción se agrega al final de esa playlist (reusa CU-17.1.a).
      - **Ver canción** — equivale a hacer clic en el título (navega a `/canciones/[slug]`).
-     - **Compartir** — usa `navigator.share` si está disponible; si no, copia la URL canónica al portapapeles y muestra un toast "Enlace copiado".
+     - **Compartir** — abre el diálogo "Compartir" (`QrDialog`, CU-12) con la URL canónica de la canción: botón "Compartir enlace" (Web Share API con fallback a portapapeles) y QR descargable en PNG.
      - **Agregar a Mis favoritos** / **Quitar de Mis favoritos** — toggle del corazón (CU-15).
      - **Quitar de esta playlist** — solo presente si el listado es una playlist y el usuario tiene permisos (CU-17.2).
 - **Flujos alternativos:**
@@ -779,7 +788,7 @@ b. **Por búsqueda de texto:** el editor/admin escribe un nombre/dirección (mí
      - 🔍 **Buscar** (lupa) → tooltip "Buscar".
      - ❤ **Mis favoritos** (corazón) → tooltip "Mis favoritos".
      - 👤 **Menú** (avatar del usuario o silueta si invitado) → tooltip "Menú".
-  2. **Buscar:** abre un overlay/diálogo con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01.
+  2. **Buscar:** abre un overlay/diálogo (`SearchDialog`) con un input de búsqueda global. A medida que el usuario tipea, el sistema busca en paralelo en **canciones**, **playlists** y **parroquias** y agrupa resultados por tipo. Al elegir uno, navega al detalle correspondiente (canción → CU-02, playlist → CU-05, parroquia → CU-06.2). Reusa el motor de CU-01 (hook `useGlobalSearch`). La **vista de canción** ofrece además un buscador flotante propio (`SearchFab`) con el mismo motor, sin depender del header (CU-01).
   3. **Mis favoritos:** abre el diálogo popup de CU-22.
   4. **Menú:** abre el menú desplegable con encabezado de perfil read-only (avatar + nombre + email, o "Invitado" + botón "Iniciá sesión") y los items de navegación y configuración.
 - NOTA: Asignación N:M canción↔categoría implementada (mig. 0021). ABM de `categories` no implementado: hoy se gestiona por SQL. Decisión: catálogo estable, no justifica pantalla.      
