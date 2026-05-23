@@ -529,6 +529,7 @@ export async function getEventForToday(
 }
 
 export type Featured = {
+  id: string;
   title: string;
   body: string | null;
   kind: string | null;
@@ -598,6 +599,7 @@ async function resolveAnnouncementHrefs(
       href = `/anuncios/${r.id}`;
     }
     return {
+      id: r.id,
       title: r.title,
       body: r.body,
       kind: r.kind,
