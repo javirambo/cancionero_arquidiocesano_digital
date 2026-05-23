@@ -31,6 +31,7 @@
   /* Estado */
   --color-success: #2f7d3a;
   --color-warning: #c08a00;
+  --color-info: #3b82f6;
   --color-destructive: #b00020;
   --color-destructive-foreground: #ffffff;
 
@@ -54,6 +55,7 @@
   --color-song-title-hover: #c25555;
   --color-page-title: #8aa9e0;
   --color-shortcut: #6f91c8;
+  --color-info: #60a5fa;
 
   --theme-background: #1a1f29;       /* derivado oscuro de TEXTO */
   --theme-foreground: #eaf0fa;       /* FONDO SECCIÓN como texto claro */
@@ -75,6 +77,7 @@
   --color-shortcut: var(--color-shortcut);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
   --color-destructive: var(--color-destructive);
   --color-destructive-foreground: var(--color-destructive-foreground);
 

@@ -4,6 +4,7 @@ import { getAdminAccess } from "../access";
 import {
   countSongsByStatus,
   listSongsForAdmin,
+  type AdminSongsOrden,
   type SongStatus,
 } from "@/lib/songs-admin";
 import { formatearFecha } from "@/lib/dates";
@@ -15,25 +16,65 @@ import {
 } from "@/app/components/icons";
 import { SongStatusBadge } from "./status-badge";
 import { SearchForm } from "./search-form";
+import { OrdenSelect } from "./orden-select";
 
 type EstadoTab = SongStatus | "todas";
 
-const TABS: { value: EstadoTab; label: string }[] = [
-  { value: "todas", label: "Todas" },
-  { value: "draft", label: "Borradores" },
-  { value: "review", label: "En revisión" },
-  { value: "published", label: "Publicados" },
-  { value: "archived", label: "Archivados" },
+const TABS: {
+  value: EstadoTab;
+  label: string;
+  active: string;
+  inactive: string;
+}[] = [
+  {
+    value: "todas",
+    label: "Todo",
+    active: "border-primary bg-primary text-primary-foreground",
+    inactive:
+      "border-border text-muted-foreground hover:border-primary hover:text-primary",
+  },
+  {
+    value: "draft",
+    label: "Borrador",
+    active: "border-info bg-info text-primary-foreground",
+    inactive: "border-info text-info hover:bg-info hover:text-primary-foreground",
+  },
+  {
+    value: "review",
+    label: "Revisión",
+    active: "border-warning bg-warning text-primary-foreground",
+    inactive:
+      "border-warning text-warning hover:bg-warning hover:text-primary-foreground",
+  },
+  {
+    value: "published",
+    label: "Pública",
+    active: "border-success bg-success text-primary-foreground",
+    inactive:
+      "border-success text-success hover:bg-success hover:text-primary-foreground",
+  },
+  {
+    value: "archived",
+    label: "Papelera",
+    active: "border-muted-foreground bg-muted-foreground text-primary-foreground",
+    inactive:
+      "border-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:text-primary-foreground",
+  },
 ];
 
 function isEstadoTab(v: string | undefined): v is EstadoTab {
   return TABS.some((t) => t.value === v);
 }
 
+const ORDENES: AdminSongsOrden[] = ["modificacion", "numero", "nombre"];
+function isOrden(v: string | undefined): v is AdminSongsOrden {
+  return !!v && (ORDENES as string[]).includes(v);
+}
+
 export default async function AdminCancionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; estado?: string }>;
+  searchParams: Promise<{ q?: string; estado?: string; orden?: string }>;
 }) {
   const access = await getAdminAccess();
   if (!access.isAdmin && !access.isEditor) redirect("/admin");
@@ -41,8 +82,9 @@ export default async function AdminCancionesPage({
   const sp = await searchParams;
   const q = sp.q ?? "";
   const estado: EstadoTab = isEstadoTab(sp.estado) ? sp.estado : "todas";
+  const orden: AdminSongsOrden = isOrden(sp.orden) ? sp.orden : "modificacion";
   const [songs, counts] = await Promise.all([
-    listSongsForAdmin(q, estado),
+    listSongsForAdmin(q, estado, orden),
     countSongsByStatus(),
   ]);
 
@@ -59,26 +101,23 @@ export default async function AdminCancionesPage({
           </Link>
         </div>
         <p className="text-sm normal-case text-muted-foreground">
-          Edición de metadatos, letra/acordes y archivos. Flujo editorial draft → revisión → publicado.
+          Edición de metadatos, letra/acordes y archivos. Flujo editorial borrador → revisión → publicado.
         </p>
       </header>
 
-      <nav className="flex flex-wrap gap-2" aria-label="Filtrar por estado">
+      <nav className="flex flex-wrap gap-1.5" aria-label="Filtrar por estado">
         {TABS.map((t) => {
           const params = new URLSearchParams();
           if (q) params.set("q", q);
           if (t.value !== "todas") params.set("estado", t.value);
+          if (orden !== "modificacion") params.set("orden", orden);
           const href = `/admin/canciones${params.toString() ? `?${params.toString()}` : ""}`;
           const active = t.value === estado;
           return (
             <Link
               key={t.value}
               href={href}
-              className={
-                active
-                  ? "rounded-full border border-primary bg-primary px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground"
-                  : "rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
-              }
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${active ? t.active : t.inactive}`}
             >
               {t.label} ({counts[t.value]})
             </Link>
@@ -86,7 +125,12 @@ export default async function AdminCancionesPage({
         })}
       </nav>
 
-      <SearchForm defaultValue={q} estado={estado} />
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <SearchForm defaultValue={q} estado={estado} orden={orden} />
+        </div>
+        <OrdenSelect value={orden} q={q} estado={estado} />
+      </div>
 
       {songs.length === 0 ? (
         <p className="text-sm normal-case text-muted-foreground">

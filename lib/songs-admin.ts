@@ -86,85 +86,51 @@ export type SongEvent = {
   created_at: string;
 };
 
-type Named = { name: string } | { name: string }[] | null;
-function firstName(rel: Named): string | null {
-  if (!rel) return null;
-  if (Array.isArray(rel)) return rel[0]?.name ?? null;
-  return rel.name ?? null;
-}
-
-function joinAuthors(a: Named, b: Named): string | null {
-  const n1 = firstName(a);
-  const n2 = firstName(b);
-  const parts = [n1, n2].filter((x): x is string => Boolean(x));
-  return parts.length === 0 ? null : parts.join(", ");
-}
-
-type SongCategoryRel =
-  | { categories: { name: string } | { name: string }[] | null }
-  | { categories: { name: string } | { name: string }[] | null }[]
-  | null;
-
-function categoryNames(rel: SongCategoryRel): string[] {
-  if (!rel) return [];
-  const arr = Array.isArray(rel) ? rel : [rel];
-  const names: string[] = [];
-  for (const row of arr) {
-    const cat = row.categories;
-    if (!cat) continue;
-    if (Array.isArray(cat)) {
-      for (const c of cat) if (c?.name) names.push(c.name);
-    } else if (cat.name) {
-      names.push(cat.name);
-    }
-  }
-  return names;
-}
+export type AdminSongsOrden = "modificacion" | "numero" | "nombre";
 
 export async function listSongsForAdmin(
   q: string = "",
-  status: SongStatus | "todas" = "todas"
+  status: SongStatus | "todas" = "todas",
+  orden: AdminSongsOrden = "modificacion"
 ): Promise<AdminSongRow[]> {
   const supabase = await createClient();
-  let query = supabase
-    .from("songs")
-    .select(
-      "id, number, title, slug, status, updated_at, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
-    )
-    .order("updated_at", { ascending: false })
-    .limit(200);
-  const term = q.trim();
-  if (term) {
-    const asNumber = /^\d+$/.test(term) ? Number(term) : null;
-    if (asNumber !== null) {
-      query = query.or(`title.ilike.%${term}%,number.eq.${asNumber}`);
-    } else {
-      query = query.ilike("title", `%${term}%`);
-    }
-  }
-  if (status !== "todas") query = query.eq("status", status);
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc("admin_search_songs", {
+    q: q.trim(),
+    p_status: status,
+    p_orden: orden,
+    lim: 200,
+  });
   if (error) {
     console.error("[listSongsForAdmin] supabase error", error);
     throw new Error(error.message);
   }
-  return (data ?? []).map((row) => {
-    const body = (row.body as string | null) ?? "";
-    const files = (row.song_files as { id: string }[] | null) ?? [];
-    const cats = categoryNames(row.song_categories as SongCategoryRel);
+  type Row = {
+    id: string;
+    number: number | null;
+    title: string;
+    slug: string;
+    status: SongStatus;
+    updated_at: string;
+    body: string | null;
+    youtube_url: string | null;
+    has_files: boolean;
+    authors: string | null;
+    categories: string | null;
+  };
+  return ((data ?? []) as Row[]).map((row) => {
+    const body = row.body ?? "";
     return {
-      id: row.id as string,
-      number: row.number as number | null,
-      title: row.title as string,
-      slug: row.slug as string,
-      status: row.status as SongStatus,
-      category: cats.length > 0 ? cats.join(", ") : null,
-      author: joinAuthors(row.author1 as Named, row.author2 as Named),
-      updated_at: row.updated_at as string,
+      id: row.id,
+      number: row.number,
+      title: row.title,
+      slug: row.slug,
+      status: row.status,
+      category: row.categories,
+      author: row.authors,
+      updated_at: row.updated_at,
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
-      hasFiles: files.length > 0,
+      hasFiles: row.has_files,
     };
   });
 }

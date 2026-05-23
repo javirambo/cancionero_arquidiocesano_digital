@@ -37,7 +37,6 @@ export default async function NuevaPlaylistPage({
         <PlaylistForm
           mode="create"
           parishSlug={null}
-          showArchdiocesan={false}
           personalAllowed
           restricted
           initial={{
@@ -78,8 +77,7 @@ export default async function NuevaPlaylistPage({
           <PlaylistForm
             mode="create"
             parishSlug={par.slug}
-            showArchdiocesan={false}
-            initial={{
+              initial={{
               parish_id: par.id,
               name: "",
               description: "",
@@ -107,8 +105,7 @@ export default async function NuevaPlaylistPage({
           <PlaylistForm
             mode="create"
             parishSlug={arch.slug as string}
-            showArchdiocesan={true}
-            initial={{
+              initial={{
               parish_id: arch.id as string,
               name: "",
               description: "",
@@ -147,7 +144,6 @@ export default async function NuevaPlaylistPage({
         <PlaylistForm
           mode="create"
           parishSlug={arch.slug as string}
-          showArchdiocesan={true}
           initial={{
             parish_id: arch.id as string,
             name: "",
@@ -184,7 +180,6 @@ export default async function NuevaPlaylistPage({
         <PlaylistForm
           mode="create"
           parishSlug={par.slug}
-          showArchdiocesan={false}
           initial={{
             parish_id: par.id,
             name: "",
@@ -209,7 +204,6 @@ export default async function NuevaPlaylistPage({
         <PlaylistForm
           mode="create"
           parishSlug={null}
-          showArchdiocesan={false}
           parishOptions={options}
           initial={{
             parish_id: null,
@@ -231,7 +225,6 @@ export default async function NuevaPlaylistPage({
       <PlaylistForm
         mode="create"
         parishSlug={null}
-        showArchdiocesan={false}
         personalAllowed
         restricted
         initial={{

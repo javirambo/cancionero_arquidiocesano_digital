@@ -45,17 +45,12 @@ export default async function NuevaPlaylistPage({
   }
   if (!canCreate) redirect(`/parroquias/${parish.slug}/playlists`);
 
-  // Solo se puede marcar "arquidiocesana" si la playlist es de la parroquia
-  // virtual "arquidiocesis" (y el usuario es admin o coord de ella).
-  const showArchdiocesan = parish.slug === "arquidiocesis" && canCreate;
-
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
       <h1 className="text-2xl text-page-title">Nueva lista en {parish.name}</h1>
       <PlaylistForm
         mode="create"
         parishSlug={parish.slug}
-        showArchdiocesan={showArchdiocesan}
         initial={{
           parish_id: parish.id,
           name: "",
@@ -63,7 +58,7 @@ export default async function NuevaPlaylistPage({
           image_path: null,
           schedules: [],
           visibility: "public",
-          is_archdiocesan: false,
+          is_archdiocesan: parish.slug === "arquidiocesis",
         }}
       />
     </main>

@@ -26,7 +26,6 @@ export function PlaylistForm({
   initial,
   mode,
   parishSlug,
-  showArchdiocesan,
   parishOptions,
   personalAllowed,
   adminParishOptions,
@@ -37,7 +36,6 @@ export function PlaylistForm({
   // Slug usado para el botón Cancelar y para el redirect tras eliminar.
   // Cuando la creación no parte de una parroquia, pasar null.
   parishSlug: string | null;
-  showArchdiocesan: boolean;
   // Si está presente y tiene >1 entrada, se muestra un selector inline.
   // Si tiene exactamente 1, se preasigna y no se muestra.
   parishOptions?: ParishOption[];
@@ -77,11 +75,6 @@ export function PlaylistForm({
     ? adminParishOptions!.find((p) => p.id === form.parish_id)?.slug ?? null
     : parishSlug;
   const selectedIsArchdiocesis = selectedParishSlug === "arquidiocesis";
-  // Para admin, el toggle archdiocesan se muestra cuando la parroquia
-  // seleccionada es la virtual; para el resto sigue la prop original.
-  const archdiocesanVisible = canReassignOwner
-    ? selectedIsArchdiocesis
-    : showArchdiocesan;
   const wasArchdiocesanInitial = initial?.is_archdiocesan === true;
 
   async function handleSubmit(e: FormEvent) {
@@ -116,7 +109,7 @@ export function PlaylistForm({
       description: form.description.trim() || null,
       image_path: form.image_path,
       visibility: form.visibility,
-      is_archdiocesan: archdiocesanVisible ? form.is_archdiocesan : false,
+      is_archdiocesan: selectedIsArchdiocesis,
     };
 
     if (mode === "create") {
@@ -256,18 +249,6 @@ export function PlaylistForm({
           onChange={(path) => update("image_path", path)}
           pathPrefix="playlists"
         />
-        {archdiocesanVisible && !restricted && (
-          <Field label="Alcance" full>
-            <label className="flex items-center gap-2 text-sm normal-case">
-              <input
-                type="checkbox"
-                checked={form.is_archdiocesan}
-                onChange={(e) => update("is_archdiocesan", e.target.checked)}
-              />
-              Visible por defecto en todas las parroquias (arquidiocesana)
-            </label>
-          </Field>
-        )}
       </div>
 
       {!restricted && (
