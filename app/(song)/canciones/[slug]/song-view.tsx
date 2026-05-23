@@ -714,6 +714,14 @@ const StopIcon = () => (
     <rect x="6" y="6" width="12" height="12" rx="1" />
   </svg>
 );
+const ChevronDownIcon = ({ open }: { open: boolean }) => (
+  <svg
+    {...menuIconProps}
+    style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 150ms" }}
+  >
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
 
 function SongHamburgerMenu({
   songId,
@@ -749,6 +757,8 @@ function SongHamburgerMenu({
   ) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [downloadsOpen, setDownloadsOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [scores, setScores] = useState<
     Array<{ id: string; bucket: string; path: string; label: string | null }> | null
@@ -836,7 +846,11 @@ function SongHamburgerMenu({
     };
   }, [open, audios, songId, hasFiles]);
 
-  const close = () => setOpen(false);
+  const close = () => {
+    setOpen(false);
+    setDownloadsOpen(false);
+    setPrintOpen(false);
+  };
 
   async function pickAudio(file: {
     bucket: string;
@@ -907,6 +921,7 @@ function SongHamburgerMenu({
                 <SongMenuItem
                   icon={<HomeIcon />}
                   label="Inicio"
+                  bold
                   onSelect={() => {
                     close();
                     router.push("/");
@@ -949,44 +964,113 @@ function SongHamburgerMenu({
                     />
                   </li>
                 ))}
-              {scores?.map((f) => (
-                <li key={f.id}>
-                  <SongMenuItem
-                    icon={<DownloadIcon />}
-                    label={`Descargar ${f.label ?? "partitura"}`}
-                    onSelect={() => {
-                      void downloadScore(f);
+              {scores && scores.length > 0 && (
+                <>
+                  <li>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      aria-expanded={downloadsOpen}
+                      onClick={() => setDownloadsOpen((v) => !v)}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+                    >
+                      <span aria-hidden="true" className="text-muted-foreground">
+                        <DownloadIcon />
+                      </span>
+                      <span className="flex-1">Descargar...</span>
+                      <span aria-hidden="true" className="text-muted-foreground">
+                        <ChevronDownIcon open={downloadsOpen} />
+                      </span>
+                    </button>
+                  </li>
+                  <li
+                    aria-hidden={!downloadsOpen}
+                    style={{
+                      display: "grid",
+                      gridTemplateRows: downloadsOpen ? "1fr" : "0fr",
+                      transition: "grid-template-rows 300ms ease",
                     }}
-                  />
-                </li>
-              ))}
-              {canPrintWithChords && (
-                <li>
-                  <a
-                    href={buildPrintHref(true)}
-                    role="menuitem"
-                    onClick={close}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
                   >
-                    <span aria-hidden="true" className="text-muted-foreground">
-                      <PrinterIcon />
-                    </span>
-                    Imprimir con acordes <em>#</em>
-                  </a>
-                </li>
+                    <ul style={{ overflow: "hidden" }}>
+                      {scores.map((f) => (
+                        <li key={f.id}>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            tabIndex={downloadsOpen ? 0 : -1}
+                            onClick={() => {
+                              void downloadScore(f);
+                            }}
+                            className="flex w-full items-center gap-3 py-2 pl-10 pr-4 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+                          >
+                            <span aria-hidden="true" className="text-muted-foreground">
+                              <DownloadIcon />
+                            </span>
+                            {f.label ?? "partitura"}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                </>
               )}
               <li>
-                <a
-                  href={buildPrintHref(false)}
+                <button
+                  type="button"
                   role="menuitem"
-                  onClick={close}
+                  aria-expanded={printOpen}
+                  onClick={() => setPrintOpen((v) => !v)}
                   className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
                 >
                   <span aria-hidden="true" className="text-muted-foreground">
                     <PrinterIcon />
                   </span>
-                  Imprimir sin acordes
-                </a>
+                  <span className="flex-1">Imprimir...</span>
+                  <span aria-hidden="true" className="text-muted-foreground">
+                    <ChevronDownIcon open={printOpen} />
+                  </span>
+                </button>
+              </li>
+              <li
+                aria-hidden={!printOpen}
+                style={{
+                  display: "grid",
+                  gridTemplateRows: printOpen ? "1fr" : "0fr",
+                  transition: "grid-template-rows 300ms ease",
+                }}
+              >
+                <ul style={{ overflow: "hidden" }}>
+                  {canPrintWithChords && (
+                    <li>
+                      <a
+                        href={buildPrintHref(true)}
+                        role="menuitem"
+                        tabIndex={printOpen ? 0 : -1}
+                        onClick={close}
+                        className="flex w-full items-center gap-3 py-2 pl-10 pr-4 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+                      >
+                        <span aria-hidden="true" className="text-muted-foreground">
+                          <PrinterIcon />
+                        </span>
+                        con acordes <em>#</em>
+                      </a>
+                    </li>
+                  )}
+                  <li>
+                    <a
+                      href={buildPrintHref(false)}
+                      role="menuitem"
+                      tabIndex={printOpen ? 0 : -1}
+                      onClick={close}
+                      className="flex w-full items-center gap-3 py-2 pl-10 pr-4 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+                    >
+                      <span aria-hidden="true" className="text-muted-foreground">
+                        <PrinterIcon />
+                      </span>
+                      sin acordes
+                    </a>
+                  </li>
+                </ul>
               </li>
               {wakeLockSupported !== false && (
                 <li>
@@ -1053,17 +1137,21 @@ function SongMenuItem({
   icon,
   label,
   onSelect,
+  bold = false,
 }: {
   icon: React.ReactNode;
   label: string;
   onSelect: () => void;
+  bold?: boolean;
 }) {
   return (
     <button
       type="button"
       role="menuitem"
       onClick={onSelect}
-      className="flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar"
+      className={`flex w-full items-center gap-3 px-4 py-2 text-left normal-case text-foreground transition-colors hover:bg-sidebar${
+        bold ? " font-bold" : ""
+      }`}
     >
       <span aria-hidden="true" className="text-muted-foreground">
         {icon}
@@ -1140,17 +1228,29 @@ function AutoScrollPanel({
     <div
       role="group"
       aria-label="Desplazamiento automático"
-      className="fixed bottom-[70px] right-4 z-30 flex flex-col items-center gap-2"
+      className="fixed bottom-[104px] right-4 z-30"
+      style={{ width: 40, height: 40 }}
     >
       <button
         type="button"
         onClick={() => canUp && setSpeed(speed + 1)}
-        disabled={!canUp}
+        disabled={!canUp || !on}
+        tabIndex={on ? 0 : -1}
+        aria-hidden={!on}
         aria-label={`Aumentar velocidad (actual ${speed})`}
         title={`Aumentar velocidad (actual ${speed})`}
         onPointerDown={flashButton}
-        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-opacity focus:outline-none enabled:hover:opacity-90 disabled:opacity-40"
-        style={{ backgroundColor: "#436bb0" }}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg focus:outline-none enabled:hover:opacity-90 disabled:opacity-40"
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          backgroundColor: "#436bb0",
+          transform: on ? "translateY(-48px)" : "translateY(0)",
+          opacity: on ? 1 : 0,
+          pointerEvents: on ? "auto" : "none",
+          transition: "transform 350ms ease, opacity 350ms ease",
+        }}
       >
         <span className="text-lg font-semibold leading-none">+</span>
       </button>
@@ -1169,8 +1269,14 @@ function AutoScrollPanel({
             : `Iniciar desplazamiento automático (velocidad ${speed})`
         }
         onPointerDown={flashButton}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-opacity focus:outline-none hover:opacity-90"
-        style={{ backgroundColor: on ? "#1f3f73" : "#436bb0" }}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-colors focus:outline-none hover:opacity-90"
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          zIndex: 10,
+          backgroundColor: on ? "#1f3f73" : "#436bb0",
+        }}
       >
         <svg
           width="22"
@@ -1189,7 +1295,13 @@ function AutoScrollPanel({
         </svg>
         <span
           aria-hidden="true"
-          className="absolute left-1/2 top-[13px] -translate-x-1/2 text-[10px] font-bold leading-none"
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: 13,
+            transform: "translateX(-50%)",
+          }}
+          className="text-[10px] font-bold leading-none"
         >
           {speed}
         </span>
@@ -1197,12 +1309,23 @@ function AutoScrollPanel({
       <button
         type="button"
         onClick={() => canDown && setSpeed(speed - 1)}
-        disabled={!canDown}
+        disabled={!canDown || !on}
+        tabIndex={on ? 0 : -1}
+        aria-hidden={!on}
         aria-label={`Reducir velocidad (actual ${speed})`}
         title={`Reducir velocidad (actual ${speed})`}
         onPointerDown={flashButton}
-        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-opacity focus:outline-none enabled:hover:opacity-90 disabled:opacity-40"
-        style={{ backgroundColor: "#436bb0" }}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg focus:outline-none enabled:hover:opacity-90 disabled:opacity-40"
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          backgroundColor: "#436bb0",
+          transform: on ? "translateY(48px)" : "translateY(0)",
+          opacity: on ? 1 : 0,
+          pointerEvents: on ? "auto" : "none",
+          transition: "transform 350ms ease, opacity 350ms ease",
+        }}
       >
         <span className="text-lg font-semibold leading-none">−</span>
       </button>
