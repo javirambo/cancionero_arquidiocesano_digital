@@ -67,7 +67,8 @@ Derivado automáticamente de la paleta light: se invierte la luminosidad del fon
 |-----------------------------|-----------|--------------------------------------------------------------------|------------------------------------------------------|
 | `primary-foreground`        | `#ffffff` | ![#ffffff](https://placehold.co/16x16/ffffff/ffffff.png)           | Texto/icono sobre fondo `primary`                    |
 | `success`                   | `#2f7d3a` | ![#2f7d3a](https://placehold.co/16x16/2f7d3a/2f7d3a.png)           | Confirmaciones / estados positivos                   |
-| `warning`                   | `#c08a00` | ![#c08a00](https://placehold.co/16x16/c08a00/c08a00.png)           | Advertencias                                         |
+| `warning`                   | `#c08a00` | ![#c08a00](https://placehold.co/16x16/c08a00/c08a00.png)           | Advertencias / estados intermedios (revisión)        |
+| `info`                      | `#3b82f6` | ![#3b82f6](https://placehold.co/16x16/3b82f6/3b82f6.png)           | Estados informativos (borrador). Dark: `#60a5fa`     |
 | `destructive`               | `#b00020` | ![#b00020](https://placehold.co/16x16/b00020/b00020.png)           | Borrado / errores críticos                           |
 | `destructive-foreground`    | `#ffffff` | ![#ffffff](https://placehold.co/16x16/ffffff/ffffff.png)           | Texto/icono sobre fondo `destructive`                |
 

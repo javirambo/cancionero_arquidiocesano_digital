@@ -156,7 +156,7 @@ export function ReviewActions({
               type="button"
               onClick={onSubmit}
               disabled={busy}
-              className="rounded-full border border-success bg-success px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              className="rounded-full border border-warning bg-warning px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
               Enviar a revisión
             </button>
@@ -168,7 +168,7 @@ export function ReviewActions({
               disabled={busy}
               className="rounded-full border border-success bg-success px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
-              Aprobar y publicar
+              Publicar
             </button>
           )}
           {caps.canWithdraw && (
@@ -176,9 +176,9 @@ export function ReviewActions({
               type="button"
               onClick={onWithdraw}
               disabled={busy}
-              className="rounded-full border border-border px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
+              className="rounded-full border border-info px-5 py-2 text-sm font-semibold uppercase tracking-wide text-info hover:bg-info hover:text-primary-foreground disabled:opacity-60"
             >
-              Devolver a borrador
+              A borrador
             </button>
           )}
           {caps.canUnpublish && (
@@ -186,9 +186,9 @@ export function ReviewActions({
               type="button"
               onClick={onUnpublish}
               disabled={busy}
-              className="rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
+              className="rounded-full border border-info px-5 py-2 text-sm font-semibold uppercase tracking-wide text-info hover:bg-info hover:text-primary-foreground disabled:opacity-60"
             >
-              Despublicar
+              A borrador
             </button>
           )}
           {caps.canArchive && (
@@ -196,9 +196,9 @@ export function ReviewActions({
               type="button"
               onClick={onArchive}
               disabled={busy}
-              className="rounded-full border border-destructive px-5 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
+              className="rounded-full border border-muted-foreground px-5 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted-foreground hover:text-primary-foreground disabled:opacity-60"
             >
-              Archivar
+              A papelera
             </button>
           )}
           {canDelete && (
@@ -211,7 +211,7 @@ export function ReviewActions({
               className="inline-flex items-center gap-2 rounded-full border border-destructive px-4 py-2 text-sm font-semibold uppercase tracking-wide text-destructive hover:bg-destructive hover:text-destructive-foreground disabled:opacity-60"
             >
               <TrashIcon />
-              <span>Borrar</span>
+              <span>Eliminar</span>
             </button>
           )}
           {caps.canUnarchive && (
@@ -219,9 +219,9 @@ export function ReviewActions({
               type="button"
               onClick={onUnarchive}
               disabled={busy}
-              className="rounded-full border border-secondary bg-secondary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              className="rounded-full border border-info px-5 py-2 text-sm font-semibold uppercase tracking-wide text-info hover:bg-info hover:text-primary-foreground disabled:opacity-60"
             >
-              Recuperar
+              A borrador
             </button>
           )}
         </div>

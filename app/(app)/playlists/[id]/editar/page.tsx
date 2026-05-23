@@ -63,7 +63,6 @@ export default async function EditarPlaylistPage({
   // Lista personal del usuario actual (sin parroquia y dueña): edición restringida.
   const isPersonalOwner = isOwner && !pl.parish && !isAdmin;
 
-  const showArchdiocesan = pl.parish?.slug === "arquidiocesis";
   const schedules = await loadSchedulesForEntity("playlist", pl.id);
 
   // Sólo admin puede reasignar el dueño de la playlist (CU-17).
@@ -91,7 +90,6 @@ export default async function EditarPlaylistPage({
         <PlaylistForm
           mode="edit"
           parishSlug={pl.parish?.slug ?? null}
-          showArchdiocesan={showArchdiocesan}
           adminParishOptions={adminParishOptions}
           restricted={isPersonalOwner}
           initial={{

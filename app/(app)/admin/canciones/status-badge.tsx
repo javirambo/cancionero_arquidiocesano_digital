@@ -3,19 +3,19 @@ import type { SongStatus } from "@/lib/songs-admin";
 const STYLE: Record<SongStatus, { label: string; className: string }> = {
   draft: {
     label: "Borrador",
-    className: "border-border text-muted-foreground",
+    className: "border-info text-info",
   },
   review: {
     label: "En revisión",
-    className: "border-secondary text-secondary",
+    className: "border-warning text-warning",
   },
   published: {
     label: "Publicado",
     className: "border-success text-success",
   },
   archived: {
-    label: "Archivado",
-    className: "border-primary text-primary",
+    label: "Papelera",
+    className: "border-muted-foreground text-muted-foreground",
   },
 };
 

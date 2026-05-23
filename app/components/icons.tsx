@@ -72,6 +72,17 @@ export function FilterIcon(): ReactElement {
   );
 }
 
+export function SortIcon(): ReactElement {
+  // Tres líneas decrecientes (patrón estándar "ordenar por").
+  return (
+    <svg {...baseProps} aria-hidden="true" width={20} height={20}>
+      <path d="M5 7h14" />
+      <path d="M7 12h10" />
+      <path d="M10 17h4" />
+    </svg>
+  );
+}
+
 export function SearchIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true" width={20} height={20}>
