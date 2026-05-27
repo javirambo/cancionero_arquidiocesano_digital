@@ -17,6 +17,9 @@ import {
 import { SongStatusBadge } from "./status-badge";
 import { SearchForm } from "./search-form";
 import { OrdenSelect } from "./orden-select";
+import { Pagination } from "./pagination";
+
+const PAGE_SIZE = 50;
 
 type EstadoTab = SongStatus | "todas";
 
@@ -74,7 +77,12 @@ function isOrden(v: string | undefined): v is AdminSongsOrden {
 export default async function AdminCancionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; estado?: string; orden?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    estado?: string;
+    orden?: string;
+    page?: string;
+  }>;
 }) {
   const access = await getAdminAccess();
   if (!access.isAdmin && !access.isEditor) redirect("/admin");
@@ -83,10 +91,19 @@ export default async function AdminCancionesPage({
   const q = sp.q ?? "";
   const estado: EstadoTab = isEstadoTab(sp.estado) ? sp.estado : "todas";
   const orden: AdminSongsOrden = isOrden(sp.orden) ? sp.orden : "modificacion";
-  const [songs, counts] = await Promise.all([
-    listSongsForAdmin(q, estado, orden),
+  const pageParam = Number(sp.page);
+  const requestedPage = Number.isFinite(pageParam) && pageParam >= 1
+    ? Math.floor(pageParam)
+    : 1;
+  const [allSongs, counts] = await Promise.all([
+    listSongsForAdmin(q, estado, orden, 10000),
     countSongsByStatus(),
   ]);
+  const total = allSongs.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const from = (page - 1) * PAGE_SIZE;
+  const songs = allSongs.slice(from, from + PAGE_SIZE);
 
   return (
     <main className="flex flex-col gap-6">
@@ -131,6 +148,15 @@ export default async function AdminCancionesPage({
         </div>
         <OrdenSelect value={orden} q={q} estado={estado} />
       </div>
+
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+        q={q}
+        estado={estado}
+        orden={orden}
+      />
 
       {songs.length === 0 ? (
         <p className="text-sm normal-case text-muted-foreground">

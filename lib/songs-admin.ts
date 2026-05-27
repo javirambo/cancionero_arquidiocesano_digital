@@ -91,14 +91,15 @@ export type AdminSongsOrden = "modificacion" | "numero" | "nombre";
 export async function listSongsForAdmin(
   q: string = "",
   status: SongStatus | "todas" = "todas",
-  orden: AdminSongsOrden = "modificacion"
+  orden: AdminSongsOrden = "modificacion",
+  lim: number = 200
 ): Promise<AdminSongRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("admin_search_songs", {
     q: q.trim(),
     p_status: status,
     p_orden: orden,
-    lim: 200,
+    lim,
   });
   if (error) {
     console.error("[listSongsForAdmin] supabase error", error);

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SortIcon } from "@/app/components/icons";
+import { DownloadIcon, SortIcon } from "@/app/components/icons";
 
 const OPTIONS: { value: string; label: string }[] = [
   { value: "nombre", label: "Ordenar por Nombre" },
@@ -49,6 +49,16 @@ export function OrdenSelect({
     router.push(`/admin/canciones${qs ? `?${qs}` : ""}`);
   }
 
+  function onDescargar() {
+    setOpen(false);
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (estado !== "todas") params.set("estado", estado);
+    if (value !== "modificacion") params.set("orden", value);
+    const qs = params.toString();
+    window.location.href = `/admin/canciones/descargar${qs ? `?${qs}` : ""}`;
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -80,6 +90,16 @@ export function OrdenSelect({
               </button>
             );
           })}
+          <div className="border-t border-border" />
+          <button
+            role="menuitem"
+            type="button"
+            onClick={onDescargar}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs normal-case text-foreground hover:bg-sidebar"
+          >
+            <DownloadIcon />
+            Descargar listado
+          </button>
         </div>
       )}
     </div>
