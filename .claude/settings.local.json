@@ -24,7 +24,8 @@
       "Bash(git commit *)",
       "PowerShell(python \"C:\\\\Users\\\\javie\\\\OneDrive\\\\Documentos\\\\Proyectos\\\\Iset57\\\\cancionero_arquidiocesano_digital\\\\canciones\\\\test.py\")",
       "PowerShell(pip install geopy)",
-      "Bash(xargs -I {} basename {})"
+      "Bash(xargs -I {} basename {})",
+      "Bash(cat C:\\\\\\\\Users\\\\\\\\javie\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\c--Users-javie-OneDrive-Documentos-Proyectos-Iset57-cancionero-arquidiocesano-digital\\\\\\\\4be5f369-d0f3-4705-a52c-1e28d49fb7c9\\\\\\\\tasks\\\\\\\\bqb5s2m6i.output)"
     ]
   }
 }
