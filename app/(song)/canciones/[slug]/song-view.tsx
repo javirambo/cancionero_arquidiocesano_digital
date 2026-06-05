@@ -9,6 +9,7 @@ import {
   hasAnyChord,
   parseBody,
   semitonesBetween,
+  transposeChord,
   transposeLine,
   type ChordLine,
   type ChordSystem,
@@ -27,7 +28,7 @@ import {
 import { usePreferences } from "@/app/components/preferences";
 import { useTheme } from "@/app/components/theme";
 import { useWakeLock } from "@/app/components/wake-lock";
-import { YoutubeIcon, MusicIcon, ShareIcon } from "@/app/components/icons";
+import { YoutubeIcon, SpeakerIcon, ShareIcon } from "@/app/components/icons";
 import { QrDialog } from "@/app/components/qr-button";
 import { SearchFab } from "@/app/components/search-fab";
 
@@ -421,14 +422,16 @@ function SongToolbar({
       <div className="flex flex-nowrap items-center justify-between gap-1">
         <div className="flex flex-nowrap items-center gap-1">
           <div
-            className={`flex w-[184px] flex-nowrap items-center justify-start gap-1 ${
-              chordsAvailable ? "" : "invisible"
-            }`}
+            className={`flex flex-nowrap items-center justify-start transition-all duration-300 ease-out ${
+              showChords ? "gap-1" : "gap-0"
+            } ${chordsAvailable ? "" : "hidden"}`}
             aria-hidden={!chordsAvailable}
           >
             <ChordsCycleButton
               showChords={showChords}
               effectiveSystem={effectiveSystem}
+              originalKey={originalKey}
+              semitones={semitones}
               onCycle={() => {
                 // Off → Latín On → Inglés On → Off
                 if (!showChords) {
@@ -444,55 +447,69 @@ function SongToolbar({
               }}
             />
 
+            {/* Controles de transposición: ocultos cuando los acordes están
+                apagados; al encenderlos se despliegan deslizándose hacia la
+                derecha desde el botón de acordes. */}
             <div
-              className="flex items-center gap-0.5"
-              aria-label="Transposición"
+              className={`flex items-center overflow-hidden transition-all duration-300 ease-out ${
+                showChords
+                  ? "max-w-[220px] translate-x-0 opacity-100"
+                  : "pointer-events-none max-w-0 -translate-x-3 opacity-0"
+              }`}
+              aria-hidden={!showChords}
             >
-              {inPlaylistContext && playlistKeyOverride && (
-                <span
-                  aria-hidden="true"
-                  className="mr-0.5 text-xs text-white/90"
-                  title="Tono sugerido por la playlist"
+              <div
+                className="flex items-center gap-0.5"
+                aria-label="Transposición"
+              >
+                {inPlaylistContext && playlistKeyOverride && (
+                  <span
+                    aria-hidden="true"
+                    className="mr-0.5 text-xs text-white/90"
+                    title="Tono sugerido por la playlist"
+                  >
+                    ★
+                  </span>
+                )}
+                <ToolbarButton
+                  onClick={() => setSemitones((s) => (s <= -5 ? 6 : s - 1))}
+                  disabled={!showChords}
+                  label="Bajar un semitono"
                 >
-                  ★
-                </span>
-              )}
-              <ToolbarButton
-                onClick={() => setSemitones((s) => (s <= -5 ? 6 : s - 1))}
-                disabled={!showChords}
-                label="Bajar un semitono"
-              >
-                <span className="text-base font-semibold leading-none">
-                  ♪−
-                </span>
-              </ToolbarButton>
-              <button
-                type="button"
-                onClick={() => semitones !== 0 && setSemitones(() => 0)}
-                disabled={!showChords || semitones === 0}
-                aria-label={
-                  semitones === 0 ? "Tono original" : "Restablecer tono original"
-                }
-                title={
-                  semitones === 0
-                    ? "Tono original"
-                    : "Restablecer tono original"
-                }
-                className="min-w-8 rounded-full px-1 text-center text-sm normal-case text-white transition-opacity disabled:opacity-60"
-              >
-                {semitones === 0
-                  ? originalKey ?? "Tono"
-                  : `${semitones > 0 ? "+" : ""}${semitones}`}
-              </button>
-              <ToolbarButton
-                onClick={() => setSemitones((s) => (s >= 6 ? -5 : s + 1))}
-                disabled={!showChords}
-                label="Subir un semitono"
-              >
-                <span className="text-base font-semibold leading-none">
-                  ♪+
-                </span>
-              </ToolbarButton>
+                  <span className="text-base font-semibold leading-none">
+                    ♪−
+                  </span>
+                </ToolbarButton>
+                <button
+                  type="button"
+                  onClick={() => semitones !== 0 && setSemitones(() => 0)}
+                  disabled={!showChords || semitones === 0}
+                  aria-label={
+                    semitones === 0
+                      ? "Tono original"
+                      : "Restablecer tono original"
+                  }
+                  title={
+                    semitones === 0
+                      ? "Tono original"
+                      : "Restablecer tono original"
+                  }
+                  className="min-w-8 rounded-full px-1 text-center text-sm normal-case text-white transition-opacity disabled:opacity-60"
+                >
+                  {semitones === 0
+                    ? originalKey ?? "Tono"
+                    : `${semitones > 0 ? "+" : ""}${semitones}`}
+                </button>
+                <ToolbarButton
+                  onClick={() => setSemitones((s) => (s >= 6 ? -5 : s + 1))}
+                  disabled={!showChords}
+                  label="Subir un semitono"
+                >
+                  <span className="text-base font-semibold leading-none">
+                    ♪+
+                  </span>
+                </ToolbarButton>
+              </div>
             </div>
           </div>
           <span
@@ -607,19 +624,41 @@ const EighthNoteIcon = ({ size = 18 }: { size?: number }) => (
 function ChordsCycleButton({
   showChords,
   effectiveSystem,
+  originalKey,
+  semitones,
   onCycle,
 }: {
   showChords: boolean;
   effectiveSystem: "latin" | "english";
+  originalKey: string | null;
+  semitones: number;
   onCycle: () => void;
 }) {
   const on = showChords;
-  const suffix = on ? (effectiveSystem === "latin" ? "Do" : "C") : null;
+  // Tono de la canción transpuesto al sistema actual. Solo si hay tono
+  // original cargado; si no, mostramos solo el ícono de nota.
+  const suffix =
+    on && originalKey
+      ? transposeChord(originalKey, semitones, effectiveSystem)
+      : null;
   const label = !on
     ? "Mostrar acordes"
     : effectiveSystem === "latin"
       ? "Acordes en cifrado latino (click → americano)"
       : "Acordes en cifrado americano (click → ocultar)";
+
+  // Color de fondo por estado:
+  //  - off            → azul (header)
+  //  - on + latino    → amarillo (acento)
+  //  - on + americano → blanco
+  const bg = !on
+    ? HEADER_BG
+    : effectiveSystem === "latin"
+      ? "var(--color-secondary)"
+      : "#ffffff";
+  // Texto/ícono legible sobre cada fondo: blanco sobre azul, azul en el resto.
+  const fg = !on ? "#ffffff" : HEADER_BG;
+
   return (
     <button
       type="button"
@@ -628,10 +667,10 @@ function ChordsCycleButton({
       aria-pressed={on}
       aria-label={label}
       title={label}
-      className={`relative flex h-10 w-14 items-center justify-center rounded-full border border-white text-white transition-colors focus:outline-none hover:bg-white hover:text-[color:#436bb0] ${
-        on ? "bg-white" : ""
+      className={`relative flex h-10 items-center justify-center rounded-full border border-white transition-colors focus:outline-none ${
+        suffix ? "w-14" : "w-10"
       }`}
-      style={on ? { color: HEADER_BG } : undefined}
+      style={{ backgroundColor: bg, color: fg }}
     >
       <span className={suffix ? "absolute left-2" : ""}>
         <EighthNoteIcon size={18} />
@@ -956,7 +995,7 @@ function SongHamburgerMenu({
                 audios?.map((f) => (
                   <li key={f.id}>
                     <SongMenuItem
-                      icon={<MusicIcon />}
+                      icon={<SpeakerIcon />}
                       label={`Reproducir ${f.label ?? "audio"}`}
                       onSelect={() => {
                         void pickAudio(f);

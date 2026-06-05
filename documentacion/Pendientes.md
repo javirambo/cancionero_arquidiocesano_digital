@@ -17,7 +17,8 @@
     4. cantos
 
 [X] el popup mas chico, que se vea atras
+[X] arreglar lo que dijo Diego...
+[X] menu en vista de cancion->reproducir audio o youtube colocar un parlante
 
 [ ] buscar liturgia-rosario.com
 
-[ ] arreglar lo que dijo Diego...

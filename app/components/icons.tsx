@@ -223,6 +223,16 @@ export function MusicIcon(): ReactElement {
   );
 }
 
+export function SpeakerIcon(): ReactElement {
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M11 5 6 9H2v6h4l5 4z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18.5 6a8 8 0 0 1 0 12" />
+    </svg>
+  );
+}
+
 export function EyeIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true">
