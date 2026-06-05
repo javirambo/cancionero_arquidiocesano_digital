@@ -497,7 +497,9 @@ function SongToolbar({
                   className="min-w-8 rounded-full px-1 text-center text-sm normal-case text-white transition-opacity disabled:opacity-60"
                 >
                   {semitones === 0
-                    ? originalKey ?? "Tono"
+                    ? originalKey
+                      ? transposeChord(originalKey, 0, effectiveSystem)
+                      : "Tono"
                     : `${semitones > 0 ? "+" : ""}${semitones}`}
                 </button>
                 <ToolbarButton
