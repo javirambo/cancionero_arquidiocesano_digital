@@ -440,6 +440,11 @@ export function AnuncioForm({
               )}
             </select>
           </Field>
+          {form.kind === "indicaciones" && !form.featured && (
+            <p className="col-start-3 -mt-1 text-xs font-semibold normal-case text-warning">
+              Este aviso se verá solo en ORIENTACIONES LITÚRGICAS
+            </p>
+          )}
         </div>
         <ImageUploadField
           value={form.image_path}

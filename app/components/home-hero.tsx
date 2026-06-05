@@ -18,7 +18,7 @@ export function HeroContent() {
         CANCIONERO ARQUIDIOCESANO
       </h1>
       <p className="max-w-2xl text-lg italic leading-8 text-muted-foreground normal-case">
-        «Cantando y celebrando al Señor de todo corazón» Ef 5,19
+        «Cantando y celebrando al Señor de todo corazón» Ef&nbsp;5,19
       </p>
       <p className="max-w-2xl text-base leading-7 text-muted-foreground normal-case">
         Un recurso común para coros, músicos y fieles de toda la Arquidiócesis,

@@ -19,20 +19,25 @@ type Props = {
    * o "De la Arquidiócesis".
    */
   badge?: string | null;
+  /**
+   * Oculta el subtítulo con el nombre de la parroquia. Útil cuando el contexto
+   * ya implica la procedencia (p. ej. el bloque de avisos diocesanos en la home).
+   */
+  hideParish?: boolean;
 };
 
-export function PlaylistCard({ playlist, badge }: Props) {
+export function PlaylistCard({ playlist, badge, hideParish }: Props) {
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite("playlist", playlist.id);
 
   return (
-    <li className="relative">
+    <li className="relative h-full">
       <CardWithImage
         imagePath={playlist.image_path ?? null}
         href={`/playlists/${playlist.id}`}
       >
         <span className="text-base text-page-title pr-10">{playlist.name}</span>
-        {playlist.parish && !badge && (
+        {playlist.parish && !badge && !hideParish && (
           <span className="text-sm normal-case text-secondary">
             {playlist.parish.name}
           </span>

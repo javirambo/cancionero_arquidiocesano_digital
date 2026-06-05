@@ -765,6 +765,90 @@ export async function loadFeaturedAnnouncementPopup(): Promise<Featured | null> 
   return items[0] ?? null;
 }
 
+// Devuelve el conjunto de announcement_ids que tienen al menos una parroquia
+// vinculada (es decir, NO son globales/diocesanos).
+async function getScopedAnnouncementIds(ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("announcement_parishes")
+    .select("announcement_id")
+    .in("announcement_id", ids);
+  return new Set((data ?? []).map((l) => l.announcement_id as string));
+}
+
+// AVISOS (home): anuncios diocesanos = globales (sin parroquia vinculada),
+// litúrgicos + comunes mezclados, ordenados por prioridad. Excluye las
+// indicaciones no destacadas (esas viven en /orientaciones-liturgicas).
+export async function listDiocesanAnnouncements(
+  limit?: number
+): Promise<{ items: Featured[]; total: number }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
+    )
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  const scoped = await getScopedAnnouncementIds(all.map((r) => r.id));
+  const globals = all.filter(
+    (r) =>
+      !scoped.has(r.id) && (r.kind !== "indicaciones" || r.featured)
+  );
+  const sched = await loadSchedules("announcement", globals.map((r) => r.id));
+  const visibles = globals.filter((r) => isVisibleNow(sched.get(r.id)));
+  const rows = limit ? visibles.slice(0, limit) : visibles;
+  const items = await resolveAnnouncementHrefs(rows);
+  return { items, total: visibles.length };
+}
+
+// AVISOS PARROQUIALES (home): anuncios vinculados a alguna de las parroquias
+// del usuario actual (excluye globales/diocesanos). Ordenados por prioridad.
+export async function listParishOnlyAnnouncements(
+  limit?: number
+): Promise<{ items: Featured[]; total: number }> {
+  const userParishes = await getCurrentUserParishIds();
+  if (userParishes.size === 0) return { items: [], total: 0 };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
+    )
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  // Mapa announcement_id -> parroquias vinculadas.
+  const { data: links } = await supabase
+    .from("announcement_parishes")
+    .select("announcement_id, parish_id")
+    .in("announcement_id", all.map((r) => r.id));
+  const byAnn = new Map<string, Set<string>>();
+  for (const l of links ?? []) {
+    const annId = l.announcement_id as string;
+    if (!byAnn.has(annId)) byAnn.set(annId, new Set());
+    byAnn.get(annId)!.add(l.parish_id as string);
+  }
+  const scopedToUser = all.filter((r) => {
+    const parishes = byAnn.get(r.id);
+    if (!parishes || parishes.size === 0) return false; // global -> no acá
+    for (const p of parishes) if (userParishes.has(p)) return true;
+    return false;
+  });
+  const sched = await loadSchedules(
+    "announcement",
+    scopedToUser.map((r) => r.id)
+  );
+  const visibles = scopedToUser.filter((r) => isVisibleNow(sched.get(r.id)));
+  const rows = limit ? visibles.slice(0, limit) : visibles;
+  const items = await resolveAnnouncementHrefs(rows);
+  return { items, total: visibles.length };
+}
+
 // Compat: la home anterior llamaba listActiveFeatured (5 items, kind null).
 export async function listActiveFeatured(): Promise<Featured[]> {
   const { items } = await listCommonAnnouncements(5);

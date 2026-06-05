@@ -53,20 +53,14 @@ export default async function AboutPage() {
         </p>
       </section>
 
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex w-full justify-center">
         <Image
-          src="/logo-arquidiocesis.png"
-          alt="Arquidiócesis de Rosario"
-          width={1024}
-          height={1024}
-          className="h-auto w-full max-w-sm"
+          src="/logo-comis-full.png"
+          alt="Comisión Arquidiocesana de Liturgia"
+          width={1855}
+          height={926}
+          className="h-auto w-full max-w-[14rem]"
         />
-        <p
-          className="text-center text-2xl font-bold text-foreground"
-          style={{ fontFamily: "Arial, sans-serif" }}
-        >
-          Arzobispado de Rosario
-        </p>
       </div>
 
       <section
@@ -97,6 +91,22 @@ export default async function AboutPage() {
           {contactEmail && <CopyEmailButton email={contactEmail} />}
         </div>
       </section>
+
+      <div className="flex flex-col items-center gap-2">
+        <Image
+          src="/logo-arquidiocesis.png"
+          alt="Arquidiócesis de Rosario"
+          width={1280}
+          height={1365}
+          className="h-auto w-20"
+        />
+        <p
+          className="text-center text-xs font-bold text-foreground"
+          style={{ fontFamily: "Arial, sans-serif" }}
+        >
+          Arzobispado de Rosario
+        </p>
+      </div>
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { slugify } from "@/lib/slug";
 import type {
   AdminSongDetail,
   AdminSongFile,
@@ -37,6 +38,32 @@ function toFormState(song: AdminSongDetail): SongFormState {
     original_key: song.original_key ?? "",
     body: song.body,
   };
+}
+
+// Slug placeholder que genera el RPC `create_blank_song` al crear una canción
+// en blanco: "nueva-cancion-<timestamp>". Mientras el slug siga este patrón,
+// la canción nunca recibió un slug derivado de su título real.
+const PLACEHOLDER_SLUG_RE = /^nueva-cancion-\d+$/;
+
+// Genera un slug único a partir del título, evitando colisiones con otras
+// canciones (excluye la propia por id). Si "mi-canto" existe, prueba
+// "mi-canto-2", "mi-canto-3", etc.
+async function uniqueSlugFromTitle(
+  supabase: ReturnType<typeof createClient>,
+  title: string,
+  selfId: string
+): Promise<string> {
+  const base = slugify(title) || "canto";
+  const { data } = await supabase
+    .from("songs")
+    .select("id, slug")
+    .like("slug", `${base}%`)
+    .neq("id", selfId);
+  const taken = new Set((data ?? []).map((r) => r.slug as string));
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}-${n}`)) n++;
+  return `${base}-${n}`;
 }
 
 export function SongForm({
@@ -89,9 +116,14 @@ export function SongForm({
     const numberVal = form.number.trim() === "" ? null : Number(form.number);
     const tempoVal =
       form.tempo_bpm.trim() === "" ? null : Number(form.tempo_bpm);
+    const title = form.title.trim();
 
-    const payload = {
-      title: form.title.trim(),
+    // Si la canción todavía tiene el slug placeholder de creación
+    // ("nueva-cancion-<timestamp>"), lo reemplazamos por uno derivado del
+    // título real al guardar. Las canciones con slug ya personalizado no se
+    // tocan para no romper URLs existentes.
+    const payload: Record<string, unknown> = {
+      title,
       number: numberVal,
       author_id: form.author_id || null,
       author2_id: form.author2_id || null,
@@ -100,6 +132,9 @@ export function SongForm({
       original_key: form.original_key.trim() || null,
       body: form.body,
     };
+    if (PLACEHOLDER_SLUG_RE.test(song.slug)) {
+      payload.slug = await uniqueSlugFromTitle(supabase, title, song.id);
+    }
 
     const { error: updateErr } = await supabase
       .from("songs")

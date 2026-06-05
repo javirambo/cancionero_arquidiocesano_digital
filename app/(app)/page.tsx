@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
-  listCommonAnnouncements,
-  listLiturgicalAnnouncements,
+  listDiocesanAnnouncements,
+  listParishOnlyAnnouncements,
   listPublicCategories,
   listSongsPaged,
   loadFeaturedAnnouncementPopup,
@@ -73,9 +73,9 @@ export default async function Home() {
     primaryParishPlaylists,
     otherParishPlaylists,
     archdiocesan,
-    liturgical,
+    diocesanAnnouncements,
     songsResult,
-    novedades,
+    parishAnnouncements,
     songCategories,
     featuredPopup,
   ] = await Promise.all([
@@ -83,7 +83,7 @@ export default async function Home() {
       ? listPlaylistsForParish(primaryParish.id, {
           parishSlug: primaryParish.slug,
           excludeArchdiocesan: true,
-          limit: PREVIEW,
+          limit: PLAYLIST_HOME_LIMIT,
         })
       : Promise.resolve([]),
     Promise.all(
@@ -91,14 +91,14 @@ export default async function Home() {
         listPlaylistsForParish(par.id, {
           parishSlug: par.slug,
           excludeArchdiocesan: true,
-          limit: PREVIEW,
+          limit: PLAYLIST_HOME_LIMIT,
         }).then((items) => ({ parish: par, items }))
       )
     ),
-    listArchdiocesanPlaylists({ limit: PREVIEW }),
-    listLiturgicalAnnouncements(PREVIEW, "home"),
+    listArchdiocesanPlaylists({ limit: PLAYLIST_HOME_LIMIT }),
+    listDiocesanAnnouncements(PREVIEW),
     listSongsPaged(1, SONGS_PAGE_SIZE),
-    listCommonAnnouncements(PREVIEW, "home"),
+    listParishOnlyAnnouncements(PREVIEW),
     listPublicCategories(),
     loadFeaturedAnnouncementPopup(),
   ]);
@@ -109,7 +109,41 @@ export default async function Home() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12">
         <HomeHero />
 
-        {/* Playlists: una sola sección mezclada, dedupe, máximo 4. */}
+        {/* 1. AVISOS: avisos diocesanos (orden de prioridad) + playlists
+            diocesanas debajo. */}
+        {(diocesanAnnouncements.items.length > 0 || archdiocesan.length > 0) && (
+          <section className="flex flex-col gap-6">
+            <h2 className="text-xl text-page-title">Avisos</h2>
+            {diocesanAnnouncements.items.length > 0 && (
+              <ul className="grid gap-3">
+                {diocesanAnnouncements.items.map((a) => (
+                  <li key={a.id}>
+                    <AnnouncementCard item={a} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {archdiocesan.length > 0 && (
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {archdiocesan.slice(0, PLAYLIST_HOME_LIMIT).map((p) => (
+                  <PlaylistCard
+                    key={p.id}
+                    hideParish
+                    playlist={{
+                      id: p.id,
+                      name: p.name,
+                      description: p.description,
+                      image_path: p.image_path,
+                      parish: p.parish,
+                    }}
+                  />
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {/* 2. SELECCIÓN PARROQUIAL: playlists que NO son diocesanas. */}
         {(() => {
           const merged: PlaylistSummary[] = [];
           const seen = new Set<string>();
@@ -120,7 +154,6 @@ export default async function Home() {
           };
           primaryParishPlaylists.forEach(push);
           otherParishPlaylists.forEach((g) => g.items.forEach(push));
-          archdiocesan.forEach(push);
           if (merged.length === 0) return null;
           return (
             <PlaylistsSection
@@ -131,28 +164,10 @@ export default async function Home() {
           );
         })()}
 
-        {/* Anuncios litúrgicos. En la home excluimos kind=indicaciones
-            salvo que el anuncio esté destacado (featured=true); el resto
-            de indicaciones vive en /orientaciones-liturgicas. */}
-        {(() => {
-          const items = liturgical.items.filter(
-            (it) => it.kind !== "indicaciones" || it.featured
-          );
-          if (items.length === 0) return null;
-          return (
-            <AnnouncementsSection
-              heading="Avisos"
-              items={items}
-              total={items.length}
-              seeAllHref="/novedades"
-            />
-          );
-        })()}
-
-        {/* Atajos a categorías de cantos */}
+        {/* 3. CATEGORÍAS: atajos a categorías de cantos */}
         <SongCategoryShortcuts categories={songCategories} />
 
-        {/* Canciones */}
+        {/* 4. CANTOS */}
         <SongsFrame
           initialItems={songsResult.items}
           initialTotal={songsResult.total}
@@ -161,12 +176,13 @@ export default async function Home() {
           showSeeAll={false}
         />
 
-        {/* Novedades */}
-        {novedades.items.length > 0 && (
+        {/* 5. AVISOS PARROQUIALES: solo anuncios de las parroquias del usuario. */}
+        {parishAnnouncements.items.length > 0 && (
           <AnnouncementsSection
-            heading="Avisos"
-            items={novedades.items}
-            total={novedades.total}
+            heading="Avisos parroquiales"
+            subheading={primaryParish?.name}
+            items={parishAnnouncements.items}
+            total={parishAnnouncements.total}
             seeAllHref="/novedades"
           />
         )}
@@ -225,11 +241,13 @@ function PlaylistsSection({
 
 function AnnouncementsSection({
   heading,
+  subheading,
   items,
   total,
   seeAllHref,
 }: {
   heading: string;
+  subheading?: string;
   items: ReturnType<typeof Object>;
   total: number;
   seeAllHref: string;
@@ -238,7 +256,14 @@ function AnnouncementsSection({
   const list = items as import("@/lib/songs").Featured[];
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-xl text-page-title">{heading}</h2>
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-xl text-page-title">{heading}</h2>
+        {subheading && (
+          <span className="text-sm normal-case text-secondary">
+            {subheading}
+          </span>
+        )}
+      </div>
       <ul className="grid gap-3">
         {list.map((item, i) => (
           <li key={i}>
@@ -269,19 +294,26 @@ function SongCategoryShortcuts({
   if (shortcuts.length === 0) return null;
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
-      {shortcuts.map((c) => (
-        <li key={c.slug}>
-          <Link
-            href={`/canciones?cat=${c.slug}`}
-            title={c.description ?? undefined}
-            className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-base uppercase text-page-title transition-opacity hover:opacity-90"
-          >
-            {c.name}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <section className="flex flex-col gap-4">
+      <h2 className="text-xl text-page-title">Categorías</h2>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {shortcuts.map((c) => {
+          // El tooltip muestra solo el texto previo al marcador ">>>".
+          const tooltip = c.description?.split(">>>")[0].trim() || undefined;
+          return (
+          <li key={c.slug}>
+            <Link
+              href={`/canciones?cat=${c.slug}`}
+              title={tooltip}
+              className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-base uppercase text-page-title transition-opacity hover:opacity-90"
+            >
+              {c.name}
+            </Link>
+          </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

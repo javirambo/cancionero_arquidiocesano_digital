@@ -10,7 +10,7 @@ type Props = {
 
 export function PlaylistView({ playlist }: Props) {
   const sorted = useMemo(() => {
-    const arr = [...playlist.songs];
+    const arr = playlist.songs.filter((s) => s.status === "published");
     arr.sort((a, b) => a.position - b.position);
     return arr;
   }, [playlist.songs]);
@@ -23,18 +23,13 @@ export function PlaylistView({ playlist }: Props) {
         </p>
       ) : (
         <ol className="flex flex-col divide-y divide-border rounded-xl border border-border bg-background">
-          {sorted.map((s) => {
-            const unpublished = s.status !== "published";
-            return (
-              <SongRow
-                key={s.id}
-                song={s}
-                playlistContext={{ playlistId: playlist.id, canManage: false }}
-                disabled={unpublished}
-                disabledReason={unpublished ? "no publicada" : undefined}
-              />
-            );
-          })}
+          {sorted.map((s) => (
+            <SongRow
+              key={s.id}
+              song={s}
+              playlistContext={{ playlistId: playlist.id, canManage: false }}
+            />
+          ))}
         </ol>
       )}
     </>

@@ -21,9 +21,9 @@ export function CardWithImage({
   const imageUrl = getPublicImageUrl(imagePath);
 
   const cardClass =
-    "relative flex items-center overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary";
+    "relative flex h-full w-full items-center overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary";
   const staticCardClass =
-    "relative flex items-center overflow-hidden rounded-xl border border-border bg-card";
+    "relative flex h-full w-full items-center overflow-hidden rounded-xl border border-border bg-card";
 
   const imageBlock = imageUrl ? (
     <div className="absolute inset-y-0 left-0 w-[75px] bg-sidebar">

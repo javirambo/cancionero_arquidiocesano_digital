@@ -82,17 +82,18 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
   const ctaLabel = item.href ? CTA_LABEL[item.target_kind] ?? null : null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-2 z-50 sm:inset-3"
-    >
+    <>
       <div
         aria-hidden="true"
-        className="fixed inset-0 -z-10 bg-black/60"
+        className="fixed inset-0 z-40 bg-black/75"
         onClick={dismiss}
       />
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="fixed left-1/2 top-1/2 z-50 h-[50vh] w-[80vw] -translate-x-1/2 -translate-y-1/2"
+      >
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-background">
         <div className="flex-1 overflow-y-auto">
           {imgUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -119,37 +120,38 @@ export function FeaturedAnnouncementPopup({ item }: { item: Featured }) {
           </div>
         </div>
 
-        {item.href && ctaLabel && (
-          <div className="flex justify-center border-t border-border bg-sidebar px-6 py-4">
-            {isExternal ? (
-              <a
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-primary bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground shadow-md hover:opacity-90"
-              >
-                {ctaLabel}
-              </a>
-            ) : (
-              <Link
-                href={item.href}
-                className="rounded-full border border-primary bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground shadow-md hover:opacity-90"
-              >
-                {ctaLabel}
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
+          {item.href && ctaLabel && (
+            <div className="flex justify-center border-t border-border bg-sidebar px-6 py-4">
+              {isExternal ? (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-primary bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground shadow-md hover:opacity-90"
+                >
+                  {ctaLabel}
+                </a>
+              ) : (
+                <Link
+                  href={item.href}
+                  className="rounded-full border border-primary bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground shadow-md hover:opacity-90"
+                >
+                  {ctaLabel}
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
 
-      <button
-        type="button"
-        aria-label="Cerrar"
-        onClick={dismiss}
-        className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-lg font-semibold text-foreground shadow-md backdrop-blur hover:border-primary hover:text-primary"
-      >
-        ✕
-      </button>
-    </div>
+        <button
+          type="button"
+          aria-label="Cerrar"
+          onClick={dismiss}
+          className="absolute -left-5 -top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-lg font-semibold text-foreground shadow-md hover:border-primary hover:text-primary"
+        >
+          ✕
+        </button>
+      </div>
+    </>
   );
 }
