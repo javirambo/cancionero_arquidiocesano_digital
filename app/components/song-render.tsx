@@ -55,11 +55,13 @@ export function LineView({
   return (
     <div className="mt-5 flex flex-wrap items-end leading-tight">
       {segments.map((seg, i) => (
-        <span key={i} className="inline-flex flex-col">
+        <span key={i} className="inline-flex min-w-0 flex-col">
           <span className="-mb-0.5 text-[0.875em] font-bold leading-none text-primary">
             {seg.chord ?? " "}
           </span>
-          <span className="whitespace-pre">{seg.text || " "}</span>
+          <span className="whitespace-pre-wrap break-words">
+            {seg.text || " "}
+          </span>
         </span>
       ))}
     </div>

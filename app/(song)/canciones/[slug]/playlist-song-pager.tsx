@@ -286,11 +286,16 @@ function Panel({
   isCurrent?: boolean;
 }) {
   if (!song) {
-    return <div style={{ width: "100vw", flex: "0 0 100vw" }} aria-hidden />;
+    return (
+      <div
+        style={{ width: "100vw", flex: "0 0 100vw", overflowX: "hidden" }}
+        aria-hidden
+      />
+    );
   }
   return (
     <div
-      style={{ width: "100vw", flex: "0 0 100vw" }}
+      style={{ width: "100vw", flex: "0 0 100vw", overflowX: "hidden" }}
       aria-hidden={!isCurrent}
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col px-4">
