@@ -296,7 +296,7 @@ function SongCategoryShortcuts({
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-xl text-page-title">Categorías</h2>
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {shortcuts.map((c) => {
           // El tooltip muestra solo el texto previo al marcador ">>>".
           const tooltip = c.description?.split(">>>")[0].trim() || undefined;
@@ -305,7 +305,7 @@ function SongCategoryShortcuts({
             <Link
               href={`/canciones?cat=${c.slug}`}
               title={tooltip}
-              className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-base uppercase text-page-title transition-opacity hover:opacity-90"
+              className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-sm uppercase text-page-title transition-opacity hover:opacity-90"
             >
               {c.name}
             </Link>

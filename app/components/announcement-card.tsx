@@ -1,5 +1,6 @@
 import type { Featured } from "@/lib/songs";
 import { CardWithImage } from "./card-with-image";
+import { ExpandableText } from "./expandable-text";
 import { SimpleMarkdown } from "./simple-markdown";
 
 const KIND_LABEL: Record<string, string> = {
@@ -27,10 +28,12 @@ export function AnnouncementCard({ item }: { item: Featured }) {
       )}
       <p className="text-base text-page-title">{item.title}</p>
       {item.body && (
-        <SimpleMarkdown
-          text={item.body}
+        <ExpandableText
           className="mt-1 text-sm normal-case leading-6 text-muted-foreground"
-        />
+          maxLines={4}
+        >
+          <SimpleMarkdown text={item.body} />
+        </ExpandableText>
       )}
     </CardWithImage>
   );
