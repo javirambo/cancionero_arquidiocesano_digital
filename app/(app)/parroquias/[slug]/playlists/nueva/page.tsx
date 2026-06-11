@@ -59,6 +59,7 @@ export default async function NuevaPlaylistPage({
           schedules: [],
           visibility: "public",
           is_archdiocesan: parish.slug === "arquidiocesis",
+          sort_order: 0,
         }}
       />
     </main>

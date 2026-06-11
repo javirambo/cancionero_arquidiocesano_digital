@@ -223,7 +223,7 @@ export function SiteHeader() {
   const { favorites } = useFavorites();
   const { active: wakeLockActive, supported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
   const { isAdmin, isEditor } = useUserRoles();
-  const { title } = useHomeTitle();
+  const { title, brand } = useHomeTitle();
   const [displayTitle, setDisplayTitle] = useState(title);
   const [titleVisible, setTitleVisible] = useState(true);
 
@@ -305,24 +305,52 @@ export function SiteHeader() {
       className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border`}
     >
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between py-1 pl-6 pr-2">
-        <Link href="/" className="-ml-3.5 flex items-center gap-3" aria-label={displayTitle}>
-          <Image
-            src="/logo-comis-cordero.png"
-            alt=""
-            width={90}
-            height={90}
-            priority
-            className="h-10 w-auto"
-          />
-          <Image
-            src="/logo-comis-liturgia.png"
-            alt="Comisión de Liturgia"
-            width={300}
-            height={100}
-            priority
-            className="h-8 w-auto"
-          />
-        </Link>
+        {brand ? (
+          <Link
+            href={brand.href}
+            className="flex min-w-0 items-center gap-3"
+            aria-label={brand.name}
+          >
+            {brand.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={brand.logoUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-10 w-10 shrink-0 rounded-full border border-white/40 object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/10 text-lg text-white"
+              >
+                {brand.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="min-w-0 truncate text-sm font-semibold text-white">
+              {brand.name}
+            </span>
+          </Link>
+        ) : (
+          <Link href="/" className="-ml-3.5 flex items-center gap-3" aria-label={displayTitle}>
+            <Image
+              src="/logo-comis-cordero.png"
+              alt=""
+              width={90}
+              height={90}
+              priority
+              className="h-10 w-auto"
+            />
+            <Image
+              src="/logo-comis-liturgia.png"
+              alt="Comisión de Liturgia"
+              width={300}
+              height={100}
+              priority
+              className="h-8 w-auto"
+            />
+          </Link>
+        )}
 
         <div className="flex items-center gap-1">
           <CircleButton

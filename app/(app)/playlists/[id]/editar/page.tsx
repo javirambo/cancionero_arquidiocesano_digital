@@ -100,6 +100,7 @@ export default async function EditarPlaylistPage({
             image_path: pl.image_path,
             visibility: pl.visibility,
             is_archdiocesan: pl.is_archdiocesan,
+            sort_order: pl.sort_order,
             schedules: schedules.map((s) => ({
               date_mode: s.date_mode,
               weekdays: s.weekdays,

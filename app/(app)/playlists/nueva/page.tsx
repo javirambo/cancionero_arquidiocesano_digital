@@ -47,6 +47,7 @@ export default async function NuevaPlaylistPage({
             schedules: [],
             visibility: "unlisted",
             is_archdiocesan: false,
+            sort_order: 0,
           }}
         />
       </CreateLayout>
@@ -85,6 +86,7 @@ export default async function NuevaPlaylistPage({
               schedules: [],
               visibility: "public",
               is_archdiocesan: false,
+              sort_order: 0,
             }}
           />
         </CreateLayout>
@@ -113,6 +115,7 @@ export default async function NuevaPlaylistPage({
               schedules: [],
               visibility: "public",
               is_archdiocesan: true,
+              sort_order: 0,
             }}
           />
         </CreateLayout>
@@ -152,6 +155,7 @@ export default async function NuevaPlaylistPage({
             schedules: [],
             visibility: "public",
             is_archdiocesan: true,
+            sort_order: 0,
           }}
         />
       </CreateLayout>
@@ -188,6 +192,7 @@ export default async function NuevaPlaylistPage({
             schedules: [],
             visibility: "public",
             is_archdiocesan: false,
+            sort_order: 0,
           }}
         />
       </CreateLayout>
@@ -213,6 +218,7 @@ export default async function NuevaPlaylistPage({
             schedules: [],
             visibility: "public",
             is_archdiocesan: false,
+            sort_order: 0,
           }}
         />
       </CreateLayout>
@@ -235,6 +241,7 @@ export default async function NuevaPlaylistPage({
           schedules: [],
           visibility: "unlisted",
           is_archdiocesan: false,
+          sort_order: 0,
         }}
       />
     </CreateLayout>

@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getParishBySlug, listAnnouncementsForParish } from "@/lib/songs";
+import {
+  getParishBySlug,
+  listAnnouncementsForParish,
+  listSongsPaged,
+  listPublicCategories,
+} from "@/lib/songs";
 import { listPlaylistsForParish } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
 import { AnnouncementCard } from "@/app/components/announcement-card";
+import { SongsFrame } from "@/app/components/songs-frame";
+import { ParishHeaderBranding } from "./parish-header-branding";
+import { ParishDetails } from "./parish-details";
+
+const SONGS_PAGE_SIZE = 50;
 
 export default async function ParroquiaPage({
   params,
@@ -15,7 +25,15 @@ export default async function ParroquiaPage({
   const parish = await getParishBySlug(slug);
   if (!parish) notFound();
 
-  const playlists = await listPlaylistsForParish(parish.id, { parishSlug: parish.slug });
+  const [playlists, songsResult, songCategories, parishAnnouncements] =
+    await Promise.all([
+      listPlaylistsForParish(parish.id, { parishSlug: parish.slug }),
+      listSongsPaged(1, SONGS_PAGE_SIZE),
+      listPublicCategories(),
+      // Los avisos de la parroquia son públicos (RLS abierta desde mig.
+      // 0035): se cargan para cualquier visitante, incluso sin sesión.
+      listAnnouncementsForParish(parish.id),
+    ]);
   const previewPlaylists = playlists.slice(0, 4);
 
   const supabase = await createClient();
@@ -29,9 +47,6 @@ export default async function ParroquiaPage({
   let isAdmin = false;
   let isEditor = false;
   let isCoordinatorOfThisParish = false;
-  let parishAnnouncements: Awaited<
-    ReturnType<typeof listAnnouncementsForParish>
-  > = { items: [], total: 0 };
 
   if (user) {
     const [memberRes, rolesRes] = await Promise.all([
@@ -47,7 +62,6 @@ export default async function ParroquiaPage({
         .eq("user_id", user.id),
     ]);
     if (memberRes.data) {
-      parishAnnouncements = await listAnnouncementsForParish(parish.id);
       isCoordinatorOfThisParish = memberRes.data.role === "coordinator";
     }
     const roleNames =
@@ -154,7 +168,14 @@ type ContactGroup = {
 
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 pb-12 pt-4">
+      <ParishHeaderBranding
+        brand={{
+          name: parish.name,
+          logoUrl: parish.logo_url ?? null,
+          href: `/parroquias/${parish.slug}`,
+        }}
+      />
       <header className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
@@ -205,79 +226,21 @@ type ContactGroup = {
           <h1 className="min-w-0 text-3xl text-page-title">{parish.name}</h1>
         </div>
 
-        <dl className="flex flex-col gap-1 text-sm normal-case text-muted-foreground">
-          {(parish.address || parish.city) && (
-            <div>{[parish.address, parish.city].filter(Boolean).join(", ")}</div>
-          )}
-          {parish.description && (
-            <div className="max-w-2xl whitespace-pre-line border-l-2 border-destructive pl-3 text-base italic">
-              {parish.description}
-            </div>
-          )}
-          {parish.parent_id && parish.parent?.name && (
-            <div>Sede: {parish.parent.name}</div>
-          )}
-          {(parish.email || parish.phone) && (
-            <div className="flex flex-wrap items-center gap-x-2">
-              {parish.email && (
-                <span>
-                  Correo:{" "}
-                  <a
-                    href={`mailto:${parish.email}`}
-                    className="hover:text-primary hover:underline"
-                  >
-                    {parish.email}
-                  </a>
-                </span>
-              )}
-              {parish.email && parish.phone && <span aria-hidden="true">·</span>}
-              {parish.phone && (
-                <span>
-                  Tel:{" "}
-                  <a
-                    href={`tel:${parish.phone}`}
-                    className="hover:text-primary hover:underline"
-                  >
-                    {parish.phone}
-                  </a>
-                </span>
-              )}
-            </div>
-          )}
-          {parish.url && (
-            <div>
-              <a
-                href={parish.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-primary hover:underline"
-              >
-                <span>{prettyHost(parish.url)}</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-3.5 w-3.5"
-                  aria-hidden="true"
-                >
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
-            </div>
-          )}
-        </dl>
+        <ParishDetails
+          address={parish.address ?? null}
+          city={parish.city ?? null}
+          description={parish.description ?? null}
+          parentName={parish.parent_id ? parish.parent?.name ?? null : null}
+          email={parish.email ?? null}
+          phone={parish.phone ?? null}
+          url={parish.url ?? null}
+        />
       </header>
 
       <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="playlists-heading" className="text-xl">
-            Listas
+          <h2 id="playlists-heading" className="text-xl text-page-title">
+            Listas de cantos
           </h2>
           <div className="flex items-center gap-3">
             {playlists.length > previewPlaylists.length && (
@@ -339,7 +302,7 @@ type ContactGroup = {
           className="flex flex-col gap-4"
         >
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 id="anuncios-heading" className="text-xl">
+            <h2 id="anuncios-heading" className="text-xl text-page-title">
               Avisos
             </h2>
             {isCoordinatorOfThisParish && (
@@ -367,13 +330,21 @@ type ContactGroup = {
         </section>
       )}
 
+      <SongsFrame
+        initialItems={songsResult.items}
+        initialTotal={songsResult.total}
+        pageSize={SONGS_PAGE_SIZE}
+        categories={songCategories}
+        showSeeAll={false}
+      />
+
       {contactGroups.length > 0 && (
         <section
           aria-labelledby="contacto-heading"
           className="flex flex-col gap-4"
         >
           <div className="flex flex-col gap-1">
-            <h2 id="contacto-heading" className="text-xl">
+            <h2 id="contacto-heading" className="text-xl text-page-title">
               Contacto
             </h2>
             <p className="text-sm normal-case text-muted-foreground">
@@ -436,12 +407,4 @@ type ContactGroup = {
       )}
     </main>
   );
-}
-
-function prettyHost(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
 }

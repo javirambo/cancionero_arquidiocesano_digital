@@ -267,11 +267,12 @@ Lista de canciones de una parroquia para una celebración o uso general. La URL 
 | `visibility`      | text        | CHECK in ('public','unlisted','private'); default 'public'|
 | `is_archdiocesan` | boolean     | default false. Cuando true (solo si `parish_id` corresponde a la parroquia virtual `arquidiocesis`), la playlist se ve por defecto en todas las parroquias |
 | `image_path`      | text        | NULL permitido. Path dentro del bucket `images` para la imagen de la card (mig. 0023) |
+| `sort_order`      | int         | NOT NULL default 0. Orden de visualización en los listados; menor primero, desempate por `created_at` desc (mig. 0050) |
 | `created_by`      | uuid        | FK → `users.id`                                           |
 | `created_at`      | timestamptz | default now()                                             |
 | `updated_at`      | timestamptz | default now()                                             |
 
-**Índices:** `parish_id`, `is_archdiocesan` (parcial donde true), `name` (GIN unaccent+trgm para búsqueda).
+**Índices:** `parish_id`, `is_archdiocesan` (parcial donde true), `sort_order`, `name` (GIN unaccent+trgm para búsqueda).
 
 **Vigencia temporal:** la fecha/franja en que la playlist se muestra en listados públicos se modela con filas en `entity_schedules` (entity_type='playlist'). Sin filas → siempre visible (default). Las pantallas de admin/configuración omiten este filtro.
 

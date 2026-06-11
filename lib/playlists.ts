@@ -10,6 +10,7 @@ export type PlaylistSummary = {
   image_path: string | null;
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
+  sort_order: number;
   parish: { id: string; name: string; slug: string } | null;
 };
 
@@ -51,7 +52,7 @@ function firstParish(
 }
 
 const PLAYLIST_SELECT =
-  "id, name, description, image_path, visibility, is_archdiocesan, parishes!playlists_parish_id_fkey(id, name, slug)";
+  "id, name, description, image_path, visibility, is_archdiocesan, sort_order, parishes!playlists_parish_id_fkey(id, name, slug)";
 
 function rowToSummary(row: {
   id: string;
@@ -60,6 +61,7 @@ function rowToSummary(row: {
   image_path: string | null;
   visibility: string;
   is_archdiocesan: boolean;
+  sort_order: number;
   parishes: ParishRel;
 }): PlaylistSummary {
   return {
@@ -69,6 +71,7 @@ function rowToSummary(row: {
     image_path: row.image_path,
     visibility: row.visibility as PlaylistSummary["visibility"],
     is_archdiocesan: row.is_archdiocesan,
+    sort_order: row.sort_order,
     parish: firstParish(row.parishes),
   };
 }
@@ -101,6 +104,7 @@ export async function listAllPublicPlaylists(options?: {
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("visibility", "public")
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (error) throw error;
   const all = (data ?? []).map((r) =>
@@ -131,6 +135,7 @@ export async function listArchdiocesanPlaylists(options?: {
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("is_archdiocesan", true)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (error) throw error;
   const all = (data ?? []).map((r) =>
@@ -152,6 +157,7 @@ export async function listMyPlaylistsSections(
     .select(PLAYLIST_SELECT)
     .is("parish_id", null)
     .eq("created_by", userId)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   // 2. Parroquias donde el usuario es miembro.
@@ -189,6 +195,7 @@ export async function listMyPlaylistsSections(
       .from("playlists")
       .select(PLAYLIST_SELECT)
       .eq("parish_id", par.id)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
 
     const subsReq = supabase
@@ -239,6 +246,7 @@ export async function listMyPlaylistsSections(
     .from("playlists")
     .select(PLAYLIST_SELECT)
     .eq("is_archdiocesan", true)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (archErr) throw archErr;
 
@@ -287,7 +295,8 @@ export async function listPlaylistsForParish(parishId: string, options?: {
     .eq("parish_id", parishId);
   const ownReq = (
     options?.excludeArchdiocesan ? ownBase.eq("is_archdiocesan", false) : ownBase
-  ).order("created_at", { ascending: false });
+  ).order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
 
   // 2. Suscriptas (excluye las propias por seguridad).
   const subsReq = supabase
@@ -303,7 +312,8 @@ export async function listPlaylistsForParish(parishId: string, options?: {
         .select(PLAYLIST_SELECT)
         .eq("is_archdiocesan", true)
         .neq("parish_id", parishId)
-        .order("created_at", { ascending: false });
+        .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
   const [ownRes, subsRes, archRes] = await Promise.all([ownReq, subsReq, archReq]);
   if (ownRes.error) throw ownRes.error;

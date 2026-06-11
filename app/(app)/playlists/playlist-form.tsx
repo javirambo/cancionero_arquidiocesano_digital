@@ -16,6 +16,7 @@ export type PlaylistFormData = {
   image_path: string | null;
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
+  sort_order: number;
   schedules: ScheduleInput[];
 };
 
@@ -58,6 +59,7 @@ export function PlaylistForm({
       image_path: null,
       visibility: "public",
       is_archdiocesan: false,
+      sort_order: 0,
       schedules: [],
     }
   );
@@ -110,6 +112,7 @@ export function PlaylistForm({
       image_path: form.image_path,
       visibility: form.visibility,
       is_archdiocesan: selectedIsArchdiocesis,
+      sort_order: form.sort_order,
     };
 
     if (mode === "create") {
@@ -243,6 +246,20 @@ export function PlaylistForm({
             rows={3}
             className={inputClass}
           />
+        </Field>
+        <Field label="Orden">
+          <input
+            type="number"
+            step={1}
+            value={form.sort_order}
+            onChange={(e) =>
+              update("sort_order", Number(e.target.value) || 0)
+            }
+            className={inputClass}
+          />
+          <span className="text-xs normal-case text-muted-foreground">
+            Menor número se muestra primero (0 por defecto).
+          </span>
         </Field>
         <ImageUploadField
           value={form.image_path}
