@@ -308,7 +308,7 @@ export function SiteHeader() {
         {brand ? (
           <Link
             href={brand.href}
-            className="flex min-w-0 items-center gap-3"
+            className="-ml-2 flex min-w-0 items-center gap-3"
             aria-label={brand.name}
           >
             {brand.logoUrl ? (
@@ -327,7 +327,7 @@ export function SiteHeader() {
                 {brand.name.charAt(0).toUpperCase()}
               </span>
             )}
-            <span className="min-w-0 truncate text-sm font-semibold text-white">
+            <span className="line-clamp-2 min-w-0 break-words text-xs font-semibold leading-tight text-white sm:text-sm">
               {brand.name}
             </span>
           </Link>

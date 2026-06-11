@@ -223,7 +223,9 @@ type ContactGroup = {
               avatar
             );
           })()}
-          <h1 className="min-w-0 text-3xl text-page-title">{parish.name}</h1>
+          <h1 className="min-w-0 break-words text-2xl leading-tight text-page-title sm:text-3xl">
+            {parish.name}
+          </h1>
         </div>
 
         <ParishDetails
