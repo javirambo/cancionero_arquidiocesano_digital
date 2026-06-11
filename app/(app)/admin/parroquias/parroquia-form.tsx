@@ -1,9 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slug";
+import {
+  STORAGE_BUCKETS,
+  getPublicImageUrl,
+  getImagePathFromPublicUrl,
+} from "@/lib/supabase/storage";
 
 export type ParishStatus = "active" | "inactive";
 
@@ -24,6 +29,9 @@ export type ParishFormData = {
   longitude: string;
   url: string;
 };
+
+const LOGO_ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 
 type Candidate = {
   name: string;
@@ -79,6 +87,51 @@ export function ParroquiaForm({
     return lat !== "" && lon !== "" ? `${lat}, ${lon}` : "";
   });
   const [coordsError, setCoordsError] = useState<string | null>(null);
+
+  // Subida de logo a Supabase Storage (guarda la URL pública en logo_url).
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  async function handleLogoFile(file: File) {
+    setLogoError(null);
+    if (!LOGO_ACCEPTED.includes(file.type)) {
+      setLogoError("Formato no soportado. Usá JPG, PNG o WEBP.");
+      return;
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      setLogoError("El archivo supera los 2 MB.");
+      return;
+    }
+    setLogoUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `parroquias/${crypto.randomUUID()}.${ext}`;
+    const supabase = createClient();
+    const { error: upErr } = await supabase.storage
+      .from(STORAGE_BUCKETS.images)
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+    setLogoUploading(false);
+    if (upErr) {
+      setLogoError(upErr.message);
+      return;
+    }
+    const publicUrl = getPublicImageUrl(path);
+    if (!publicUrl) {
+      setLogoError("No se pudo generar la URL pública de la imagen.");
+      return;
+    }
+    // Si la imagen anterior estaba en nuestro bucket, ya no se podrá reutilizar:
+    // la borramos para no dejar archivos huérfanos.
+    const prevPath = getImagePathFromPublicUrl(form.logo_url);
+    if (prevPath && prevPath !== path) {
+      await supabase.storage.from(STORAGE_BUCKETS.images).remove([prevPath]);
+    }
+    update("logo_url", publicUrl);
+  }
 
   function handleCoordsChange(value: string) {
     setCoordsInput(value);
@@ -302,6 +355,13 @@ export function ParroquiaForm({
         }
         setSaving(false);
         return;
+      }
+      // Si el logo inicial era una imagen de nuestro bucket y ya no se usa,
+      // la borramos para no dejar archivos huérfanos.
+      const prevPath = getImagePathFromPublicUrl(initial?.logo_url);
+      const nextPath = getImagePathFromPublicUrl(payload.logo_url);
+      if (prevPath && prevPath !== nextPath) {
+        await supabase.storage.from(STORAGE_BUCKETS.images).remove([prevPath]);
       }
       router.push(backHref);
       router.refresh();
@@ -538,7 +598,49 @@ export function ParroquiaForm({
             </select>
           )}
         </Field>
-        <Field label="Logo (URL)">
+        <Field
+          label="Logo (URL)"
+          hint="Subí una imagen o pegá una URL. JPG/PNG/WEBP, hasta 2 MB."
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            {form.logo_url && (
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-sidebar">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={form.logo_url}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover object-center"
+                />
+              </div>
+            )}
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept={LOGO_ACCEPTED.join(",")}
+              disabled={logoUploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleLogoFile(f);
+                e.target.value = "";
+              }}
+              className="sr-only"
+            />
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={logoUploading}
+              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-60"
+            >
+              {form.logo_url ? "Cambiar imagen" : "Subir imagen"}
+            </button>
+          </div>
+          {logoUploading && (
+            <span className="text-xs text-muted-foreground">Subiendo…</span>
+          )}
+          {logoError && (
+            <span className="text-xs text-destructive">{logoError}</span>
+          )}
           <input
             type="url"
             value={form.logo_url}
