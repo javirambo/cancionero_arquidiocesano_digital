@@ -26,6 +26,9 @@ export default async function CancionPage({
   let playlistCtx: {
     name: string;
     playlistId: string;
+    // Destino del item "Inicio": la parroquia dueña si la playlist es de una
+    // parroquia real (no archidiocesana); si no, la home del sitio.
+    homeHref: string;
     keyOverride: string | null;
     prev: { slug: string; title: string } | null;
     next: { slug: string; title: string } | null;
@@ -83,6 +86,10 @@ export default async function CancionPage({
         playlistCtx = {
           name: pl.name,
           playlistId: pl.id,
+          homeHref:
+            pl.parish && !pl.is_archdiocesan
+              ? `/parroquias/${pl.parish.slug}`
+              : "/",
           keyOverride: pl.songs[idx].key_override,
           prev:
             prevIdx >= 0
@@ -107,6 +114,7 @@ export default async function CancionPage({
           songs={playlistCtx.preloadedSongs}
           initialSlug={slug}
           playlistId={playlistCtx.playlistId}
+          homeHref={playlistCtx.homeHref}
         />
       ) : (
         <SongView

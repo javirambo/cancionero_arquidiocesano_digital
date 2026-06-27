@@ -26,6 +26,7 @@ type Props = {
   songs: SongInPlaylist[];
   initialSlug: string;
   playlistId: string;
+  homeHref: string;
 };
 
 const DIRECTION_LOCK_PX = 12;
@@ -43,7 +44,7 @@ type Drag = {
   direction: "horizontal" | "vertical" | null;
 };
 
-export function PlaylistSongPager({ songs, initialSlug, playlistId }: Props) {
+export function PlaylistSongPager({ songs, initialSlug, playlistId, homeHref }: Props) {
   const plQuery = `?pl=${playlistId}`;
 
   const initialIndex = useMemo(() => {
@@ -224,9 +225,9 @@ export function PlaylistSongPager({ songs, initialSlug, playlistId }: Props) {
           touchAction: "pan-y",
         }}
       >
-        <Panel song={prev} plQuery={plQuery} songs={songs} />
-        <Panel song={song} plQuery={plQuery} songs={songs} isCurrent />
-        <Panel song={next} plQuery={plQuery} songs={songs} />
+        <Panel song={prev} plQuery={plQuery} songs={songs} homeHref={homeHref} />
+        <Panel song={song} plQuery={plQuery} songs={songs} homeHref={homeHref} isCurrent />
+        <Panel song={next} plQuery={plQuery} songs={songs} homeHref={homeHref} />
       </div>
       {portalReady &&
         createPortal(
@@ -278,11 +279,13 @@ function Panel({
   song,
   plQuery,
   songs,
+  homeHref,
   isCurrent = false,
 }: {
   song: SongInPlaylist | null;
   plQuery: string;
   songs: SongInPlaylist[];
+  homeHref: string;
   isCurrent?: boolean;
 }) {
   if (!song) {
@@ -310,6 +313,7 @@ function Panel({
           hasFiles={song.hasFiles}
           playlistKeyOverride={song.key_override}
           inPlaylistContext
+          homeHref={homeHref}
           hideToolbar={!isCurrent}
           titleSlot={
             <header className="flex flex-col gap-2">

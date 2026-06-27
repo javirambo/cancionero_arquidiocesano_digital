@@ -6,6 +6,7 @@ import { loadSchedulesForEntity } from "@/lib/schedule.server";
 import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { PlaylistView } from "./playlist-view";
 import { PrecacheButton } from "@/app/components/precache-button";
+import { ParishHeaderBranding } from "@/app/(app)/parroquias/[slug]/parish-header-branding";
 
 export default async function PlaylistPage({
   params,
@@ -63,6 +64,15 @@ export default async function PlaylistPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
+      {pl.parish && !pl.is_archdiocesan && (
+        <ParishHeaderBranding
+          brand={{
+            name: pl.parish.name,
+            logoUrl: pl.parish.logo_url ?? null,
+            href: `/parroquias/${pl.parish.slug}`,
+          }}
+        />
+      )}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl text-page-title">{pl.name}</h1>

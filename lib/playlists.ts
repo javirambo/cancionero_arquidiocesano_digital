@@ -11,7 +11,7 @@ export type PlaylistSummary = {
   visibility: "public" | "unlisted" | "private";
   is_archdiocesan: boolean;
   sort_order: number;
-  parish: { id: string; name: string; slug: string } | null;
+  parish: { id: string; name: string; slug: string; logo_url: string | null } | null;
 };
 
 export type PlaylistWithSongs = PlaylistSummary & {
@@ -40,19 +40,19 @@ function joinAuthors(a: Named, b: Named): string | null {
 }
 
 type ParishRel =
-  | { id: string; name: string; slug: string }
-  | { id: string; name: string; slug: string }[]
+  | { id: string; name: string; slug: string; logo_url: string | null }
+  | { id: string; name: string; slug: string; logo_url: string | null }[]
   | null;
 function firstParish(
   rel: ParishRel
-): { id: string; name: string; slug: string } | null {
+): { id: string; name: string; slug: string; logo_url: string | null } | null {
   if (!rel) return null;
   if (Array.isArray(rel)) return rel[0] ?? null;
   return rel;
 }
 
 const PLAYLIST_SELECT =
-  "id, name, description, image_path, visibility, is_archdiocesan, sort_order, parishes!playlists_parish_id_fkey(id, name, slug)";
+  "id, name, description, image_path, visibility, is_archdiocesan, sort_order, parishes!playlists_parish_id_fkey(id, name, slug, logo_url)";
 
 function rowToSummary(row: {
   id: string;

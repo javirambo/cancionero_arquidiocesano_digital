@@ -44,6 +44,8 @@ type Props = {
   inPlaylistContext?: boolean;
   hideToolbar?: boolean;
   titleSlot?: React.ReactNode;
+  // Destino del item "Inicio" del menú. Por defecto la home del sitio.
+  homeHref?: string;
 };
 
 const STORAGE_KEY_PREFIX = "song:transpose:";
@@ -72,6 +74,7 @@ export function SongView({
   inPlaylistContext = false,
   hideToolbar = false,
   titleSlot,
+  homeHref = "/",
 }: Props) {
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
@@ -237,6 +240,7 @@ export function SongView({
       media={media}
       setMedia={setMedia}
       canEdit={canEdit}
+      homeHref={homeHref}
     />
   ) : null;
 
@@ -382,6 +386,7 @@ type ToolbarProps = {
       | null
   ) => void;
   canEdit: boolean;
+  homeHref: string;
 };
 
 function SongToolbar({
@@ -406,6 +411,7 @@ function SongToolbar({
   media,
   setMedia,
   canEdit,
+  homeHref,
 }: ToolbarProps) {
   return (
     <div
@@ -546,6 +552,7 @@ function SongToolbar({
           hasFiles={hasFiles}
           media={media}
           setMedia={setMedia}
+          homeHref={homeHref}
         />
       </div>
     </div>
@@ -776,6 +783,7 @@ function SongHamburgerMenu({
   hasFiles,
   media,
   setMedia,
+  homeHref,
 }: {
   songId: string;
   songSlug: string;
@@ -786,6 +794,7 @@ function SongHamburgerMenu({
   system: ChordSystem;
   youtubeEmbed: string | null;
   hasFiles: boolean;
+  homeHref: string;
   media:
     | { type: "youtube" }
     | { type: "audio"; src: string; label: string }
@@ -965,7 +974,7 @@ function SongHamburgerMenu({
                   bold
                   onSelect={() => {
                     close();
-                    router.push("/");
+                    router.push(homeHref);
                   }}
                 />
               </li>
