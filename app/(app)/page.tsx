@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   listDiocesanAnnouncements,
   listParishOnlyAnnouncements,
@@ -26,7 +27,12 @@ const SONGS_PAGE_SIZE = 50;
 
 type ParishLite = { id: string; slug: string; name: string };
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ pwa?: string }>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -66,6 +72,13 @@ export default async function Home() {
       others.push(p);
     }
     otherParishes = others.slice(0, 2);
+  }
+
+  // Arranque de la PWA instalada (start_url "/?pwa=1"): si el usuario tiene
+  // parroquia principal, abrir directo ahí. Invitados y usuarios sin parroquia
+  // principal siguen viendo la home.
+  if (sp.pwa === "1" && primaryParish) {
+    redirect(`/parroquias/${primaryParish.slug}`);
   }
 
   // Cargas en paralelo.

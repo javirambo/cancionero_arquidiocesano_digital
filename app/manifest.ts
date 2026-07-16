@@ -5,7 +5,9 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Cancionero Arquidiocesano",
     short_name: "Cancionero",
     description: "Evangelizar a través de la música",
-    start_url: "/",
+    // El "pwa=1" marca que el arranque viene del ícono de la app instalada:
+    // la home lo usa para abrir directo en la parroquia principal del usuario.
+    start_url: "/?pwa=1",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
