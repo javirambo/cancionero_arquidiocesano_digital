@@ -36,8 +36,12 @@ Consecuencia práctica: **los registros DNS se cargan en el panel de Vercel, no 
 
 ## Estado actual
 
-- Delegación a Vercel aplicada el 2026-07-16 (operación `SUCCESSFUL` en Route 53).
-- Vercel configura el A record del apex automáticamente y emite el SSL (Let's Encrypt) solo.
+**Online y funcionando** desde el 2026-07-16.
+
+- `https://liturgia.click` responde HTTP 200 desde el proyecto de Vercel.
+- El registry de `.click` delega a `ns1/ns2.vercel-dns.com`; los resolvers públicos ya lo ven.
+- Vercel configuró el A record del apex automáticamente y emitió el SSL (Let's Encrypt) solo. Lo renueva sin intervención.
+- La hosted zone de Route 53 fue **eliminada** (ver Historial). El DNS vive 100% en Vercel.
 - **Solo el apex** `liturgia.click` está configurado. `www.liturgia.click` **no resuelve** — fue una decisión explícita. Si algún día se quiere, se agrega como dominio aparte en Vercel (Project → Settings → Domains) con redirect al apex.
 
 ## Decisiones y por qué
@@ -104,19 +108,27 @@ Privacy protection **activada** en los tres contactos (registrant, admin, tech),
 
 ## Pendientes
 
-- [ ] **Borrar la hosted zone de Route 53** `Z06918652K3J6I3I97OBZ`. Route 53 la creó automáticamente al registrar el dominio, pero quedó sin uso porque el DNS lo maneja Vercel. Cuesta **USD 0,50/mes** de gusto.
-  **Solo borrarla cuando el registry ya delegue a Vercel** (verificar con el `dig +norecurse` de arriba). Si se borra mientras el registry todavía apunta a los nameservers de AWS, el dominio deja de resolver por completo.
-  ```bash
-  aws route53 delete-hosted-zone --id Z06918652K3J6I3I97OBZ
-  ```
+Ninguno. El setup está cerrado.
+
+Cosas a considerar sólo si el proyecto cambia de escala:
+
+- `www.liturgia.click` (hoy no resuelve, por decisión).
+- Custom domain de Supabase (hoy descartado por costo).
+- Mail desde `@liturgia.click` (requiere SPF/DKIM/DMARC en el DNS de Vercel, y ojo con la reputación de `.click`).
+
+## Historial
+
+- **2026-07-16** — Alta del dominio en Route 53 (USD 3/año, auto-renew, privacy ON). Verificación de ICANN confirmada el mismo día. Route 53 creó automáticamente la hosted zone `Z06918652K3J6I3I97OBZ`.
+- **2026-07-16** — Delegación cambiada a `ns1/ns2.vercel-dns.com`. Vercel configuró el A record y emitió el SSL solo. Sitio online.
+- **2026-07-16** — Hosted zone `Z06918652K3J6I3I97OBZ` eliminada: quedó sin uso al mover el DNS a Vercel y solo generaba costo. Contenía únicamente los `NS`/`SOA` por defecto. La cuenta AWS quedó sin hosted zones.
 
 ## Costos
 
 | Concepto | Costo | Estado |
 |---|---|---|
 | Dominio `.click` | USD 3/año | Activo, auto-renew |
-| Hosted zone Route 53 | USD 0,50/mes | **A eliminar** — no se usa |
 | DNS en Vercel | USD 0 | Activo |
+| Hosted zone Route 53 | USD 0,50/mes | Eliminada 2026-07-16 |
 | Supabase Custom Domain | USD 10/mes + Pro USD 25/mes | Descartado |
 
-Si se elimina la hosted zone, el costo total del dominio queda en **USD 3/año**.
+**Costo total del dominio: USD 3/año.**

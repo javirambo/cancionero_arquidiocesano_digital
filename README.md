@@ -85,7 +85,7 @@ pnpm dev
 bun dev
 
 Production:
-cancionero-arquidiocesano-digital.vercel.app
+https://liturgia.click
 
 ```
 
