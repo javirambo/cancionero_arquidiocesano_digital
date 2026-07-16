@@ -209,10 +209,14 @@ const HamburgerIcon = () => (
   </svg>
 );
 
+// Debe coincidir con la duración de .menu-pop-in / .menu-pop-out en globals.css.
+const MENU_ANIM_MS = 180;
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuRender, setMenuRender] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -266,6 +270,17 @@ export function SiteHeader() {
     setMenuOpen(false);
     window.location.reload();
   };
+
+  // Mantiene el panel montado mientras corre la animación de cierre.
+  useEffect(() => {
+    if (menuOpen) {
+      setMenuRender(true);
+      return;
+    }
+    if (!menuRender) return;
+    const t = setTimeout(() => setMenuRender(false), MENU_ANIM_MS);
+    return () => clearTimeout(t);
+  }, [menuOpen, menuRender]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -376,11 +391,13 @@ export function SiteHeader() {
               ariaExpanded={menuOpen}
             />
 
-            {menuOpen && (
+            {menuRender && (
               <div
                 role="menu"
                 aria-label="Menú de usuario"
-                className="absolute right-0 top-12 z-40 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+                className={`absolute right-0 top-12 z-40 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg ${
+                  menuOpen ? "menu-pop-in" : "menu-pop-out"
+                }`}
               >
                 <ProfileSummary
                   user={user}
