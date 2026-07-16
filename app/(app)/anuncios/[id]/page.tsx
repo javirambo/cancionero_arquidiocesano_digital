@@ -1,8 +1,22 @@
 import { notFound } from "next/navigation";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+// Etiquetas que produce el editor (tiptap StarterKit + Link + Underline).
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "p", "br", "hr",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "strong", "b", "em", "i", "u", "s", "strike",
+    "ul", "ol", "li",
+    "blockquote", "code", "pre",
+    "a", "span", "div",
+  ],
+  allowedAttributes: { a: ["href", "target", "rel"] },
+  allowedSchemes: ["http", "https", "mailto", "tel"],
+};
 
 export default async function AnuncioDocumentoPage({
   params,
@@ -29,10 +43,10 @@ export default async function AnuncioDocumentoPage({
 
   if (!annRes.data || !docRes.data) notFound();
 
-  const safeHtml = DOMPurify.sanitize(docRes.data.content_html as string, {
-    USE_PROFILES: { html: true },
-    ADD_ATTR: ["target", "rel"],
-  });
+  const safeHtml = sanitizeHtml(
+    docRes.data.content_html as string,
+    SANITIZE_OPTIONS
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
