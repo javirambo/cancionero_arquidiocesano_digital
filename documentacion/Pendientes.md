@@ -6,14 +6,18 @@
 # presentacion del cancionero: 1 agosto
 
 - diego hace un power point
-
 - armar una lista para "Misa Nuestra Señora del Rosario"
 - Categorias -> Salmo responsorial esta vacio !
 -    "       -> Adoracion no tiene todos los cantos
 - Preparar un aviso parroquial DEMO
-- 
 
-google-site-verification=yuH-sHGIqe5u_tN-VoVPAEPBLXAteTXCxsYw2ZpcGWc
+# Salmos responsoriales
 
-https://www.corosanclemente.com.ar/
+Permitir ingresar los salmos como aca: https://www.corosanclemente.com.ar/
+
+- imagen con partitura,
+- mp3,
+- salmo completo.
+- descargar todos desde la pagina y colocar 
+>> "© Coro San Clemente – Permitida su copia y distribución con mención de la fuente: www.corosanclemente.com.ar"
 
