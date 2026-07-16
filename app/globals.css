@@ -22,6 +22,11 @@
   --color-song-title: #8b1a1a;
   --color-song-title-hover: #6f1414;
 
+  /* Respuesta del salmo responsorial: la "R." que marca `{R.}` (rojo rúbrica).
+     Es un rojo puro y saturado, a propósito distinto del `song-title`: tiene
+     que saltar dentro del cuerpo del salmo. Aplicar con `text-response`. */
+  --color-response: #d40000;
+
   /* Títulos de páginas (azul medio) */
   --color-page-title: #436baf;
 
@@ -53,6 +58,7 @@
   --color-secondary: #d4ba75;        /* ACENTO aclarado */
   --color-song-title: #d96a6a;
   --color-song-title-hover: #c25555;
+  --color-response: #ff5a5a;         /* rojo rúbrica aclarado para fondo oscuro */
   --color-page-title: #8aa9e0;
   --color-shortcut: #6f91c8;
   --color-info: #60a5fa;
@@ -73,6 +79,7 @@
   --color-secondary: var(--color-secondary);
   --color-song-title: var(--color-song-title);
   --color-song-title-hover: var(--color-song-title-hover);
+  --color-response: var(--color-response);
   --color-page-title: var(--color-page-title);
   --color-shortcut: var(--color-shortcut);
   --color-success: var(--color-success);

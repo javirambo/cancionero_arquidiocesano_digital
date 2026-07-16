@@ -5,12 +5,14 @@ import { detectSystem, parseBody, type ChordLine } from "@/lib/chordpro";
 import type { SongFormState } from "./song-form";
 import { Accordion } from "./accordion";
 import { ChordEditor, type ChordEditorHandle } from "./chord-editor";
+import { LyricsText } from "@/app/components/song-render";
 import {
   ChordsIcon,
   EditIcon,
   EyeIcon,
   HelpIcon,
   RepeatIcon,
+  ResponseIcon,
 } from "@/app/components/icons";
 
 export function LyricsSection({
@@ -37,6 +39,10 @@ export function LyricsSection({
       "{start_of_chorus}",
       "{end_of_chorus}"
     );
+  }
+
+  function insertResponse() {
+    editorRef.current?.insertText("{R.}");
   }
 
   return (
@@ -90,6 +96,12 @@ export function LyricsSection({
                         {"{end_of_chorus}"}
                       </code>
                     </li>
+                    <li>
+                      La respuesta del salmo responsorial se marca con{" "}
+                      <code className="rounded bg-sidebar px-1">{"{R.}"}</code>,
+                      en cualquier parte de la línea. Se ve como una{" "}
+                      <strong className="text-response">R.</strong> roja.
+                    </li>
                   </ul>
                   <p className="mt-2 text-muted-foreground">Ejemplo:</p>
                   <pre className="mt-1 overflow-x-auto rounded bg-sidebar p-2 font-mono text-foreground">
@@ -104,6 +116,16 @@ Abba Padre, venga tu Reino
           <div className="flex flex-wrap items-center gap-2">
             {!preview && (
               <>
+                <button
+                  type="button"
+                  onClick={insertResponse}
+                  aria-label="Insertar respuesta del salmo"
+                  title="Insertar la respuesta del salmo responsorial"
+                  className="flex items-center gap-2 rounded-full border border-primary px-3 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground sm:px-4"
+                >
+                  <ResponseIcon />
+                  <span className="hidden sm:inline">Respuesta</span>
+                </button>
                 <div className="relative">
                   <button
                     type="button"
@@ -302,25 +324,41 @@ function LineView({ line }: { line: ChordLine }) {
     return <div className="h-4" />;
   }
   if (line.chords.length === 0) {
-    return <div>{line.lyrics || " "}</div>;
+    return (
+      <div>
+        {line.lyrics === "" ? (
+          " "
+        ) : (
+          <LyricsText text={line.lyrics} responses={line.responses} />
+        )}
+      </div>
+    );
   }
 
-  const segments: { chord: string | null; text: string }[] = [];
+  const segments: { chord: string | null; text: string; offset: number }[] = [];
   const sortedChords = [...line.chords].sort((a, b) => a.index - b.index);
   let cursor = 0;
   if (sortedChords.length > 0 && sortedChords[0].index > 0) {
-    segments.push({ chord: null, text: line.lyrics.slice(0, sortedChords[0].index) });
+    segments.push({
+      chord: null,
+      text: line.lyrics.slice(0, sortedChords[0].index),
+      offset: 0,
+    });
     cursor = sortedChords[0].index;
   }
   for (let i = 0; i < sortedChords.length; i++) {
     const here = sortedChords[i];
     const nextIdx = sortedChords[i + 1]?.index ?? line.lyrics.length;
     const text = line.lyrics.slice(here.index, nextIdx);
-    segments.push({ chord: here.chord, text });
+    segments.push({ chord: here.chord, text, offset: here.index });
     cursor = nextIdx;
   }
   if (cursor < line.lyrics.length) {
-    segments.push({ chord: null, text: line.lyrics.slice(cursor) });
+    segments.push({
+      chord: null,
+      text: line.lyrics.slice(cursor),
+      offset: cursor,
+    });
   }
 
   return (
@@ -330,7 +368,17 @@ function LineView({ line }: { line: ChordLine }) {
           <span className="-mb-0.5 text-sm font-bold leading-none text-primary">
             {seg.chord ?? " "}
           </span>
-          <span className="whitespace-pre">{seg.text || " "}</span>
+          <span className="whitespace-pre">
+            {seg.text === "" ? (
+              " "
+            ) : (
+              <LyricsText
+                text={seg.text}
+                offset={seg.offset}
+                responses={line.responses}
+              />
+            )}
+          </span>
         </span>
       ))}
     </div>

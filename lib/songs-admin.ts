@@ -44,7 +44,7 @@ export type CategoryOption = { id: string; name: string };
 export type AdminSongFile = {
   id: string;
   song_id: string;
-  kind: "score_pdf" | "audio_mp3" | "audio_ogg" | "other";
+  kind: "score_pdf" | "audio_mp3" | "audio_ogg" | "image" | "other";
   bucket: string;
   path: string;
   label: string | null;

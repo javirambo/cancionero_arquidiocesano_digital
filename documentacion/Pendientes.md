@@ -11,13 +11,11 @@
 -    "       -> Adoracion no tiene todos los cantos
 - Preparar un aviso parroquial DEMO
 
+
 # Salmos responsoriales
 
 Permitir ingresar los salmos como aca: https://www.corosanclemente.com.ar/
 
-- imagen con partitura,
-- mp3,
-- salmo completo.
 - descargar todos desde la pagina y colocar 
 >> "© Coro San Clemente – Permitida su copia y distribución con mención de la fuente: www.corosanclemente.com.ar"
 

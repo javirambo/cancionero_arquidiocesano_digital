@@ -9,12 +9,26 @@ export type ChordLine = {
   chords: ChordToken[];
   // true si la línea está dentro de un bloque {start_of_chorus}…{end_of_chorus}.
   inChorus?: boolean;
+  // Posiciones dentro de `lyrics` donde arranca una respuesta de salmo
+  // responsorial (el texto RESPONSE_TEXT). Ver `{R.}` más abajo.
+  responses?: number[];
 };
+
+// Texto con el que se renderiza la marca de respuesta `{R.}`.
+export const RESPONSE_TEXT = "R.";
 
 // Cada llamada crea su propia regex para evitar bugs de `lastIndex`
 // compartido al reusar un regex global entre `matchAll`/`exec`/`test`.
 function chordRe(): RegExp {
   return /\[([^\]]+)\]/g;
+}
+
+// Tokens inline de una línea: acordes `[Am]` y respuestas de salmo `{R.}`.
+// A diferencia de {soc}/{eoc}, que ocupan la línea entera, `{R.}` puede
+// aparecer en cualquier posición (al inicio del versículo o al final).
+// Tolera espacios, minúscula y la variante sin punto: {R}, { r. }.
+function tokenRe(): RegExp {
+  return /\[([^\]]+)\]|\{\s*R\.?\s*\}/gi;
 }
 
 // Directivas ChordPro de inicio/fin de estribillo (con alias soc/eoc).
@@ -24,18 +38,28 @@ const EOC_RE = /^\s*\{\s*(?:end_of_chorus|eoc)\s*\}\s*$/i;
 
 export function parseLine(line: string): ChordLine {
   const chords: ChordToken[] = [];
+  const responses: number[] = [];
   let lyrics = "";
   let lastEnd = 0;
-  const re = chordRe();
+  const re = tokenRe();
   let m: RegExpExecArray | null;
   while ((m = re.exec(line)) !== null) {
     const matchStart = m.index;
     lyrics += line.slice(lastEnd, matchStart);
-    chords.push({ chord: m[1], index: lyrics.length });
+    if (m[1] !== undefined) {
+      // Acorde: no ocupa lugar en la letra, solo marca una posición.
+      chords.push({ chord: m[1], index: lyrics.length });
+    } else {
+      // Respuesta: sí ocupa lugar, la "R." se lee como parte de la letra.
+      responses.push(lyrics.length);
+      lyrics += RESPONSE_TEXT;
+    }
     lastEnd = matchStart + m[0].length;
   }
   lyrics += line.slice(lastEnd);
-  return { lyrics, chords };
+  const parsed: ChordLine = { lyrics, chords };
+  if (responses.length > 0) parsed.responses = responses;
+  return parsed;
 }
 
 export function parseBody(body: string): ChordLine[] {
@@ -136,6 +160,9 @@ export function transposeLine(
     })),
   };
   if (line.inChorus) result.inChorus = true;
+  // La transposición no toca la letra, así que los índices de las
+  // respuestas siguen siendo válidos tal cual.
+  if (line.responses) result.responses = line.responses;
   return result;
 }
 

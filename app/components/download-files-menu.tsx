@@ -2,11 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { downloadFilename } from "@/lib/supabase/storage";
+import { showsImageInline } from "@/lib/psalms";
 import { DownloadIcon, FilesIcon, MusicIcon, PrinterIcon } from "./icons";
+
+// Kinds que NO se listan como descargables, en el formato que espera el
+// filtro `.not("kind","in", ...)` de PostgREST.
+function excludedKinds(songTitle: string): string {
+  return showsImageInline(songTitle)
+    ? "(audio_mp3,audio_ogg,image)"
+    : "(audio_mp3,audio_ogg)";
+}
 
 export type DownloadableFile = {
   id: string;
-  kind: "score_pdf" | "audio_mp3" | "audio_ogg" | "other";
+  kind: "score_pdf" | "audio_mp3" | "audio_ogg" | "image" | "other";
   bucket: string;
   path: string;
   label: string | null;
@@ -59,7 +69,10 @@ export function DownloadFilesMenu({ songId, songTitle, print }: Props) {
         .from("song_files")
         .select("id, kind, bucket, path, label")
         .eq("song_id", songId)
-        .not("kind", "in", "(audio_mp3,audio_ogg)")
+        // Los audios se reproducen, no se descargan. Las imágenes sí se
+        // descargan (son partituras escaneadas), salvo en los salmos, donde
+        // la imagen se muestra embebida bajo el título.
+        .not("kind", "in", excludedKinds(songTitle))
         .order("kind", { ascending: true })
         .order("created_at", { ascending: false });
       if (cancelled) return;
@@ -75,7 +88,7 @@ export function DownloadFilesMenu({ songId, songTitle, print }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open, files, songId]);
+  }, [open, files, songId, songTitle]);
 
   async function handleDownload(file: DownloadableFile) {
     const supabase = createClient();
@@ -218,13 +231,14 @@ function FilesDropdown({
 }
 
 function KindIcon({ kind }: { kind: DownloadableFile["kind"] }) {
-  if (kind === "score_pdf") return <FilesIcon />;
   if (kind === "audio_mp3" || kind === "audio_ogg") return <MusicIcon />;
   return <FilesIcon />;
 }
 
 function kindShortLabel(kind: DownloadableFile["kind"]): string {
-  if (kind === "score_pdf") return "Partitura";
+  // Una imagen acá es una partitura escaneada: en los salmos, que son el
+  // otro uso de las imágenes, no llega a este menú.
+  if (kind === "score_pdf" || kind === "image") return "Partitura";
   if (kind === "audio_mp3" || kind === "audio_ogg") return "Audio";
   return "Otro";
 }
@@ -234,9 +248,7 @@ function defaultLabel(f: DownloadableFile): string {
 }
 
 function filenameFor(f: DownloadableFile, songTitle: string): string {
-  const ext = f.path.includes(".") ? f.path.split(".").pop() : "";
-  const base = (f.label ?? songTitle).replace(/[\\/:*?"<>|]/g, "_");
-  return ext ? `${base}.${ext}` : base;
+  return downloadFilename(f.label ?? songTitle, f.path);
 }
 
 // Variante embebida (sin botón ni dropdown propio) para usar dentro de
@@ -266,7 +278,10 @@ export function DownloadFilesPanel({
         .from("song_files")
         .select("id, kind, bucket, path, label")
         .eq("song_id", songId)
-        .not("kind", "in", "(audio_mp3,audio_ogg)")
+        // Los audios se reproducen, no se descargan. Las imágenes sí se
+        // descargan (son partituras escaneadas), salvo en los salmos, donde
+        // la imagen se muestra embebida bajo el título.
+        .not("kind", "in", excludedKinds(songTitle))
         .order("kind", { ascending: true })
         .order("created_at", { ascending: false });
       if (cancelled) return;
@@ -282,7 +297,7 @@ export function DownloadFilesPanel({
     return () => {
       cancelled = true;
     };
-  }, [songId]);
+  }, [songId, songTitle]);
 
   async function pick(file: DownloadableFile) {
     const supabase = createClient();

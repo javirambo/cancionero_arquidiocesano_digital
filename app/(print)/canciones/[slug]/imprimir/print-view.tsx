@@ -8,6 +8,7 @@ import {
   type ChordSystem,
 } from "@/lib/chordpro";
 import { groupChorus, LineView } from "@/app/components/song-render";
+import { SongTitle } from "@/app/components/song-title";
 
 const MAX_PT = 11;
 const MIN_PT = 9;
@@ -111,9 +112,10 @@ export function PrintView({
             <p className="text-[0.7em] uppercase tracking-[0.2em] text-secondary">
               {number !== null ? `Nº ${number}` : "Canto"}
             </p>
-            <h1 className="text-[1.6em] font-bold uppercase leading-tight text-song-title">
-              {title}
-            </h1>
+            <SongTitle
+              title={title}
+              className="text-[1.6em] font-bold uppercase leading-tight text-song-title"
+            />
             {author && (
               <p className="text-[0.75em] normal-case text-muted-foreground">
                 Autor: {author}

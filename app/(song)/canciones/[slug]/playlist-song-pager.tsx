@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 
+import { SongTitle } from "@/app/components/song-title";
 import { SongView } from "./song-view";
 import { FavoriteHeartInline } from "./favorite-heart-inline";
 
@@ -18,6 +19,7 @@ type SongInPlaylist = {
   categories: string[];
   author: string | null;
   hasFiles: boolean;
+  imagePaths: string[];
   key_override: string | null;
   youtubeEmbed: string | null;
 };
@@ -311,6 +313,7 @@ function Panel({
           originalKey={song.original_key}
           youtubeEmbed={song.youtubeEmbed}
           hasFiles={song.hasFiles}
+          imagePaths={song.imagePaths}
           playlistKeyOverride={song.key_override}
           inPlaylistContext
           homeHref={homeHref}
@@ -340,9 +343,10 @@ function Panel({
                   </span>
                 )}
               </div>
-              <h1 className="text-3xl leading-tight text-song-title">
-                {song.title}
-              </h1>
+              <SongTitle
+                title={song.title}
+                className="text-3xl leading-tight text-song-title"
+              />
               {song.author && (
                 <p className="text-sm normal-case text-muted-foreground">
                   Autor: {song.author}

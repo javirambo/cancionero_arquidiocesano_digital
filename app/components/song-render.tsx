@@ -1,6 +1,46 @@
-import type { ChordLine } from "@/lib/chordpro";
+import type { ReactNode } from "react";
+import { RESPONSE_TEXT, type ChordLine } from "@/lib/chordpro";
 
 export type LineBlock = { inChorus: boolean; lines: ChordLine[] };
+
+/**
+ * Renderiza un tramo de letra resaltando las respuestas del salmo ("R.").
+ *
+ * `offset` es la posición del tramo dentro de `line.lyrics`, porque cuando
+ * hay acordes la línea se parte en segmentos y cada uno recibe solo su
+ * pedazo. Un acorde solo puede caer justo antes o justo después de la "R."
+ * (nunca en el medio, ver `parseLine`), así que una respuesta siempre entra
+ * entera en un segmento y no hace falta partirla entre dos.
+ */
+export function LyricsText({
+  text,
+  offset = 0,
+  responses,
+}: {
+  text: string;
+  offset?: number;
+  responses?: number[];
+}) {
+  const hits = (responses ?? []).filter(
+    (r) => r >= offset && r + RESPONSE_TEXT.length <= offset + text.length
+  );
+  if (hits.length === 0) return <>{text}</>;
+
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  for (const abs of hits) {
+    const start = abs - offset;
+    if (start > cursor) parts.push(text.slice(cursor, start));
+    parts.push(
+      <strong key={abs} className="font-bold text-response">
+        {text.slice(start, start + RESPONSE_TEXT.length)}
+      </strong>
+    );
+    cursor = start + RESPONSE_TEXT.length;
+  }
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
+}
 
 export function groupChorus(lines: ChordLine[]): LineBlock[] {
   const blocks: LineBlock[] = [];
@@ -28,16 +68,25 @@ export function LineView({
   }
 
   if (!showChords || line.chords.length === 0) {
-    return <div>{line.lyrics || " "}</div>;
+    return (
+      <div>
+        {line.lyrics === "" ? (
+          " "
+        ) : (
+          <LyricsText text={line.lyrics} responses={line.responses} />
+        )}
+      </div>
+    );
   }
 
-  const segments: { chord: string | null; text: string }[] = [];
+  const segments: { chord: string | null; text: string; offset: number }[] = [];
   const sortedChords = [...line.chords].sort((a, b) => a.index - b.index);
   let cursor = 0;
   if (sortedChords.length > 0 && sortedChords[0].index > 0) {
     segments.push({
       chord: null,
       text: line.lyrics.slice(0, sortedChords[0].index),
+      offset: 0,
     });
     cursor = sortedChords[0].index;
   }
@@ -45,11 +94,15 @@ export function LineView({
     const here = sortedChords[i];
     const nextIdx = sortedChords[i + 1]?.index ?? line.lyrics.length;
     const text = line.lyrics.slice(here.index, nextIdx);
-    segments.push({ chord: here.chord, text });
+    segments.push({ chord: here.chord, text, offset: here.index });
     cursor = nextIdx;
   }
   if (cursor < line.lyrics.length) {
-    segments.push({ chord: null, text: line.lyrics.slice(cursor) });
+    segments.push({
+      chord: null,
+      text: line.lyrics.slice(cursor),
+      offset: cursor,
+    });
   }
 
   return (
@@ -60,7 +113,15 @@ export function LineView({
             {seg.chord ?? " "}
           </span>
           <span className="whitespace-pre-wrap break-words">
-            {seg.text || " "}
+            {seg.text === "" ? (
+              " "
+            ) : (
+              <LyricsText
+                text={seg.text}
+                offset={seg.offset}
+                responses={line.responses}
+              />
+            )}
           </span>
         </span>
       ))}

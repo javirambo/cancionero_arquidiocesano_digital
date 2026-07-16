@@ -242,6 +242,19 @@ export function EyeIcon(): ReactElement {
   );
 }
 
+export function ResponseIcon(): ReactElement {
+  // Respuesta del salmo responsorial. A diferencia del resto, es tipográfica
+  // y no un trazo: se lee igual que la marca que inserta en la letra.
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex h-[18px] w-[18px] items-center justify-center text-[13px] font-bold leading-none"
+    >
+      R.
+    </span>
+  );
+}
+
 export function RepeatIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true">

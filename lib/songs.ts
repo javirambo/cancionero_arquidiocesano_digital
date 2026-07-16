@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { showsImageInline } from "@/lib/psalms";
+
+export { youtubeEmbedUrl } from "@/lib/media";
 import { isVisibleNow } from "@/lib/schedule";
 import { loadSchedules } from "@/lib/schedule.server";
 
@@ -61,7 +64,50 @@ export type Song = Omit<SongSummary, "category"> & {
   original_key: string | null;
   youtube_url: string | null;
   hasFiles: boolean;
+  /** Paths en el bucket público `images`, en orden de subida. */
+  imagePaths: string[];
 };
+
+// Shape del join song_files usado por las queries que devuelven `Song`.
+type SongFileRel =
+  | { id: string; kind: string; path: string; created_at: string }[]
+  | null;
+
+// Shape mínimo del join song_files para computar el badge de archivos.
+type SongFileKindRel = { kind: string }[] | null;
+
+/**
+ * ¿La canción tiene archivos para ofrecer en el menú de descargas/play?
+ *
+ * Depende del título: en un salmo la imagen se muestra embebida bajo el
+ * título y por lo tanto no es un archivo descargable (contarla abriría un
+ * menú vacío). En el resto de las canciones la imagen es una partitura
+ * escaneada y sí se descarga.
+ */
+function hasDownloadableFiles(
+  rel: SongFileKindRel,
+  title: string | null
+): boolean {
+  const inlineImages = showsImageInline(title);
+  return (rel ?? []).some((f) => !(inlineImages && f.kind === "image"));
+}
+
+function splitSongFiles(
+  rel: SongFileRel,
+  title: string | null
+): { hasFiles: boolean; imagePaths: string[] } {
+  return {
+    hasFiles: hasDownloadableFiles(rel, title),
+    // Solo los salmos muestran la imagen embebida; para el resto no hay
+    // nada que renderizar bajo el título.
+    imagePaths: showsImageInline(title)
+      ? (rel ?? [])
+          .filter((f) => f.kind === "image")
+          .sort((a, b) => a.created_at.localeCompare(b.created_at))
+          .map((f) => f.path)
+      : [],
+  };
+}
 
 export type PublicCategoryOption = {
   id: string;
@@ -144,14 +190,17 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
+      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id, kind, path, created_at)"
     )
     .eq("status", "published")
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const files = (data.song_files as { id: string }[] | null) ?? [];
+  const { hasFiles, imagePaths } = splitSongFiles(
+    data.song_files as SongFileRel,
+    data.title as string
+  );
   return {
     id: data.id as string,
     number: data.number as number | null,
@@ -162,7 +211,8 @@ export async function getSongBySlug(slug: string): Promise<Song | null> {
     youtube_url: data.youtube_url as string | null,
     categories: categoryNames(data.song_categories as SongCategoryRel),
     author: joinAuthors(data.author1 as Named, data.author2 as Named),
-    hasFiles: files.length > 0,
+    hasFiles,
+    imagePaths,
   };
 }
 
@@ -175,7 +225,7 @@ export async function getSongsByIds(ids: string[]): Promise<Song[]> {
   const { data, error } = await supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
+      "id, number, title, slug, body, original_key, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id, kind, path, created_at)"
     )
     .eq("status", "published")
     .in("id", ids);
@@ -185,7 +235,10 @@ export async function getSongsByIds(ids: string[]): Promise<Song[]> {
     .map((id) => byId.get(id))
     .filter((row): row is NonNullable<typeof row> => row !== undefined)
     .map((row) => {
-      const files = (row.song_files as { id: string }[] | null) ?? [];
+      const { hasFiles, imagePaths } = splitSongFiles(
+        row.song_files as SongFileRel,
+        row.title as string
+      );
       return {
         id: row.id as string,
         number: row.number as number | null,
@@ -196,7 +249,8 @@ export async function getSongsByIds(ids: string[]): Promise<Song[]> {
         youtube_url: row.youtube_url as string | null,
         categories: categoryNames(row.song_categories as SongCategoryRel),
         author: joinAuthors(row.author1 as Named, row.author2 as Named),
-        hasFiles: files.length > 0,
+        hasFiles,
+        imagePaths,
       };
     });
 }
@@ -233,7 +287,7 @@ export async function listSongsWithCapabilities(
     const { data: rows, error } = await supabase
       .from("songs")
       .select(
-        "id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
+        "id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id, kind)"
       )
       .in("id", ids);
     if (error) throw error;
@@ -244,7 +298,6 @@ export async function listSongsWithCapabilities(
       .filter((row): row is NonNullable<typeof row> => row !== undefined)
       .map((row) => {
         const body = (row.body as string | null) ?? "";
-        const files = (row.song_files as { id: string }[] | null) ?? [];
         const cats = categoryNames(row.song_categories as SongCategoryRel);
         return {
           id: row.id as string,
@@ -255,7 +308,10 @@ export async function listSongsWithCapabilities(
           author: joinAuthors(row.author1 as Named, row.author2 as Named),
           hasChords: /\[[^\]]+\]/.test(body),
           hasYoutube: Boolean(row.youtube_url),
-          hasFiles: files.length > 0,
+          hasFiles: hasDownloadableFiles(
+            row.song_files as SongFileKindRel,
+            row.title as string
+          ),
         };
       });
   }
@@ -264,7 +320,7 @@ export async function listSongsWithCapabilities(
   let baseQuery = supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)"
+      "id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id, kind)"
     )
     .eq("status", "published");
   if (categoryIds) {
@@ -276,7 +332,6 @@ export async function listSongsWithCapabilities(
   if (error) throw error;
   return (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
-    const files = (row.song_files as { id: string }[] | null) ?? [];
     const cats = categoryNames(row.song_categories as SongCategoryRel);
     return {
       id: row.id as string,
@@ -287,7 +342,10 @@ export async function listSongsWithCapabilities(
       author: joinAuthors(row.author1 as Named, row.author2 as Named),
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
-      hasFiles: files.length > 0,
+      hasFiles: hasDownloadableFiles(
+            row.song_files as SongFileKindRel,
+            row.title as string
+          ),
     };
   });
 }
@@ -311,7 +369,7 @@ export async function listSongsPaged(
   let pagedQuery = supabase
     .from("songs")
     .select(
-      "id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id)",
+      "id, number, title, slug, body, youtube_url, song_categories(categories(name)), author1:authors!songs_author_id_fkey(name), author2:authors!songs_author2_id_fkey(name), song_files(id, kind)",
       { count: "exact" }
     )
     .eq("status", "published");
@@ -324,7 +382,6 @@ export async function listSongsPaged(
   if (error) throw error;
   const items = (data ?? []).map((row) => {
     const body = (row.body as string | null) ?? "";
-    const files = (row.song_files as { id: string }[] | null) ?? [];
     const cats = categoryNames(row.song_categories as SongCategoryRel);
     return {
       id: row.id as string,
@@ -335,7 +392,10 @@ export async function listSongsPaged(
       author: joinAuthors(row.author1 as Named, row.author2 as Named),
       hasChords: /\[[^\]]+\]/.test(body),
       hasYoutube: Boolean(row.youtube_url),
-      hasFiles: files.length > 0,
+      hasFiles: hasDownloadableFiles(
+            row.song_files as SongFileKindRel,
+            row.title as string
+          ),
     };
   });
   return { items, total: count ?? 0 };
@@ -855,27 +915,3 @@ export async function listActiveFeatured(): Promise<Featured[]> {
   return items;
 }
 
-export function youtubeEmbedUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("open.spotify.com")) {
-      const parts = u.pathname.split("/").filter(Boolean);
-      const validKinds = ["track", "episode", "album", "playlist", "show"];
-      const kindIdx = parts.findIndex((p) => validKinds.includes(p));
-      if (kindIdx >= 0 && parts[kindIdx + 1]) {
-        return `https://open.spotify.com/embed/${parts[kindIdx]}/${parts[kindIdx + 1]}`;
-      }
-      return null;
-    }
-    let id: string | null = null;
-    if (u.hostname.includes("youtu.be")) {
-      id = u.pathname.replace(/^\//, "");
-    } else if (u.hostname.includes("youtube.com")) {
-      id = u.searchParams.get("v");
-    }
-    return id ? `https://www.youtube.com/embed/${id}` : null;
-  } catch {
-    return null;
-  }
-}

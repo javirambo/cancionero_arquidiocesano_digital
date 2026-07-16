@@ -34,6 +34,7 @@ Valores actuales tomados de [`app/globals.css`](../app/globals.css). Paleta apro
 | `page-title`       | `#436baf` | ![#436baf](https://placehold.co/16x16/436baf/436baf.png)           | Títulos de páginas. Clase: `text-page-title`.                             |
 | `shortcut`         | `#6f91c7` | ![#6f91c7](https://placehold.co/16x16/6f91c7/6f91c7.png)           | Atajos / categorías destacadas (ej. botones de categoría de cantos en la home). Clases: `bg-shortcut`, `border-shortcut`, `text-shortcut`. |
 | `song-title`       | `#8b1a1a` | ![#8b1a1a](https://placehold.co/16x16/8b1a1a/8b1a1a.png)           | Títulos de canciones, de tarjetas y de playlists. Clases: `text-song-title`, `border-song-title`. También el corazón de favoritos. |
+| `response`         | `#d40000` | ![#d40000](https://placehold.co/16x16/d40000/d40000.png)           | La "R." de la respuesta del salmo responsorial, que se marca con `{R.}` en la letra. Clase: `text-response`. |
 | `secondary`        | `#b49a55` | ![#b49a55](https://placehold.co/16x16/b49a55/b49a55.png)           | Acentos, subtítulos, número y categorías en vista de canción              |
 | `foreground`       | `#30343b` | ![#30343b](https://placehold.co/16x16/30343b/30343b.png)           | Texto normal                                                              |
 | `card`             | `#ffffff` | ![#ffffff](https://placehold.co/16x16/ffffff/ffffff.png)           | Fondo de tarjetas. Clase: `bg-card`.                                      |
@@ -55,6 +56,7 @@ Derivado automáticamente de la paleta light: se invierte la luminosidad del fon
 | `page-title`       | `#8aa9e0` | ![#8aa9e0](https://placehold.co/16x16/8aa9e0/8aa9e0.png)           | Títulos de páginas                                                        |
 | `shortcut`         | `#8aa9e0` | ![#8aa9e0](https://placehold.co/16x16/8aa9e0/8aa9e0.png)           | Atajos / categorías destacadas                                            |
 | `song-title`       | `#d96a6a` | ![#d96a6a](https://placehold.co/16x16/d96a6a/d96a6a.png)           | Títulos de canciones, de tarjetas y de playlists                          |
+| `response`         | `#ff5a5a` | ![#ff5a5a](https://placehold.co/16x16/ff5a5a/ff5a5a.png)           | La "R." de la respuesta del salmo responsorial                            |
 | `secondary`        | `#d4ba75` | ![#d4ba75](https://placehold.co/16x16/d4ba75/d4ba75.png)           | Acentos, subtítulos                                                       |
 | `foreground`       | `#e4e7ef` | ![#e4e7ef](https://placehold.co/16x16/e4e7ef/e4e7ef.png)           | Texto normal                                                              |
 | `card`             | `#1a2540` | ![#1a2540](https://placehold.co/16x16/1a2540/1a2540.png)           | Fondo de tarjetas (igual al sidebar)                                      |
@@ -81,6 +83,8 @@ Derivado automáticamente de la paleta light: se invierte la luminosidad del fon
 | Encabezado, pie y barra menú de acciones  | `sidebar`        | `#a4c4f5`   |
 | Iconos del menú de acciones               | `primary`        | `#1f3f73`   |
 | Borde lateral del estribillo              | `song-title`     | `#8b1a1a`   |
+| Acordes sobre la letra                    | `primary`        | `#1f3f73`   |
+| "R." de respuesta del salmo (`{R.}`)      | `response`       | `#d40000`   |
 
 
 ## Iconografía

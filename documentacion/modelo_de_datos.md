@@ -29,7 +29,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `songs`                | Canciones (letra, acordes, metadatos)                      | 1    | CU-01, CU-02, CU-16           |
 | `song_versions`        | Historial de versiones de cada canción                     | 1    | CU-16                         |
 | `song_events`          | Bitácora cronológica de eventos de cada canción            | 1    | CU-16                         |
-| `song_files`           | Archivos asociados (partitura PDF, audio)                  | 1/2  | CU-09, CU-16                  |
+| `song_files`           | Archivos asociados (partitura PDF, audio, imagen)          | 1/2  | CU-09, CU-16                  |
 | `playlists`            | Listas de canciones por parroquia                          | 1    | CU-05, CU-11, CU-17           |
 | `playlist_songs`       | Relación playlist ↔ canción (ordenada)                     | 1    | CU-05, CU-17                  |
 | `playlist_parish_subscriptions` | Suscripción de una parroquia a una playlist ajena | 1    | CU-17                         |
@@ -234,14 +234,14 @@ Bitácora cronológica e inmutable de toda la vida editorial de una canción (mi
 ---
 
 ### `song_files`
-Archivos asociados a una canción (puede haber varias partituras y audios). Apunta a Supabase Storage.
+Archivos asociados a una canción (puede haber varias partituras, audios e imágenes). Apunta a Supabase Storage.
 
-| Columna       | Tipo        | Notas                                                       |
-| ------------- | ----------- | ----------------------------------------------------------- |
-| `id`          | uuid        | PK                                                          |
-| `song_id`     | uuid        | FK → `songs.id` ON DELETE CASCADE                           |
-| `kind`        | text        | CHECK in ('score_pdf','audio_mp3','audio_ogg','other')      |
-| `bucket`      | text        | NOT NULL — `partituras` o `audios`                          |
+| Columna       | Tipo        | Notas                                                          |
+| ------------- | ----------- | -------------------------------------------------------------- |
+| `id`          | uuid        | PK                                                             |
+| `song_id`     | uuid        | FK → `songs.id` ON DELETE CASCADE                              |
+| `kind`        | text        | CHECK in ('score_pdf','audio_mp3','audio_ogg','image','other') |
+| `bucket`      | text        | NOT NULL — `partituras`, `audios` o `images`                   |
 | `path`        | text        | NOT NULL — ruta dentro del bucket                           |
 | `label`       | text        | ej. "Partitura SATB", "Voz guía"                            |
 | `is_primary`  | boolean     | default false                                               |
@@ -252,6 +252,8 @@ Archivos asociados a una canción (puede haber varias partituras y audios). Apun
 **Índices:** `song_id`, `(song_id, kind)`.
 
 > **Nota:** los archivos no tienen workflow editorial propio; su visibilidad deriva del `status` de la canción. Si la canción está en `published`, sus archivos son descargables públicamente (CU-09); en cualquier otro estado, solo el uploader y editor/admin pueden verlos. Migración 0017 quitó las columnas `status`, `submitted_by`, `submitted_at`, `reviewed_by`, `reviewed_at`, `review_notes` y `published_at`.
+
+> **Cambio (mig. 0051):** se agregó el kind `image`. A diferencia de los demás, las imágenes van al bucket público `images` (el mismo de las cards) y no a `partituras`/`audios`, que son privados: se renderizan con URL pública directa, sin signed URL. Se muestran en la vista de la canción debajo del título y antes del cuerpo, todas, en orden de subida. Consecuencias: (a) no cuentan para el badge/menú de archivos (`hasFiles` en `lib/songs.ts` excluye `image`), porque ese menú solo lista partituras y audios; (b) al ser bucket público, la imagen de una canción en `draft` es accesible por URL directa para quien la conozca, igual que las imágenes de cards.
 
 ---
 

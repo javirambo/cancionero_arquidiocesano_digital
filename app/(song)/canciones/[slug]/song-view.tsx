@@ -18,6 +18,9 @@ import { useFavorites } from "@/app/components/favorites";
 import { useSession } from "@/app/components/session";
 import { useUserRoles } from "@/app/components/user-roles";
 import { createClient } from "@/lib/supabase/client";
+import { downloadFilename, getPublicImageUrl } from "@/lib/supabase/storage";
+import { showsImageInline } from "@/lib/psalms";
+import { embedProvider, embedProviderLabel } from "@/lib/media";
 import { groupChorus, LineView } from "@/app/components/song-render";
 import {
   useLetterScale,
@@ -40,6 +43,8 @@ type Props = {
   originalKey: string | null;
   youtubeEmbed: string | null;
   hasFiles: boolean;
+  /** Paths de imágenes en el bucket público `images`, en orden de subida. */
+  imagePaths?: string[];
   playlistKeyOverride?: string | null;
   inPlaylistContext?: boolean;
   hideToolbar?: boolean;
@@ -70,12 +75,24 @@ export function SongView({
   originalKey,
   youtubeEmbed,
   hasFiles,
+  imagePaths,
   playlistKeyOverride = null,
   inPlaylistContext = false,
   hideToolbar = false,
   titleSlot,
   homeHref = "/",
 }: Props) {
+  // Solo los salmos muestran la imagen acá: en el resto de las canciones una
+  // imagen es una partitura escaneada y va al menú de descargas. El servidor
+  // ya filtra `imagePaths`, pero la regla se repite acá para que el
+  // componente no dependa de que lo llamen bien.
+  const imageUrls = useMemo(
+    () =>
+      (showsImageInline(songTitle) ? (imagePaths ?? []) : [])
+        .map((p) => getPublicImageUrl(p))
+        .filter((u): u is string => u !== null),
+    [imagePaths, songTitle]
+  );
   const lines = useMemo(() => parseBody(body), [body]);
   const chordsExist = useMemo(() => hasAnyChord(body), [body]);
   const { isAuthenticated } = useFavorites();
@@ -265,8 +282,22 @@ export function SongView({
       )}
       {titleSlot}
 
+      {imageUrls.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {imageUrls.map((url) => (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              key={url}
+              src={url}
+              alt={`Imagen de ${songTitle}`}
+              className="w-full rounded-xl border border-border object-contain"
+            />
+          ))}
+        </div>
+      )}
+
       {media?.type === "youtube" && youtubeEmbed && (
-        youtubeEmbed.includes("open.spotify.com") ? (
+        embedProvider(youtubeEmbed) === "spotify" ? (
           <div className="w-full overflow-hidden rounded-xl border border-border">
             <iframe
               src={youtubeEmbed}
@@ -824,7 +855,6 @@ function SongHamburgerMenu({
     supported: wakeLockSupported,
     toggle: toggleWakeLock,
   } = useWakeLock();
-  const hasYoutube = Boolean(youtubeEmbed);
 
   useEffect(() => {
     if (!open) return;
@@ -853,7 +883,13 @@ function SongHamburgerMenu({
         .from("song_files")
         .select("id, bucket, path, label")
         .eq("song_id", songId)
-        .eq("kind", "score_pdf")
+        // Una partitura puede ser un PDF o un escaneo. En los salmos la
+        // imagen no es partitura sino contenido, y se muestra bajo el
+        // título, así que ahí no entra al menú de descargas.
+        .in(
+          "kind",
+          showsImageInline(songTitle) ? ["score_pdf"] : ["score_pdf", "image"]
+        )
         .order("created_at", { ascending: false });
       if (cancelled) return;
       setScores(
@@ -868,7 +904,7 @@ function SongHamburgerMenu({
     return () => {
       cancelled = true;
     };
-  }, [open, scores, songId]);
+  }, [open, scores, songId, songTitle]);
 
   useEffect(() => {
     if (!open || !hasFiles || audios !== null) return;
@@ -927,9 +963,7 @@ function SongHamburgerMenu({
     label: string | null;
   }) {
     const supabase = createClient();
-    const ext = file.path.includes(".") ? file.path.split(".").pop() : "";
-    const base = (file.label ?? songTitle).replace(/[\\/:*?"<>|]/g, "_");
-    const filename = ext ? `${base}.${ext}` : base;
+    const filename = downloadFilename(file.label ?? songTitle, file.path);
     const { data } = await supabase.storage
       .from(file.bucket)
       .createSignedUrl(file.path, 60, { download: filename });
@@ -990,11 +1024,11 @@ function SongHamburgerMenu({
                   />
                 </li>
               )}
-              {media === null && hasYoutube && (
+              {media === null && youtubeEmbed && (
                 <li>
                   <SongMenuItem
                     icon={<YoutubeIcon />}
-                    label="Reproducir YouTube"
+                    label={`Reproducir en ${embedProviderLabel(youtubeEmbed)}`}
                     onSelect={() => {
                       setMedia({ type: "youtube" });
                       close();

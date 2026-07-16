@@ -8,30 +8,52 @@ import { Accordion } from "./accordion";
 
 type FileKind = AdminSongFile["kind"];
 
-// Tipo elegido por el usuario al subir. "audio" se desambigua a mp3/ogg
-// según la extensión del archivo subido.
-type UploadType = "partitura" | "audio" | "otro";
-
 const kindLabel: Record<FileKind, string> = {
   score_pdf: "Partitura (PDF)",
   audio_mp3: "Audio MP3",
   audio_ogg: "Audio OGG",
+  image: "Imagen",
   other: "Otro",
 };
 
+// Las imágenes van al bucket público `images`: la vista pública las
+// renderiza con URL directa, sin signed URL.
 function bucketForKind(kind: FileKind): string {
   if (kind === "score_pdf") return STORAGE_BUCKETS.partituras;
   if (kind === "audio_mp3" || kind === "audio_ogg") return STORAGE_BUCKETS.audios;
+  if (kind === "image") return STORAGE_BUCKETS.images;
   return STORAGE_BUCKETS.partituras;
 }
 
-function resolveKind(uploadType: UploadType, file: File): FileKind {
-  if (uploadType === "partitura") return "score_pdf";
-  if (uploadType === "audio") {
-    const name = file.name.toLowerCase();
-    if (name.endsWith(".ogg") || name.endsWith(".oga")) return "audio_ogg";
-    return "audio_mp3";
-  }
+const IMAGE_EXT = ["jpg", "jpeg", "png", "webp", "gif", "avif"];
+
+/**
+ * Deduce el tipo a partir del archivo mismo.
+ *
+ * Antes el tipo lo elegía el usuario en un select que arrancaba en
+ * "Partitura" y no se validaba contra el archivo: subir un mp3 sin tocar
+ * el select lo guardaba como `score_pdf`, y entonces aparecía en el menú
+ * de descargas en vez de tener un play. El archivo es la fuente de verdad,
+ * así que no hay default que equivocar.
+ *
+ * Manda la extensión; el mime type solo se usa como respaldo para archivos
+ * sin extensión.
+ */
+function kindForFile(file: File): FileKind {
+  const name = file.name.toLowerCase();
+  const ext = name.includes(".") ? (name.split(".").pop() ?? "") : "";
+
+  if (ext === "pdf") return "score_pdf";
+  if (ext === "ogg" || ext === "oga") return "audio_ogg";
+  if (ext === "mp3") return "audio_mp3";
+  if (IMAGE_EXT.includes(ext)) return "image";
+
+  const mime = file.type;
+  if (mime === "application/pdf") return "score_pdf";
+  if (mime === "audio/ogg") return "audio_ogg";
+  if (mime.startsWith("audio/")) return "audio_mp3";
+  if (mime.startsWith("image/")) return "image";
+
   return "other";
 }
 
@@ -53,7 +75,6 @@ export function FilesSection({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [label, setLabel] = useState("");
-  const [uploadType, setUploadType] = useState<UploadType>("partitura");
 
   async function handleUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -63,7 +84,7 @@ export function FilesSection({
     setUploading(true);
     const supabase = createClient();
 
-    const kind = resolveKind(uploadType, file);
+    const kind = kindForFile(file);
     const bucket = bucketForKind(kind);
     const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
     const path = `${songId}/${Date.now()}-${Math.random()
@@ -124,23 +145,9 @@ export function FilesSection({
   }
 
   return (
-    <Accordion title="Archivos (partituras y audios)" defaultOpen={false}>
+    <Accordion title="Archivos (partituras, audios e imágenes)" defaultOpen={false}>
       <div className="flex flex-col gap-4 normal-case">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <label className="flex flex-col gap-1 sm:w-40">
-            <span className="text-xs uppercase tracking-[0.15em] text-secondary">
-              Tipo
-            </span>
-            <select
-              value={uploadType}
-              onChange={(e) => setUploadType(e.target.value as UploadType)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
-            >
-              <option value="partitura">Partitura</option>
-              <option value="audio">Audio</option>
-              <option value="otro">Otro</option>
-            </select>
-          </label>
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-xs uppercase tracking-[0.15em] text-secondary">
               Etiqueta (opcional)
@@ -158,7 +165,7 @@ export function FilesSection({
           >
             <input
               type="file"
-              accept=".pdf,.mp3,.ogg,.oga,application/pdf,audio/mpeg,audio/ogg"
+              accept=".pdf,.mp3,.ogg,.oga,.jpg,.jpeg,.png,.webp,.gif,application/pdf,audio/mpeg,audio/ogg,image/jpeg,image/png,image/webp,image/gif"
               onChange={handleUpload}
               disabled={uploading}
               className="hidden"
@@ -166,6 +173,13 @@ export function FilesSection({
             {uploading ? "Subiendo…" : "+ Subir archivo"}
           </label>
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          El tipo se detecta según el archivo. Los MP3 y OGG son audios y se
+          reproducen con un play. Las partituras pueden ser PDF o imágenes
+          escaneadas, y se descargan desde el menú de la canción. En los
+          salmos, en cambio, la imagen se muestra debajo del título.
+        </p>
 
         {error && (
           <p className="text-sm text-destructive">{error}</p>

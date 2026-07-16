@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSongBySlug, getSongsByIds, youtubeEmbedUrl } from "@/lib/songs";
 import { getPlaylistById } from "@/lib/playlists";
+import { SongTitle } from "@/app/components/song-title";
 import { SongView } from "./song-view";
 import { FavoriteHeartInline } from "./favorite-heart-inline";
 import { PlaylistSongPager } from "./playlist-song-pager";
@@ -125,6 +126,7 @@ export default async function CancionPage({
           originalKey={song.original_key}
           youtubeEmbed={embed}
           hasFiles={song.hasFiles}
+          imagePaths={song.imagePaths}
           playlistKeyOverride={null}
           inPlaylistContext={false}
           titleSlot={
@@ -150,9 +152,10 @@ export default async function CancionPage({
                   />
                 </span>
               </div>
-              <h1 className="text-3xl leading-tight text-song-title">
-                {song.title}
-              </h1>
+              <SongTitle
+                title={song.title}
+                className="text-3xl leading-tight text-song-title"
+              />
               {song.author && (
                 <p className="text-sm normal-case text-muted-foreground">
                   Autor: {song.author}

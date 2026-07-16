@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthorOption, CategoryOption } from "@/lib/songs-admin";
 import type { SongFormState } from "./song-form";
 import { Accordion } from "./accordion";
+import { youtubeEmbedUrl } from "@/lib/media";
 
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
@@ -26,6 +27,14 @@ export function MetadataSection({
   onAuthorCreated: (author: AuthorOption) => void;
   onAuthor2Created: (author: AuthorOption) => void;
 }) {
+  // Avisar si el link cargado no va a poder reproducirse. Se guarda igual
+  // (puede servir como referencia), pero sin este aviso la canción quedaba
+  // sin opción de escuchar y nadie se enteraba.
+  const linkNoReproduce = useMemo(() => {
+    const v = form.youtube_url.trim();
+    return v !== "" && youtubeEmbedUrl(v) === null;
+  }, [form.youtube_url]);
+
   return (
     <Accordion title="Metadatos" defaultOpen>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -121,6 +130,13 @@ export function MetadataSection({
             placeholder="https://youtube.com/watch?v=…"
             className={inputClass}
           />
+          {linkNoReproduce && (
+            <p className="mt-1 text-xs text-destructive">
+              Este link no se va a poder reproducir: la canción no va a mostrar
+              la opción de escucharlo. Sirven los de YouTube (video, short,
+              vivo o lista), YouTube Music y Spotify.
+            </p>
+          )}
         </Field>
       </div>
     </Accordion>
