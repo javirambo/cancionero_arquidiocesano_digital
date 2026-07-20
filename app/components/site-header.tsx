@@ -427,7 +427,7 @@ export function SiteHeader() {
                     <MenuItem
                       href="/parroquias"
                       icon={<ParroquiasIcon />}
-                      label="Mi parroquia"
+                      label="Parroquias"
                       onSelect={closeMenu}
                     />
                   </li>

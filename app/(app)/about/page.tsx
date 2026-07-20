@@ -92,7 +92,12 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <div className="flex flex-col items-center gap-2">
+      <a
+        href="https://delrosario.org.ar/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex flex-col items-center gap-2"
+      >
         <Image
           src="/logo-arquidiocesis.png"
           alt="Arquidiócesis de Rosario"
@@ -106,7 +111,7 @@ export default async function AboutPage() {
         >
           Arzobispado de Rosario
         </p>
-      </div>
+      </a>
     </main>
   );
 }

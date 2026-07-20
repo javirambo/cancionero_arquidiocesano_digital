@@ -160,6 +160,17 @@ export default async function CreditosPage() {
             (licencia Apache 2.0).
           </li>
         </ul>
+        <p className="text-sm leading-6 text-foreground">
+          Algunos textos y partituras: © Coro San Clemente –{" "}
+          <a
+            href="https://www.corosanclemente.com.ar"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            www.corosanclemente.com.ar
+          </a>
+        </p>
       </section>
     </main>
   );

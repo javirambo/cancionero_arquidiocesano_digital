@@ -11,11 +11,9 @@
 -    "       -> Adoracion no tiene todos los cantos
 - Preparar un aviso parroquial DEMO
 
+---
 
-# Salmos responsoriales
-
-Permitir ingresar los salmos como aca: https://www.corosanclemente.com.ar/
-
-- descargar todos desde la pagina y colocar 
->> "© Coro San Clemente – Permitida su copia y distribución con mención de la fuente: www.corosanclemente.com.ar"
-
+- un usuario no logueado: 
+- usuario sin parroquia (o no logueado) irá a seleccionar parroquias (http://localhost:4000/parroquias) 
+- cuando un usuario logueado y perteneciente a una parroquia selecciona el menu "Mi parroquia" debe mostrar directamente esa parroquia, ejemplo: http://localhost:4000/parroquias/maria_auxiliadora_rosario
+- 
