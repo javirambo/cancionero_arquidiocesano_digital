@@ -1,11 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 
-export type ParishOption = { id: string; slug: string; name: string };
+export type ParishOption = {
+  id: string;
+  slug: string;
+  name: string;
+  parent_id: string | null;
+};
 
 // Devuelve las parroquias seleccionables como destino de un anuncio:
 // - nunca incluye la parroquia virtual `arquidiocesis`,
 // - si el usuario es admin o editor, todas las parroquias no inactivas,
 // - si es coordinator/member, solo aquellas donde es miembro (parish_members).
+// El orden es parroquias primero y capillas después, alfabético dentro de
+// cada grupo.
 export async function listScopedParishes(): Promise<ParishOption[]> {
   const supabase = await createClient();
   const {
@@ -29,7 +36,7 @@ export async function listScopedParishes(): Promise<ParishOption[]> {
 
   let query = supabase
     .from("parishes")
-    .select("id, slug, name")
+    .select("id, slug, name, parent_id")
     .neq("status", "inactive")
     .neq("slug", "arquidiocesis")
     .order("name");
@@ -45,5 +52,9 @@ export async function listScopedParishes(): Promise<ParishOption[]> {
   }
 
   const { data } = await query;
-  return (data ?? []) as ParishOption[];
+  const options = (data ?? []) as ParishOption[];
+  return [
+    ...options.filter((p) => !p.parent_id),
+    ...options.filter((p) => p.parent_id),
+  ];
 }
