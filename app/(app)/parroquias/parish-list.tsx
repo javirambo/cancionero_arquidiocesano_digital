@@ -131,18 +131,29 @@ export function ParishList({
   const sortByName = (a: Parish, b: Parish) =>
     a.name.localeCompare(b.name, "es");
 
+  // Las parroquias (sin parent_id) van siempre antes que las capillas.
+  const parishesFirst = (list: Parish[]): Parish[] => [
+    ...list.filter((p) => !p.parent_id),
+    ...list.filter((p) => p.parent_id),
+  ];
+
   const mine = parishes
     .filter((p) => displayMembers.has(p.id))
     .sort((a, b) => {
       const aPrim = a.id === primaryId ? 0 : 1;
       const bPrim = b.id === primaryId ? 0 : 1;
       if (aPrim !== bPrim) return aPrim - bPrim;
+      const aChapel = a.parent_id ? 1 : 0;
+      const bChapel = b.parent_id ? 1 : 0;
+      if (aChapel !== bChapel) return aChapel - bChapel;
       return sortByName(a, b);
     });
   const othersAlpha = parishes
     .filter((p) => !displayMembers.has(p.id))
     .sort(sortByName);
-  const others = origin ? sortByDistance(othersAlpha, origin) : othersAlpha;
+  const others = parishesFirst(
+    origin ? sortByDistance(othersAlpha, origin) : othersAlpha
+  );
 
   const mineFiltered = filterByQuery(mine, mineQuery);
   const othersFiltered = filterByQuery(filterByCity(others, othersCity), othersQuery);
