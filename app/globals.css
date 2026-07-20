@@ -216,3 +216,13 @@ select {
   transform-origin: top right;
   animation: menu-pop-out 180ms ease-in forwards;
 }
+
+/* Oculta la barra de scroll horizontal de los carousels de tarjetas
+ * (ver app/components/card-carousel.tsx) sin perder el desplazamiento. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

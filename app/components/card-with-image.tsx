@@ -8,6 +8,11 @@ type Props = {
   href: string | null;
   external?: boolean;
   showIndicator?: boolean;
+  /**
+   * Padding reducido, para las tarjetas de los carousels de altura fija donde
+   * cada píxel vertical cuenta. Ver `CardCarousel`.
+   */
+  compact?: boolean;
   children: ReactNode;
 };
 
@@ -16,14 +21,17 @@ export function CardWithImage({
   href,
   external = false,
   showIndicator = true,
+  compact = false,
   children,
 }: Props) {
   const imageUrl = getPublicImageUrl(imagePath);
 
-  const cardClass =
-    "relative flex h-full w-full items-center overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary";
-  const staticCardClass =
-    "relative flex h-full w-full items-center overflow-hidden rounded-xl border border-border bg-card";
+  // En compact la tarjeta tiene altura fija y el contenido puede excederla.
+  // Con `items-center` el desborde se reparte arriba y abajo y cortaría el
+  // título; alineando arriba, el recorte cae siempre al final del texto.
+  const align = compact ? "items-start" : "items-center";
+  const cardClass = `relative flex h-full w-full ${align} overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary`;
+  const staticCardClass = `relative flex h-full w-full ${align} overflow-hidden rounded-xl border border-border bg-card`;
 
   const imageBlock = imageUrl ? (
     <div className="absolute inset-y-0 left-0 w-[75px] bg-sidebar">
@@ -36,8 +44,12 @@ export function CardWithImage({
     </div>
   ) : null;
 
+  // El `pr-10` solo hace falta para dejarle lugar al indicador; sin él, ese
+  // espacio se recupera para el texto.
+  const hasIndicator = Boolean(href) && showIndicator;
+
   const indicator =
-    href && showIndicator ? (
+    hasIndicator ? (
       <span
         className="absolute bottom-3 right-3 text-muted-foreground"
         aria-hidden="true"
@@ -50,7 +62,7 @@ export function CardWithImage({
     <>
       {imageBlock}
       <div
-        className={`flex min-w-0 flex-1 flex-col p-5 pr-10 ${imageUrl ? "ml-[75px]" : ""}`}
+        className={`flex min-w-0 flex-1 flex-col ${compact ? "p-4" : "p-5"} ${hasIndicator ? "pr-10" : ""} ${imageUrl ? "ml-[75px]" : ""}`}
       >
         {children}
       </div>

@@ -148,10 +148,10 @@ export function SongsFrame({
     "flex h-10 w-10 items-center justify-center rounded-full border border-primary bg-primary text-primary-foreground";
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-2">
       {showHeading && (
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl text-page-title">Cantos</h2>
+          <h2 className="text-lg text-page-title">Cantos</h2>
           {showSeeAll && (
             <Link
               href="/canciones"

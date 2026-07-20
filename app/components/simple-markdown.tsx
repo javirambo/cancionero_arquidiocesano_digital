@@ -70,6 +70,27 @@ function renderLine(line: string, key: number): ReactNode {
   );
 }
 
+/**
+ * Versión en texto plano del mismo mini-markdown: quita los marcadores y
+ * colapsa los saltos de línea en espacios.
+ *
+ * Se usa en las vistas compactas (carousels de altura fija), donde solo entra
+ * el comienzo del texto: ahí hace falta un flujo de texto continuo para que
+ * `line-clamp` pueda recortar con "…". El render normal, con un `<div>` por
+ * línea, no se deja recortar así.
+ */
+export function simpleMarkdownToPlainText(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^#{1,2}\s+/, ""))
+    .join(" ")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function SimpleMarkdown({
   text,
   className,

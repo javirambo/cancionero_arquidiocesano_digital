@@ -15,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { GoogleSignInButton } from "@/app/components/google-sign-in-button";
 import { AnnouncementCard } from "@/app/components/announcement-card";
+import { CardCarousel } from "@/app/components/card-carousel";
 import { FeaturedAnnouncementPopup } from "@/app/components/featured-announcement-popup";
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
@@ -125,34 +126,39 @@ export default async function Home({
         {/* 1. AVISOS: avisos diocesanos (orden de prioridad) + playlists
             diocesanas debajo. */}
         {(diocesanAnnouncements.items.length > 0 || archdiocesan.length > 0) && (
-          <section className="flex flex-col gap-6">
-            <h2 className="text-xl text-page-title">Avisos</h2>
-            {diocesanAnnouncements.items.length > 0 && (
-              <ul className="grid gap-3">
-                {diocesanAnnouncements.items.map((a) => (
-                  <li key={a.id}>
-                    <AnnouncementCard item={a} />
-                  </li>
-                ))}
-              </ul>
-            )}
-            {archdiocesan.length > 0 && (
-              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {archdiocesan.slice(0, PLAYLIST_HOME_LIMIT).map((p) => (
-                  <PlaylistCard
-                    key={p.id}
-                    hideParish
-                    playlist={{
-                      id: p.id,
-                      name: p.name,
-                      description: p.description,
-                      image_path: p.image_path,
-                      parish: p.parish,
-                    }}
-                  />
-                ))}
-              </ul>
-            )}
+          <section className="flex flex-col gap-2">
+            <h2 className="text-lg text-page-title">Avisos</h2>
+            {/* Los dos carousels mantienen su separación entre sí; el gap-2 de
+                la sección solo achica la distancia del título al contenido. */}
+            <div className="flex flex-col gap-6">
+              {diocesanAnnouncements.items.length > 0 && (
+                <CardCarousel>
+                  {diocesanAnnouncements.items.map((a) => (
+                    <li key={a.id}>
+                      <AnnouncementCard item={a} compact />
+                    </li>
+                  ))}
+                </CardCarousel>
+              )}
+              {archdiocesan.length > 0 && (
+                <CardCarousel>
+                  {archdiocesan.slice(0, PLAYLIST_HOME_LIMIT).map((p) => (
+                    <PlaylistCard
+                      key={p.id}
+                      hideParish
+                      compact
+                      playlist={{
+                        id: p.id,
+                        name: p.name,
+                        description: p.description,
+                        image_path: p.image_path,
+                        parish: p.parish,
+                      }}
+                    />
+                  ))}
+                </CardCarousel>
+              )}
+            </div>
           </section>
         )}
 
@@ -232,12 +238,13 @@ function PlaylistsSection({
   seeAllHref: string;
 }) {
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-xl text-page-title">{heading}</h2>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="flex flex-col gap-2">
+      <h2 className="text-lg text-page-title">{heading}</h2>
+      <CardCarousel>
         {playlists.map((p) => (
           <PlaylistCard
             key={p.id}
+            compact
             playlist={{
               id: p.id,
               name: p.name,
@@ -247,7 +254,7 @@ function PlaylistsSection({
             }}
           />
         ))}
-      </ul>
+      </CardCarousel>
     </section>
   );
 }
@@ -268,22 +275,22 @@ function AnnouncementsSection({
   // items tipado vía Featured pero evito ciclo de imports.
   const list = items as import("@/lib/songs").Featured[];
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-2">
       <div className="flex flex-col gap-0.5">
-        <h2 className="text-xl text-page-title">{heading}</h2>
+        <h2 className="text-lg text-page-title">{heading}</h2>
         {subheading && (
           <span className="text-sm normal-case text-secondary">
             {subheading}
           </span>
         )}
       </div>
-      <ul className="grid gap-3">
+      <CardCarousel>
         {list.map((item, i) => (
           <li key={i}>
-            <AnnouncementCard item={item} />
+            <AnnouncementCard item={item} compact />
           </li>
         ))}
-      </ul>
+      </CardCarousel>
     </section>
   );
 }
@@ -307,8 +314,8 @@ function SongCategoryShortcuts({
   if (shortcuts.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-xl text-page-title">Categorías</h2>
+    <section className="flex flex-col gap-2">
+      <h2 className="text-lg text-page-title">Categorías</h2>
       <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {shortcuts.map((c) => {
           // El tooltip muestra solo el texto previo al marcador ">>>".

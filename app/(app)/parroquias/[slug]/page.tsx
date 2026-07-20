@@ -9,6 +9,8 @@ import {
 import { listPlaylistsForParish } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
 import { AnnouncementCard } from "@/app/components/announcement-card";
+import { CardCarousel } from "@/app/components/card-carousel";
+import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
 import { ParishHeaderBranding } from "./parish-header-branding";
 import { ParishDetails } from "./parish-details";
@@ -177,21 +179,19 @@ type ContactGroup = {
         }}
       />
       <header className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Parroquia
-          </p>
-          {canEdit && (
+        {canEdit && (
+          <div className="flex items-center justify-end gap-4">
             <Link
               href={`/parroquias/${parish.slug}/editar`}
               className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
             >
               Editar
             </Link>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-1 items-center gap-4">
-          {(() => {
+          </div>
+        )}
+        <ParishDetails
+          name={parish.name}
+          avatar={(() => {
             const avatar = parish.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -223,12 +223,6 @@ type ContactGroup = {
               avatar
             );
           })()}
-          <h1 className="min-w-0 break-words text-2xl leading-tight text-page-title sm:text-3xl">
-            {parish.name}
-          </h1>
-        </div>
-
-        <ParishDetails
           address={parish.address ?? null}
           city={parish.city ?? null}
           description={parish.description ?? null}
@@ -239,9 +233,9 @@ type ContactGroup = {
         />
       </header>
 
-      <section aria-labelledby="playlists-heading" className="flex flex-col gap-4">
+      <section aria-labelledby="playlists-heading" className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="playlists-heading" className="text-xl text-page-title">
+          <h2 id="playlists-heading" className="text-lg text-page-title">
             Listas de cantos
           </h2>
           <div className="flex items-center gap-3">
@@ -268,43 +262,39 @@ type ContactGroup = {
             Esta parroquia todavía no publicó playlists.
           </p>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2">
+          <CardCarousel>
             {previewPlaylists.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/playlists/${p.id}`}
-                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary"
-                >
-                  <span className="text-lg text-primary">{p.name}</span>
-                  {p.relation === "archdiocesan" && (
-                    <span className="text-xs uppercase tracking-wide text-secondary">
-                      De la Arquidiócesis
-                    </span>
-                  )}
-                  {p.relation === "subscribed" && p.parish && (
-                    <span className="text-xs uppercase tracking-wide text-secondary">
-                      Compartida por {p.parish.name}
-                    </span>
-                  )}
-                  {p.description && (
-                    <span className="text-sm normal-case text-muted-foreground">
-                      {p.description}
-                    </span>
-                  )}
-                </Link>
-              </li>
+              <PlaylistCard
+                key={p.id}
+                hideParish
+                compact
+                badge={
+                  p.relation === "archdiocesan"
+                    ? "De la Arquidiócesis"
+                    : p.relation === "subscribed" && p.parish
+                      ? `Compartida por ${p.parish.name}`
+                      : null
+                }
+                playlist={{
+                  id: p.id,
+                  name: p.name,
+                  description: p.description,
+                  image_path: p.image_path,
+                  parish: p.parish,
+                }}
+              />
             ))}
-          </ul>
+          </CardCarousel>
         )}
       </section>
 
       {(parishAnnouncements.items.length > 0 || isCoordinatorOfThisParish) && (
         <section
           aria-labelledby="anuncios-heading"
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-2"
         >
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 id="anuncios-heading" className="text-xl text-page-title">
+            <h2 id="anuncios-heading" className="text-lg text-page-title">
               Avisos
             </h2>
             {isCoordinatorOfThisParish && (
@@ -321,13 +311,13 @@ type ContactGroup = {
               Esta parroquia todavía no publicó avisos.
             </p>
           ) : (
-            <ul className="grid gap-3">
+            <CardCarousel>
               {parishAnnouncements.items.map((item, i) => (
                 <li key={i}>
-                  <AnnouncementCard item={item} />
+                  <AnnouncementCard item={item} compact />
                 </li>
               ))}
-            </ul>
+            </CardCarousel>
           )}
         </section>
       )}
@@ -343,10 +333,10 @@ type ContactGroup = {
       {contactGroups.length > 0 && (
         <section
           aria-labelledby="contacto-heading"
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-2"
         >
           <div className="flex flex-col gap-1">
-            <h2 id="contacto-heading" className="text-xl text-page-title">
+            <h2 id="contacto-heading" className="text-lg text-page-title">
               Contacto
             </h2>
             <p className="text-sm normal-case text-muted-foreground">
