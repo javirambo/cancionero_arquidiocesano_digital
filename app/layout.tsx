@@ -62,9 +62,13 @@ export default function RootLayout({
                 <FavoritesProvider>
                   <ToastProvider>
                     <WakeLockProvider>
-                      <SWRegister />
-                      <OfflineIndicator />
-                      {children}
+                      {/* .app-shell es lo que se desplaza a la izquierda al abrir
+                       * el menú lateral (ver globals.css y site-header.tsx). */}
+                      <div className="app-shell flex min-h-full flex-1 flex-col">
+                        <SWRegister />
+                        <OfflineIndicator />
+                        {children}
+                      </div>
                     </WakeLockProvider>
                   </ToastProvider>
                 </FavoritesProvider>

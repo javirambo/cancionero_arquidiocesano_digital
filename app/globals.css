@@ -196,25 +196,53 @@ select {
   z-index: 1;
 }
 
-/* Apertura/cierre del menú desplegable: escala desde el vértice superior
- * derecho (el botón que lo abre) hasta su tamaño normal, y al revés al cerrar.
+/* Menú lateral: al abrirlo, toda la pantalla (.app-shell) se desplaza a la
+ * izquierda exactamente el ancho del panel, como si el menú la empujara. El
+ * panel entra al mismo tiempo y con el mismo easing, así su borde izquierdo
+ * queda pegado al borde derecho de la pantalla durante todo el movimiento.
  * La duración debe coincidir con MENU_ANIM_MS en site-header.tsx, que es lo
  * que retrasa el desmontaje del panel para que la salida alcance a verse. */
-@keyframes menu-pop-in {
-  from { opacity: 0; transform: scale(0); }
-  to   { opacity: 1; transform: scale(1); }
+:root {
+  --drawer-w: min(80vw, 24rem);
+  /* Duración y curva compartidas: si pantalla y panel no usan exactamente las
+   * mismas, se despegan a mitad del recorrido aunque empiecen y terminen
+   * juntos. Por el mismo motivo el desplazamiento de los dos lo dispara una
+   * única clase en <html>, y no el estado de React: así se aplican en el
+   * mismo frame. */
+  --drawer-ms: 300ms;
+  --drawer-ease: ease-out;
 }
-@keyframes menu-pop-out {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0; transform: scale(0); }
+
+.app-shell {
+  /* clip y no hidden: hidden crearía un contenedor de scroll y rompería los
+   * headers sticky que hay dentro. */
+  overflow: clip;
+  transition: transform var(--drawer-ms) var(--drawer-ease),
+    border-radius var(--drawer-ms) var(--drawer-ease);
 }
-.menu-pop-in {
-  transform-origin: top right;
-  animation: menu-pop-in 180ms ease-out;
+
+/* Sólo se redondean las esquinas derechas: la izquierda sigue a sangre. */
+html.menu-open .app-shell {
+  transform: translateX(calc(-1 * var(--drawer-w)));
+  border-radius: 0 1rem 1rem 0;
 }
-.menu-pop-out {
-  transform-origin: top right;
-  animation: menu-pop-out 180ms ease-in forwards;
+
+.app-drawer {
+  transform: translateX(100%);
+  transition: transform var(--drawer-ms) var(--drawer-ease);
+}
+
+html.menu-open .app-drawer {
+  transform: translateX(0);
+}
+
+/* El panel usa blanco y negro puros a pedido, no el fondo general del tema
+ * (crema #fafaf7 / gris azulado #1a1f29): así se despega de la pantalla. */
+.app-drawer {
+  background: #ffffff;
+}
+:root[data-theme="dark"] .app-drawer {
+  background: #000000;
 }
 
 /* Oculta la barra de scroll horizontal de los carousels de tarjetas

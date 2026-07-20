@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "./theme";
@@ -22,12 +23,13 @@ type MenuItemProps = {
   label: string;
   onSelect: () => void;
   destructive?: boolean;
+  prominent?: boolean;
 };
 
-function MenuItem({ href, icon, label, onSelect, destructive }: MenuItemProps) {
+function MenuItem({ href, icon, label, onSelect, destructive, prominent }: MenuItemProps) {
   const className = `flex w-full items-center gap-3 px-4 py-2 text-left normal-case transition-colors hover:bg-sidebar ${
     destructive ? "text-destructive" : "text-foreground"
-  }`;
+  } ${prominent ? "text-lg font-bold" : ""}`;
 
   if (href) {
     return (
@@ -209,17 +211,19 @@ const HamburgerIcon = () => (
   </svg>
 );
 
-// Debe coincidir con la duración de .menu-pop-in / .menu-pop-out en globals.css.
-const MENU_ANIM_MS = 180;
+// Debe coincidir con la transición de .app-shell en globals.css.
+const MENU_ANIM_MS = 300;
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [favOpen, setFavOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuRender, setMenuRender] = useState(false);
+  const [menuShown, setMenuShown] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const showQr = true;
@@ -272,22 +276,41 @@ export function SiteHeader() {
   };
 
   // Mantiene el panel montado mientras corre la animación de cierre.
+  // menuShown se activa un frame después del montaje para que el panel llegue a
+  // pintarse fuera de pantalla y la entrada se anime en vez de aparecer de golpe.
   useEffect(() => {
     if (menuOpen) {
       setMenuRender(true);
-      return;
+      let inner = 0;
+      const outer = requestAnimationFrame(() => {
+        inner = requestAnimationFrame(() => setMenuShown(true));
+      });
+      return () => {
+        cancelAnimationFrame(outer);
+        cancelAnimationFrame(inner);
+      };
     }
+    setMenuShown(false);
     if (!menuRender) return;
     const t = setTimeout(() => setMenuRender(false), MENU_ANIM_MS);
     return () => clearTimeout(t);
   }, [menuOpen, menuRender]);
 
+  // Desplaza toda la pantalla; el panel usa el mismo estado para ir pegado.
+  useEffect(() => {
+    document.documentElement.classList.toggle("menu-open", menuShown);
+    return () => document.documentElement.classList.remove("menu-open");
+  }, [menuShown]);
+
   useEffect(() => {
     if (!menuOpen) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+      const target = event.target as Node;
+      // El panel vive en un portal fuera de menuRef, hay que contemplarlo aparte.
+      if (menuRef.current?.contains(target) || drawerRef.current?.contains(target)) {
+        return;
       }
+      setMenuOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMenuOpen(false);
@@ -391,13 +414,12 @@ export function SiteHeader() {
               ariaExpanded={menuOpen}
             />
 
-            {menuRender && (
+            {menuRender && createPortal(
               <div
+                ref={drawerRef}
                 role="menu"
                 aria-label="Menú de usuario"
-                className={`absolute right-0 top-12 z-40 w-64 overflow-hidden rounded-xl border border-border bg-background shadow-lg ${
-                  menuOpen ? "menu-pop-in" : "menu-pop-out"
-                }`}
+                className="app-drawer fixed inset-y-0 right-0 z-50 w-[var(--drawer-w)] overflow-y-auto overflow-x-hidden border-l border-border"
               >
                 <ProfileSummary
                   user={user}
@@ -413,6 +435,7 @@ export function SiteHeader() {
                       icon={<CancionesIcon />}
                       label="Cantos"
                       onSelect={closeMenu}
+                      prominent
                     />
                   </li>
                   <li>
@@ -421,6 +444,7 @@ export function SiteHeader() {
                       icon={<ListasIcon />}
                       label="Mis listas"
                       onSelect={closeMenu}
+                      prominent
                     />
                   </li>
                   <li>
@@ -429,6 +453,7 @@ export function SiteHeader() {
                       icon={<ParroquiasIcon />}
                       label="Parroquias"
                       onSelect={closeMenu}
+                      prominent
                     />
                   </li>
                   <li>
@@ -437,9 +462,20 @@ export function SiteHeader() {
                       icon={<BibleIcon />}
                       label="Orientaciones litúrgicas"
                       onSelect={closeMenu}
+                      prominent
                     />
                   </li>
-                  <li role="separator" aria-hidden="true" className="my-1 border-t border-border" />
+                  <li role="separator" aria-hidden="true" className="my-3 border-t border-border" />
+                  <li>
+                    <MenuItem
+                      icon={<HeartIcon filled={favorites.length > 0} />}
+                      label="Mis favoritos"
+                      onSelect={() => {
+                        closeMenu();
+                        setFavOpen(true);
+                      }}
+                    />
+                  </li>
                   {wakeLockSupported !== false && (
                     <li>
                       <MenuToggleItem
@@ -486,14 +522,16 @@ export function SiteHeader() {
                       />
                     </li>
                   )}
+                  <li>
+                    <MenuItem
+                      href="/install"
+                      icon={<InstallIcon />}
+                      label="Instalar cancionero"
+                      onSelect={closeMenu}
+                    />
+                  </li>
                 </ul>
-                <div className="border-t border-border py-1 text-sm">
-                  <MenuItem
-                    href="/install"
-                    icon={<InstallIcon />}
-                    label="Instalar app"
-                    onSelect={closeMenu}
-                  />
+                <div className="mt-2 border-t border-border pb-1 pt-3 text-sm">
                   {user && (
                     <MenuItem
                       icon={<CerrarSesionIcon />}
@@ -509,11 +547,24 @@ export function SiteHeader() {
                     onSelect={closeMenu}
                   />
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
       </div>
+
+      {/* Oscurece la pantalla desplazada para despegarla del panel, y de paso
+       * evita que un click sobre ella active lo que haya debajo. */}
+      {menuRender && createPortal(
+        <div
+          aria-hidden="true"
+          className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${
+            menuShown ? "opacity-100" : "opacity-0"
+          }`}
+        />,
+        document.body
+      )}
 
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
       <FavoritesDialog open={favOpen} onClose={() => setFavOpen(false)} />
@@ -562,10 +613,7 @@ function ProfileSummary({
   if (!user) {
     return (
       <div className="flex items-center gap-3 border-b border-border px-4 py-3 normal-case">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-muted-foreground">
-          <UserIcon />
-        </div>
-        <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="truncate text-sm text-foreground">Invitado</p>
           <button
             type="button"
@@ -577,6 +625,9 @@ function ProfileSummary({
             </span>
             Iniciá sesión
           </button>
+        </div>
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-muted-foreground">
+          <UserIcon />
         </div>
       </div>
     );
@@ -591,6 +642,14 @@ function ProfileSummary({
 
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3 normal-case">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <p className="truncate text-sm text-foreground">{displayName}</p>
+        {user.email && (
+          <p className="truncate text-xs lowercase text-muted-foreground">
+            {user.email}
+          </p>
+        )}
+      </div>
       {showImg ? (
         <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-background">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -607,14 +666,6 @@ function ProfileSummary({
           {displayName.charAt(0).toUpperCase()}
         </div>
       )}
-      <div className="flex min-w-0 flex-col">
-        <p className="truncate text-sm text-foreground">{displayName}</p>
-        {user.email && (
-          <p className="truncate text-xs lowercase text-muted-foreground">
-            {user.email}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
