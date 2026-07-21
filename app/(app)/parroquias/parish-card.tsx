@@ -11,6 +11,7 @@ export type Parish = {
   name: string;
   address: string | null;
   city: string | null;
+  logo_url: string | null;
   description: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -41,6 +42,33 @@ type Props = {
 const collapsedClass =
   "max-h-0 opacity-0 !p-0 !border-transparent overflow-hidden";
 const expandedClass = "max-h-[600px] opacity-100";
+
+// Foto/ícono de la parroquia arriba a la izquierda de la tarjeta, del mismo
+// tamaño que el avatar de la página de detalle (h-16). Si no hay logo, cae a la
+// inicial dentro de un círculo.
+function ParishThumb({ name, logoUrl }: { name: string; logoUrl: string | null }) {
+  const [failed, setFailed] = useState(false);
+  const showImg = logoUrl && !failed;
+
+  if (showImg) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={logoUrl}
+        alt=""
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+        className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
+      />
+    );
+  }
+
+  return (
+    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-primary">
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
 
 export function ParishCard({
   parish,
@@ -76,23 +104,26 @@ export function ParishCard({
       <div className="flex items-start gap-2">
         <Link
           href={`/parroquias/${parish.slug}`}
-          className="flex min-w-0 flex-1 flex-col gap-1"
+          className="flex min-w-0 flex-1 items-start gap-3"
         >
-          <span className="text-lg text-song-title">{parish.name}</span>
-          {(parish.address || parish.city) && (
-            <span className="text-sm normal-case text-muted-foreground">
-              {[parish.address, parish.city].filter(Boolean).join(", ")}
-            </span>
-          )}
-          {canSeeMeta && (parish.decanato || (parish.parent_id && parish.parent?.name)) && (
-            <span className="text-[10px] normal-case text-muted-foreground/70">
-              {parish.decanato && <>Decanato: {parish.decanato}</>}
-              {parish.decanato && parish.parent_id && parish.parent?.name && " · "}
-              {parish.parent_id && parish.parent?.name && (
-                <>Sede: {parish.parent.name}</>
-              )}
-            </span>
-          )}
+          <ParishThumb name={parish.name} logoUrl={parish.logo_url} />
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-lg text-song-title">{parish.name}</span>
+            {(parish.address || parish.city) && (
+              <span className="text-sm normal-case text-muted-foreground">
+                {[parish.address, parish.city].filter(Boolean).join(", ")}
+              </span>
+            )}
+            {canSeeMeta && (parish.decanato || (parish.parent_id && parish.parent?.name)) && (
+              <span className="text-[10px] normal-case text-muted-foreground/70">
+                {parish.decanato && <>Decanato: {parish.decanato}</>}
+                {parish.decanato && parish.parent_id && parish.parent?.name && " · "}
+                {parish.parent_id && parish.parent?.name && (
+                  <>Sede: {parish.parent.name}</>
+                )}
+              </span>
+            )}
+          </span>
         </Link>
 
         {isLogged && (

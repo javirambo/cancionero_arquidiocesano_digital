@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import Link from "next/link";
+import { useState } from "react";
+import { EditIcon } from "@/app/components/icons";
 
-// Encabezado de la parroquia: logo + nombre + ubicación, y debajo un panel
+// Encabezado de la parroquia: nombre (en dorado) + ubicación, y debajo un panel
 // desplegable con el resto de los datos (descripción con horarios de misas,
 // Sede, Correo, Tel y sitio web).
 //
 // Tanto el nombre como la ubicación son disparadores del mismo estado, así que
 // tocar cualquiera de los dos abre o cierra el panel y gira la flechita.
-//
-// El avatar llega como prop en vez de construirse acá porque depende de datos
-// del servidor (logo_url, coordenadas para el link a Maps) y este componente
-// es de cliente.
 export function ParishDetails({
   name,
-  avatar,
+  editHref,
   address,
   city,
   description,
@@ -24,7 +22,7 @@ export function ParishDetails({
   url,
 }: {
   name: string;
-  avatar: ReactNode;
+  editHref: string | null;
   address: string | null;
   city: string | null;
   description: string | null;
@@ -40,14 +38,13 @@ export function ParishDetails({
   const toggle = () => setExpanded((v) => !v);
 
   const titleClass =
-    "min-w-0 break-words text-2xl leading-tight text-page-title sm:text-3xl";
+    "min-w-0 break-words text-xl leading-tight text-secondary sm:text-2xl";
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex min-w-0 items-start gap-4">
-        {avatar}
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className={titleClass}>
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex items-start justify-between gap-2">
+          <h1 className={titleClass} style={{ textTransform: "none" }}>
             {hasExtra ? (
               <button
                 type="button"
@@ -62,39 +59,49 @@ export function ParishDetails({
               name
             )}
           </h1>
-
-          {(location || hasExtra) && (
-            <div className="text-sm normal-case text-muted-foreground">
-              {hasExtra ? (
-                <button
-                  type="button"
-                  onClick={toggle}
-                  aria-expanded={expanded}
-                  aria-controls="parish-extra"
-                  className="inline-flex items-center gap-1 text-left hover:text-primary"
-                >
-                  <span>{location || "Más datos"}</span>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={`h-4 w-4 shrink-0 transition-transform ${
-                      expanded ? "rotate-180" : ""
-                    }`}
-                    aria-hidden="true"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-              ) : (
-                <span>{location}</span>
-              )}
-            </div>
+          {editHref && (
+            <Link
+              href={editHref}
+              title="Editar"
+              aria-label="Editar"
+              className="mt-1 shrink-0 text-muted-foreground transition-colors hover:text-primary [&_svg]:h-5 [&_svg]:w-5"
+            >
+              <EditIcon />
+            </Link>
           )}
         </div>
+
+        {(location || hasExtra) && (
+          <div className="text-sm normal-case text-muted-foreground">
+            {hasExtra ? (
+              <button
+                type="button"
+                onClick={toggle}
+                aria-expanded={expanded}
+                aria-controls="parish-extra"
+                className="inline-flex items-center gap-1 text-left hover:text-primary"
+              >
+                <span>{location || "Más datos"}</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`h-4 w-4 shrink-0 transition-transform ${
+                    expanded ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            ) : (
+              <span>{location}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Fuera de la columna del título: el panel usa todo el ancho disponible

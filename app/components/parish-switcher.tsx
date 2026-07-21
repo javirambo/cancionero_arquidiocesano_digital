@@ -86,11 +86,15 @@ function ParishAvatar({ name, logoUrl }: { name: string; logoUrl: string | null 
 
 async function loadUserParishes(userId: string): Promise<UserParish[]> {
   const supabase = createClient();
-  const { data } = await supabase
-    .from("parish_members")
-    .select("joined_at, parishes(id, slug, name, logo_url)")
-    .eq("user_id", userId)
-    .order("joined_at", { ascending: false });
+  const [membersRes, profileRes] = await Promise.all([
+    supabase
+      .from("parish_members")
+      .select("joined_at, parishes(id, slug, name, logo_url)")
+      .eq("user_id", userId)
+      .order("joined_at", { ascending: false }),
+    supabase.from("users").select("parish_id").eq("id", userId).maybeSingle(),
+  ]);
+  const data = membersRes.data;
   if (!data) return [];
   const seen = new Set<string>();
   const parishes: UserParish[] = [];
@@ -101,7 +105,13 @@ async function loadUserParishes(userId: string): Promise<UserParish[]> {
     seen.add(p.id);
     parishes.push(p);
   }
-  return parishes;
+  // La parroquia principal (la de la estrella, guardada en users.parish_id) va
+  // primero; el resto conserva su orden por joined_at desc.
+  const primaryId = (profileRes.data?.parish_id as string | null) ?? null;
+  if (!primaryId) return parishes;
+  const primary = parishes.filter((p) => p.id === primaryId);
+  const others = parishes.filter((p) => p.id !== primaryId);
+  return [...primary, ...others];
 }
 
 export function ParishSwitcher({ brand }: { brand: HeaderBrand | null }) {

@@ -179,50 +179,9 @@ type ContactGroup = {
         }}
       />
       <header className="flex flex-col gap-3">
-        {canEdit && (
-          <div className="flex items-center justify-end gap-4">
-            <Link
-              href={`/parroquias/${parish.slug}/editar`}
-              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-            >
-              Editar
-            </Link>
-          </div>
-        )}
         <ParishDetails
-          name={parish.name}
-          avatar={(() => {
-            const avatar = parish.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={parish.logo_url}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div
-                aria-hidden="true"
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-primary"
-              >
-                {parish.name.charAt(0).toUpperCase()}
-              </div>
-            );
-            return parish.latitude && parish.longitude ? (
-              <a
-                href={`https://www.google.com/maps?q=${parish.latitude},${parish.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Ver ubicación en Google Maps"
-                aria-label="Ver ubicación en Google Maps"
-                className="shrink-0 rounded-full transition-opacity hover:opacity-80"
-              >
-                {avatar}
-              </a>
-            ) : (
-              avatar
-            );
-          })()}
+          name={parish.parent_id ? parish.name : `Parroquia ${parish.name}`}
+          editHref={canEdit ? `/parroquias/${parish.slug}/editar` : null}
           address={parish.address ?? null}
           city={parish.city ?? null}
           description={parish.description ?? null}
