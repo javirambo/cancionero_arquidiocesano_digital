@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { CloseIcon, SearchIcon } from "./icons";
 import { useGlobalSearch } from "./use-global-search";
+import { useRecentSearches } from "./use-recent-searches";
 
 type Props = {
   open: boolean;
@@ -13,6 +14,7 @@ type Props = {
 export function SearchDialog({ open, onClose }: Props) {
   const { q, setQ, results, loading, totalResults, reset } =
     useGlobalSearch(open);
+  const { recent, addRecent } = useRecentSearches();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Foco al abrir.
@@ -35,6 +37,18 @@ export function SearchDialog({ open, onClose }: Props) {
   const close = () => {
     reset();
     onClose();
+  };
+
+  // Al abrir un resultado guardamos el término tipeado en el historial.
+  const selectResult = () => {
+    addRecent(q);
+    close();
+  };
+
+  // Tocar una búsqueda reciente rellena el input y vuelve a enfocarlo.
+  const runRecent = (term: string) => {
+    setQ(term);
+    inputRef.current?.focus();
   };
 
   return (
@@ -77,7 +91,9 @@ export function SearchDialog({ open, onClose }: Props) {
             loading={loading}
             results={results}
             totalResults={totalResults}
-            onResultClick={close}
+            onResultClick={selectResult}
+            recent={recent}
+            onRecentClick={runRecent}
           />
         </div>
       </div>
@@ -93,19 +109,43 @@ export function SearchResultsList({
   results,
   totalResults,
   onResultClick,
+  recent,
+  onRecentClick,
 }: {
   q: string;
   loading: boolean;
   results: import("@/lib/songs").GlobalSearchResults;
   totalResults: number;
   onResultClick: () => void;
+  recent?: string[];
+  onRecentClick?: (term: string) => void;
 }) {
   return (
     <>
       {q.trim() === "" && (
-        <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
-          Buscá por título, fragmento de letra, nombre de playlist o parroquia.
-        </p>
+        <>
+          {recent && recent.length > 0 && (
+            <Section title="Búsquedas recientes">
+              {recent.map((term) => (
+                <li key={term}>
+                  <button
+                    type="button"
+                    onClick={() => onRecentClick?.(term)}
+                    className="flex w-full items-center gap-3 px-5 py-3 text-left normal-case transition-colors hover:bg-sidebar"
+                  >
+                    <span aria-hidden="true" className="shrink-0 text-muted-foreground">
+                      <SearchIcon />
+                    </span>
+                    <span className="text-base text-foreground">{term}</span>
+                  </button>
+                </li>
+              ))}
+            </Section>
+          )}
+          <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
+            Buscá por título, fragmento de letra, nombre de playlist o parroquia.
+          </p>
+        </>
       )}
       {q.trim() !== "" && loading && (
         <p className="px-6 py-8 text-center text-sm normal-case text-muted-foreground">
