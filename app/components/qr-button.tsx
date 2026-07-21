@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import QRCode from "qrcode";
 import { CloseIcon, LinkIcon, QrIcon } from "./icons";
 
@@ -74,7 +75,7 @@ export function QrDialog({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   async function shareLink() {
     if (!url) return;
@@ -105,12 +106,12 @@ export function QrDialog({
     a.click();
   }
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Compartir"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
@@ -172,7 +173,8 @@ export function QrDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
