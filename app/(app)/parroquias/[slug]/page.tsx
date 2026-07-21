@@ -201,12 +201,12 @@ type ContactGroup = {
             Listas de cantos
           </h2>
           <div className="flex items-center gap-3">
-            {playlists.length > previewPlaylists.length && (
+            {!isCoordinatorOfThisParish && (
               <Link
                 href={`/parroquias/${parish.slug}/playlists`}
                 className="text-sm normal-case text-primary hover:underline"
               >
-                Ver todas ({playlists.length})
+                Ver todas
               </Link>
             )}
             {isCoordinatorOfThisParish && (

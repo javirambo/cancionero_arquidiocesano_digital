@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { loadSchedules } from "@/lib/schedule.server";
+import { EditIcon } from "@/app/components/icons";
 
 type AnnouncementRow = {
   id: string;
@@ -152,7 +153,7 @@ function Group({
       <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
         {title} ({rows.length})
       </h2>
-      <ul className="divide-y divide-border rounded-xl border border-border">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {rows.map((a) => {
           const reglas = sched.get(a.id) ?? [];
           const meta: string[] = [];
@@ -186,21 +187,25 @@ function Group({
             </>
           );
           return (
-            <li
-              key={a.id}
-              className={`px-5 py-3 transition-colors hover:bg-sidebar ${
-                muted ? "opacity-60" : ""
-              }`}
-            >
+            <li key={a.id} className={`relative ${muted ? "opacity-60" : ""}`}>
               {canManage ? (
                 <Link
                   href={`/parroquias/${parishSlug}/anuncios/${a.id}/editar`}
-                  className="flex flex-col gap-0.5"
+                  className="flex h-full flex-col gap-0.5 rounded-xl border border-border bg-background p-4 pr-12 transition-colors hover:border-primary"
                 >
                   {content}
+                  <span
+                    aria-hidden
+                    title="Editar aviso"
+                    className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground"
+                  >
+                    <EditIcon />
+                  </span>
                 </Link>
               ) : (
-                <div className="flex flex-col gap-0.5">{content}</div>
+                <div className="flex h-full flex-col gap-0.5 rounded-xl border border-border bg-background p-4">
+                  {content}
+                </div>
               )}
             </li>
           );
