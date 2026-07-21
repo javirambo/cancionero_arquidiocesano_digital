@@ -25,3 +25,14 @@ se puede sacar una?
 - mostrar las imagenes en la edicion de anuncios
 http://localhost:4000/parroquias/maria_auxiliadora_rosario/anuncios
 
+
+IMPORTANTES:
+============
+ https://www.curas.com.ar/Calendario/ordo_12_2026.html#25
+ https://curas.com.ar/Calendario/Calendario_lit%C3%BArgico_2026_para_la_Argentina.pdf
+ https://www.curas.com.ar/Leccionarios/Tiempos/Navidad/L2512n.htm
+ https://www.curas.com.ar/Leccionarios/Ferial/Top/L17lnstop.htm
+-> Dentro de cada parroquia encontrarás sus repertorios.
+
+- avisos con links
+- el link a listas no va a listas de liturgias
