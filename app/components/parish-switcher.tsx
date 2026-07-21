@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSession } from "./session";
-import type { HeaderBrand } from "./home-title-context";
+import { useHomeTitle, type HeaderBrand } from "./home-title-context";
 
 // Duración de la animación de bajada/subida del dropdown. Debe coincidir con la
 // clase duration-* del panel.
@@ -116,6 +116,7 @@ async function loadUserParishes(userId: string): Promise<UserParish[]> {
 
 export function ParishSwitcher({ brand }: { brand: HeaderBrand | null }) {
   const { user } = useSession();
+  const { setBrand } = useHomeTitle();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [shown, setShown] = useState(false);
@@ -263,7 +264,10 @@ export function ParishSwitcher({ brand }: { brand: HeaderBrand | null }) {
               <Link
                 href="/"
                 role="menuitem"
-                onClick={selectItem}
+                onClick={() => {
+                  setBrand(null);
+                  selectItem();
+                }}
                 className="flex items-center gap-3 px-4 py-2.5 normal-case transition-colors hover:bg-sidebar"
               >
                 <span className="block h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[#aab5cf] bg-background">
@@ -283,7 +287,14 @@ export function ParishSwitcher({ brand }: { brand: HeaderBrand | null }) {
                 <Link
                   href={`/parroquias/${p.slug}`}
                   role="menuitem"
-                  onClick={selectItem}
+                  onClick={() => {
+                    setBrand({
+                      name: p.name,
+                      logoUrl: p.logo_url,
+                      href: `/parroquias/${p.slug}`,
+                    });
+                    selectItem();
+                  }}
                   className="flex items-center gap-3 px-4 py-2.5 normal-case transition-colors hover:bg-sidebar"
                 >
                   <ParishAvatar name={p.name} logoUrl={p.logo_url} />

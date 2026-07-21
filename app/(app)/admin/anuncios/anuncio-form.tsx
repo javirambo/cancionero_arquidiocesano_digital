@@ -772,7 +772,7 @@ function TargetKindDropdown({
       {open && (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-lg"
+          className="absolute bottom-full left-0 right-0 z-30 mb-1 overflow-hidden rounded-lg border border-border bg-background shadow-lg"
         >
           {options.map((opt) => {
             const active = opt.value === value;

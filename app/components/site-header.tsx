@@ -372,7 +372,7 @@ export function SiteHeader() {
                   </li>
                   <li>
                     <MenuItem
-                      href="/playlists"
+                      href={brand ? `${brand.href}/playlists` : "/playlists"}
                       icon={<ListasIcon />}
                       label="Mis listas"
                       onSelect={closeMenu}

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSession } from "./session";
+import { useHomeTitle } from "./home-title-context";
 import { BibleIcon, HomeIcon } from "./icons";
 import { CancionesIcon, ListasIcon } from "./site-header";
 
@@ -46,6 +47,7 @@ async function loadHomeHref(userId: string): Promise<string> {
 export function BottomNav() {
   const pathname = usePathname() ?? "";
   const { user } = useSession();
+  const { brand } = useHomeTitle();
   const [parishHref, setParishHref] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,12 +64,16 @@ export function BottomNav() {
   // Sin usuario, el destino es siempre la home de la Arquidiócesis.
   const homeHref = user && parishHref ? parishHref : "/";
 
+  // Listas: si el brand está en una parroquia → las listas de esa parroquia;
+  // en diocesano → las listas de la Arquidiócesis.
+  const playlistsHref = brand ? `${brand.href}/playlists` : "/playlists";
+
   // Reusa los mismos íconos del menú principal (drawer): Cantos, Listas y
   // Orientaciones litúrgicas. Inicio usa el HomeIcon del catálogo.
   const items: NavItem[] = [
     { href: homeHref, label: "Inicio", icon: <HomeIcon /> },
     { href: "/canciones", label: "Cantos", icon: <CancionesIcon /> },
-    { href: "/playlists", label: "Listas", icon: <ListasIcon /> },
+    { href: playlistsHref, label: "Listas", icon: <ListasIcon /> },
     { href: "/orientaciones-liturgicas", label: "Liturgia", icon: <BibleIcon /> },
   ];
 

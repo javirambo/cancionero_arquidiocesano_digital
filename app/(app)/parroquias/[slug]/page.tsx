@@ -3,16 +3,17 @@ import { notFound } from "next/navigation";
 import {
   getParishBySlug,
   listAnnouncementsForParish,
+  loadFeaturedAnnouncementPopupForParish,
   listSongsPaged,
   listPublicCategories,
 } from "@/lib/songs";
 import { listPlaylistsForParish } from "@/lib/playlists";
 import { createClient } from "@/lib/supabase/server";
 import { AnnouncementCard } from "@/app/components/announcement-card";
+import { FeaturedAnnouncementPopup } from "@/app/components/featured-announcement-popup";
 import { CardCarousel } from "@/app/components/card-carousel";
 import { PlaylistCard } from "@/app/(app)/playlists/playlist-card";
 import { SongsFrame } from "@/app/components/songs-frame";
-import { ParishHeaderBranding } from "./parish-header-branding";
 import { ParishDetails } from "./parish-details";
 
 const SONGS_PAGE_SIZE = 50;
@@ -27,15 +28,22 @@ export default async function ParroquiaPage({
   const parish = await getParishBySlug(slug);
   if (!parish) notFound();
 
-  const [playlists, songsResult, songCategories, parishAnnouncements] =
-    await Promise.all([
-      listPlaylistsForParish(parish.id, { parishSlug: parish.slug }),
-      listSongsPaged(1, SONGS_PAGE_SIZE),
-      listPublicCategories(),
-      // Los avisos de la parroquia son públicos (RLS abierta desde mig.
-      // 0035): se cargan para cualquier visitante, incluso sin sesión.
-      listAnnouncementsForParish(parish.id),
-    ]);
+  const [
+    playlists,
+    songsResult,
+    songCategories,
+    parishAnnouncements,
+    featuredPopup,
+  ] = await Promise.all([
+    listPlaylistsForParish(parish.id, { parishSlug: parish.slug }),
+    listSongsPaged(1, SONGS_PAGE_SIZE),
+    listPublicCategories(),
+    // Los avisos de la parroquia son públicos (RLS abierta desde mig.
+    // 0035): se cargan para cualquier visitante, incluso sin sesión.
+    listAnnouncementsForParish(parish.id),
+    // Popup destacado: anuncio featured asignado a ESTA parroquia.
+    loadFeaturedAnnouncementPopupForParish(parish.id),
+  ]);
   const previewPlaylists = playlists.slice(0, 4);
 
   const supabase = await createClient();
@@ -170,14 +178,9 @@ type ContactGroup = {
 
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 pb-12 pt-4">
-      <ParishHeaderBranding
-        brand={{
-          name: parish.name,
-          logoUrl: parish.logo_url ?? null,
-          href: `/parroquias/${parish.slug}`,
-        }}
-      />
+    <>
+      {featuredPopup && <FeaturedAnnouncementPopup item={featuredPopup} />}
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 pb-12 pt-4">
       <header className="flex flex-col gap-3">
         <ParishDetails
           name={parish.parent_id ? parish.name : `Parroquia ${parish.name}`}
@@ -356,6 +359,7 @@ type ContactGroup = {
           </ul>
         </section>
       )}
-    </main>
+      </main>
+    </>
   );
 }

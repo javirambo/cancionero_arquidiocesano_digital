@@ -71,29 +71,29 @@ export default async function ParroquiaPlaylistsPage({
     return p.relation === "own" && isParishCoordinator;
   };
 
-  const groups: { label: string; items: ParishPlaylistItem[] }[] = [
-    { label: "De esta parroquia", items: playlists.filter((p) => p.relation === "own") },
-    { label: "Compartidas con esta parroquia", items: playlists.filter((p) => p.relation === "subscribed") },
-    { label: "De la Arquidiócesis", items: playlists.filter((p) => p.relation === "archdiocesan") },
+  const groups: { key: string; label: string; items: ParishPlaylistItem[] }[] = [
+    { key: "own", label: "", items: playlists.filter((p) => p.relation === "own") },
+    { key: "subscribed", label: "Compartidas con esta parroquia", items: playlists.filter((p) => p.relation === "subscribed") },
+    { key: "archdiocesan", label: "De la Arquidiócesis", items: playlists.filter((p) => p.relation === "archdiocesan") },
   ];
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
-      <header className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-1 flex-col gap-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            {parish.name}
-          </p>
-          <h1 className="text-2xl text-page-title">Playlists</h1>
+      <header className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl text-page-title">Listas</h1>
+          {canManage && (
+            <Link
+              href={`/parroquias/${parish.slug}/playlists/nueva`}
+              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              + Nueva
+            </Link>
+          )}
         </div>
-        {canManage && (
-          <Link
-            href={`/parroquias/${parish.slug}/playlists/nueva`}
-            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-          >
-            + Nueva playlist
-          </Link>
-        )}
+        <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+          DE {parish.name}
+        </p>
       </header>
 
       {playlists.length === 0 ? (
@@ -104,10 +104,12 @@ export default async function ParroquiaPlaylistsPage({
         groups
           .filter((g) => g.items.length > 0)
           .map((g) => (
-            <section key={g.label} className="flex flex-col gap-3">
-              <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
-                {g.label}
-              </h2>
+            <section key={g.key} className="flex flex-col gap-3">
+              {g.label && (
+                <h2 className="text-xs uppercase tracking-[0.2em] text-secondary">
+                  {g.label}
+                </h2>
+              )}
               <ul className="grid gap-3 sm:grid-cols-2">
                 {g.items.map((p) => {
                   const editable = canEditItem(p);

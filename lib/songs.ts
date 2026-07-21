@@ -802,8 +802,10 @@ export async function listAnnouncementsForParish(
   return { items, total: visibles.length };
 }
 
-// Devuelve el anuncio destacado (featured = true) de mayor prioridad que el
-// usuario debería ver en la Home. Aplica filtros de parroquia y vigencia.
+// Devuelve el anuncio destacado (featured = true) de mayor prioridad para el
+// popup de la home ARQUIDIOCESANA. Solo considera destacados GLOBALES (sin
+// parroquia asignada); los destacados dirigidos a una parroquia salen en el
+// popup de la home de esa parroquia (loadFeaturedAnnouncementPopupForParish).
 export async function loadFeaturedAnnouncementPopup(): Promise<Featured | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -817,9 +819,43 @@ export async function loadFeaturedAnnouncementPopup(): Promise<Featured | null> 
   if (error) throw error;
   const all = (data ?? []) as AnnouncementRow[];
   if (all.length === 0) return null;
-  const byAudience = await filterAnnouncementsByAudience(all, "home");
-  const sched = await loadSchedules("announcement", byAudience.map((r) => r.id));
-  const visibles = byAudience.filter((r) => isVisibleNow(sched.get(r.id)));
+  const scoped = await getScopedAnnouncementIds(all.map((r) => r.id));
+  const globals = all.filter((r) => !scoped.has(r.id));
+  if (globals.length === 0) return null;
+  const sched = await loadSchedules("announcement", globals.map((r) => r.id));
+  const visibles = globals.filter((r) => isVisibleNow(sched.get(r.id)));
+  if (visibles.length === 0) return null;
+  const items = await resolveAnnouncementHrefs(visibles.slice(0, 1));
+  return items[0] ?? null;
+}
+
+// Popup destacado para la home de una PARROQUIA: el anuncio featured de mayor
+// prioridad asignado a esa parroquia (vía announcement_parishes) y vigente.
+export async function loadFeaturedAnnouncementPopupForParish(
+  parishId: string
+): Promise<Featured | null> {
+  const supabase = await createClient();
+  const { data: links, error: linkErr } = await supabase
+    .from("announcement_parishes")
+    .select("announcement_id")
+    .eq("parish_id", parishId);
+  if (linkErr) throw linkErr;
+  const ids = (links ?? []).map((l) => l.announcement_id as string);
+  if (ids.length === 0) return null;
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(
+      "id, title, body, kind, target_kind, target_id, target_url, image_path, priority, featured, created_at"
+    )
+    .in("id", ids)
+    .eq("featured", true)
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const all = (data ?? []) as AnnouncementRow[];
+  if (all.length === 0) return null;
+  const sched = await loadSchedules("announcement", all.map((r) => r.id));
+  const visibles = all.filter((r) => isVisibleNow(sched.get(r.id)));
   if (visibles.length === 0) return null;
   const items = await resolveAnnouncementHrefs(visibles.slice(0, 1));
   return items[0] ?? null;

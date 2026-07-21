@@ -492,7 +492,7 @@ Anuncios + festividades litúrgicas que aparecen en la home (CU-07, CU-21). Pued
 | `target_id`    | uuid        | requerido si `target_kind in ('song','playlist','parish')`                                    |
 | `target_url`   | text        | requerido si `target_kind='external'`                                                         |
 | `priority`     | int         | default 0                                                                                     |
-| `featured`     | boolean     | default false. Si true, el anuncio se muestra como **popup fullscreen** en la home en cada carga (mig. 0033) |
+| `featured`     | boolean     | default false. Si true, el anuncio se muestra como **popup fullscreen** al cargar la home (mig. 0033). Si es **global** (sin parroquia asignada) el popup sale en la home arquidiocesana; si está asignado a una o más parroquias, el popup sale **solo** en la home de esa/s parroquia/s (`/parroquias/[slug]`), nunca en la arquidiocesana |
 | `image_path`   | text        | NULL permitido. Path dentro del bucket `images` para la imagen del anuncio (mig. 0023)        |
 | `created_by`   | uuid        | FK → `users.id` ON DELETE SET NULL                                                            |
 | `created_at`   | timestamptz | default now()                                                                                 |
