@@ -120,7 +120,7 @@ export function ImageUploadField({
       {error && <span className="text-xs text-destructive">{error}</span>}
       <span className="text-xs text-muted-foreground">
         JPG/PNG/WEBP, hasta 2 MB. La imagen se centra horizontalmente y se
-        recorta a los lados en las cards.
+        recorta a los lados si es necesario.
       </span>
     </label>
   );

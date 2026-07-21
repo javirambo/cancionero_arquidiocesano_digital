@@ -113,6 +113,24 @@ export async function listAllPublicPlaylists(options?: {
   return options?.includeOutOfWindow ? all : await filterByScheduleVisibility(all);
 }
 
+// Trae playlists por un conjunto de ids (para grupos armados aparte, p. ej.
+// "Mis favoritas" en /playlists). La RLS decide qué es legible. No garantiza
+// orden: el llamador reordena si lo necesita.
+export async function listPlaylistsByIds(
+  ids: string[]
+): Promise<PlaylistSummary[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("playlists")
+    .select(PLAYLIST_SELECT)
+    .in("id", ids);
+  if (error) throw error;
+  return (data ?? []).map((r) =>
+    rowToSummary(r as unknown as Parameters<typeof rowToSummary>[0])
+  );
+}
+
 // Secciones para `/playlists` (CU-17): personales privadas del usuario,
 // playlists de las parroquias donde es miembro, y arquidiocesanas globales.
 // Se aplica dedupe por id con prioridad: personal > parroquia > arquidiocesana.

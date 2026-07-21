@@ -29,11 +29,7 @@ export function ScheduleEditor({
 
   return (
     <div className="flex flex-col gap-4">
-      {value.length === 0 ? (
-        <p className="text-sm normal-case text-muted-foreground">
-          Sin reglas configuradas. La playlist o anuncio se mostrará siempre.
-        </p>
-      ) : (
+      {value.length === 0 ? null : (
         <ul className="flex flex-col gap-4">
           {value.map((rule, idx) => (
             <li

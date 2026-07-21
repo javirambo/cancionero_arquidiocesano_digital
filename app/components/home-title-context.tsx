@@ -9,8 +9,6 @@ import {
   type ReactNode,
 } from "react";
 
-const DEFAULT_TITLE = "Cancionero";
-
 // Clave de localStorage donde se persiste el brand elegido a mano en el
 // selector del header. El brand NO se deriva de la página actual: solo cambia
 // cuando el usuario elige un ítem en el ParishSwitcher (Arquidiócesis o una
@@ -27,21 +25,16 @@ export type HeaderBrand = {
 };
 
 type HomeTitleContextValue = {
-  title: string;
-  setTitle: (title: string) => void;
   brand: HeaderBrand | null;
   setBrand: (brand: HeaderBrand | null) => void;
 };
 
 const HomeTitleContext = createContext<HomeTitleContextValue>({
-  title: DEFAULT_TITLE,
-  setTitle: () => {},
   brand: null,
   setBrand: () => {},
 });
 
 export function HomeTitleProvider({ children }: { children: ReactNode }) {
-  const [title, setTitleState] = useState<string>(DEFAULT_TITLE);
   const [brand, setBrandState] = useState<HeaderBrand | null>(null);
 
   // Hidrata el brand persistido al montar (una vez). Arranca en null para no
@@ -58,9 +51,6 @@ export function HomeTitleProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setTitle = useCallback((next: string) => {
-    setTitleState(next || DEFAULT_TITLE);
-  }, []);
   const setBrand = useCallback((next: HeaderBrand | null) => {
     setBrandState(next);
     try {
@@ -71,7 +61,7 @@ export function HomeTitleProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   return (
-    <HomeTitleContext.Provider value={{ title, setTitle, brand, setBrand }}>
+    <HomeTitleContext.Provider value={{ brand, setBrand }}>
       {children}
     </HomeTitleContext.Provider>
   );

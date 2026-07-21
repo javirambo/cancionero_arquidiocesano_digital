@@ -273,7 +273,7 @@ export function PlaylistForm({
           <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-secondary">
             Vigencia
           </h2>
-          <p className="text-sm normal-case text-muted-foreground">
+          <p className="text-xs normal-case text-muted-foreground">
             Si no agregás reglas, la playlist se muestra siempre. Las reglas se evalúan en hora de Argentina; si hay varias, basta con que una se cumpla.
           </p>
           <ScheduleEditor

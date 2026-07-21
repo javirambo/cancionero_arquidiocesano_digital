@@ -13,7 +13,7 @@ import { useFavorites } from "./favorites";
 import { useUserRoles } from "./user-roles";
 import { useWakeLock } from "./wake-lock";
 import { useHomeTitle } from "./home-title-context";
-import { BibleIcon, HeartIcon, SearchIcon, ShareIcon, UserIcon } from "./icons";
+import { BibleIcon, HeartIcon, HomeIcon, SearchIcon, ShareIcon, UserIcon } from "./icons";
 import { QrDialog } from "./qr-button";
 import { ParishSwitcher } from "./parish-switcher";
 import pkg from "@/package.json";
@@ -217,19 +217,7 @@ export function SiteHeader() {
   const { favorites } = useFavorites();
   const { active: wakeLockActive, supported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
   const { isAdmin, isEditor } = useUserRoles();
-  const { title, brand } = useHomeTitle();
-  const [displayTitle, setDisplayTitle] = useState(title);
-  const [titleVisible, setTitleVisible] = useState(true);
-
-  useEffect(() => {
-    if (title === displayTitle) return;
-    setTitleVisible(false);
-    const t = setTimeout(() => {
-      setDisplayTitle(title);
-      setTitleVisible(true);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [title, displayTitle]);
+  const { brand } = useHomeTitle();
 
   useEffect(() => {
     const supabase = createClient();
@@ -363,6 +351,15 @@ export function SiteHeader() {
                 <ul className="py-1 text-sm">
                   <li>
                     <MenuItem
+                      href={brand ? brand.href : "/"}
+                      icon={<HomeIcon />}
+                      label="Inicio"
+                      onSelect={closeMenu}
+                      prominent
+                    />
+                  </li>
+                  <li>
+                    <MenuItem
                       href="/canciones"
                       icon={<CancionesIcon />}
                       label="Cantos"
@@ -372,7 +369,7 @@ export function SiteHeader() {
                   </li>
                   <li>
                     <MenuItem
-                      href={brand ? `${brand.href}/playlists` : "/playlists"}
+                      href="/playlists"
                       icon={<ListasIcon />}
                       label="Mis listas"
                       onSelect={closeMenu}
