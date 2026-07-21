@@ -16,6 +16,7 @@ import { useHomeTitle } from "./home-title-context";
 import { BibleIcon, HeartIcon, SearchIcon, ShareIcon, UserIcon } from "./icons";
 import { QrDialog } from "./qr-button";
 import { ParishSwitcher } from "./parish-switcher";
+import pkg from "@/package.json";
 
 type MenuItemProps = {
   href?: string;
@@ -125,7 +126,7 @@ const ModoClaroIcon = () => (
   </svg>
 );
 
-const ListasIcon = () => (
+export const ListasIcon = () => (
   <svg {...iconProps}>
     <path d="M8 6h12M8 12h12M8 18h12" />
     <circle cx="4" cy="6" r="1" />
@@ -158,7 +159,7 @@ const AdminIcon = () => (
   </svg>
 );
 
-const CancionesIcon = () => (
+export const CancionesIcon = () => (
   <svg {...iconProps}>
     <path d="M9 18V5l11-2v13" />
     <circle cx="6" cy="18" r="3" />
@@ -324,8 +325,8 @@ export function SiteHeader() {
 
   return (
     <header
-      style={{ backgroundColor: "#436bb0" }}
-      className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border`}
+      style={{ backgroundColor: "rgba(56, 90, 150, 0.85)" }}
+      className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border backdrop-blur-md`}
     >
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-2 py-1">
         <CircleButton
@@ -349,7 +350,7 @@ export function SiteHeader() {
                 ref={drawerRef}
                 role="menu"
                 aria-label="Menú de usuario"
-                className="app-drawer fixed inset-y-0 right-0 z-50 w-[var(--drawer-w)] overflow-y-auto overflow-x-hidden border-l border-border"
+                className="app-drawer fixed inset-y-0 right-0 z-50 flex w-[var(--drawer-w)] flex-col overflow-y-auto overflow-x-hidden border-l border-border"
               >
                 <ProfileSummary
                   user={user}
@@ -477,6 +478,27 @@ export function SiteHeader() {
                     label="¿Quiénes somos?"
                     onSelect={closeMenu}
                   />
+                </div>
+                <div className="mt-auto border-t border-border px-4 pb-4 pt-3 text-center text-xs normal-case text-muted-foreground">
+                  <p>Arquidiócesis de Rosario · Comisión Litúrgico-Musical</p>
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <Link
+                      href="/creditos"
+                      onClick={closeMenu}
+                      className="text-shortcut hover:text-primary"
+                    >
+                      Créditos
+                    </Link>
+                    <span aria-hidden="true">-</span>
+                    <Link
+                      href="/privacidad"
+                      onClick={closeMenu}
+                      className="text-shortcut hover:text-primary"
+                    >
+                      Privacidad
+                    </Link>
+                  </div>
+                  <p className="mt-2">Versión {pkg.version}</p>
                 </div>
               </div>,
               document.body

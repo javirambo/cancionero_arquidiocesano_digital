@@ -229,15 +229,15 @@ export function ParishSwitcher({ brand }: { brand: HeaderBrand | null }) {
         ) : (
           <>
             <Image
-              src="/logo-comis-cordero.png"
+              src="/logo-cordero.png"
               alt=""
               width={90}
               height={90}
               priority
-              className="h-10 w-auto"
+              className="h-10 w-10 shrink-0 rounded-full border border-[#aab5cf] object-cover"
             />
             <Image
-              src="/logo-comis-liturgia.png"
+              src="/logo-liturgia.png"
               alt="Comisión de Liturgia"
               width={300}
               height={100}
@@ -266,13 +266,13 @@ export function ParishSwitcher({ brand }: { brand: HeaderBrand | null }) {
                 onClick={selectItem}
                 className="flex items-center gap-3 px-4 py-2.5 normal-case transition-colors hover:bg-sidebar"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-background">
+                <span className="block h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[#aab5cf] bg-background">
                   <Image
-                    src="/logo-comis-cordero.png"
+                    src="/logo-cordero.png"
                     alt=""
                     width={32}
                     height={32}
-                    className="h-6 w-auto"
+                    className="h-full w-full object-cover"
                   />
                 </span>
                 <span className="min-w-0 truncate">Arquidiócesis</span>

@@ -319,6 +319,17 @@ export function BibleIcon(): ReactElement {
   );
 }
 
+export function HomeIcon(): ReactElement {
+  // Casa (inicio).
+  return (
+    <svg {...baseProps} aria-hidden="true">
+      <path d="M4 11.5 12 4l8 7.5" />
+      <path d="M6 10v9h12v-9" />
+      <path d="M10 19v-5h4v5" />
+    </svg>
+  );
+}
+
 export function ExternalLinkIcon(): ReactElement {
   return (
     <svg {...baseProps} aria-hidden="true">

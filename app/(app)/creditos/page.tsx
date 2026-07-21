@@ -55,7 +55,7 @@ export default async function CreditosPage() {
 
       <div className="flex justify-center">
         <Image
-          src="/logo-comis-full.png"
+          src="/logo-full.png"
           alt="Logo Comisión de Música Litúrgica"
           width={1855}
           height={926}

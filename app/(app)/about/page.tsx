@@ -55,7 +55,7 @@ export default async function AboutPage() {
 
       <div className="flex w-full justify-center">
         <Image
-          src="/logo-comis-full.png"
+          src="/logo-full.png"
           alt="Comisión Arquidiocesana de Liturgia"
           width={1855}
           height={926}
