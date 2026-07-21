@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listParishes } from "@/lib/songs";
 import { createClient } from "@/lib/supabase/server";
 import { ParishList } from "./parish-list";
+import { GuestSignInCard } from "@/app/components/guest-sign-in-card";
 
 export const dynamic = "force-dynamic";
 
@@ -69,12 +70,8 @@ export default async function ParroquiasPage() {
               con [+] y marcá tu principal con la estrella.
             </p>
           ) : (
-            <div className="flex flex-col gap-1">
-              <p className="text-base italic normal-case text-muted-foreground">
-                Estás navegando como invitado. Iniciá sesión para guardar tus
-                favoritos en la nube, vincular tu parroquia y acceder a tus
-                listas.
-              </p>
+            <div className="flex flex-col gap-3">
+              <GuestSignInCard />
               <p className="text-base normal-case text-muted-foreground">
                 Dentro de cada parroquia encontrarás sus repertorios.
               </p>

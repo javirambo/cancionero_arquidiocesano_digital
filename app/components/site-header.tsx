@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { User } from "@supabase/supabase-js";
@@ -16,6 +15,7 @@ import { useWakeLock } from "./wake-lock";
 import { useHomeTitle } from "./home-title-context";
 import { BibleIcon, HeartIcon, SearchIcon, ShareIcon, UserIcon } from "./icons";
 import { QrDialog } from "./qr-button";
+import { ParishSwitcher } from "./parish-switcher";
 
 type MenuItemProps = {
   href?: string;
@@ -158,14 +158,6 @@ const AdminIcon = () => (
   </svg>
 );
 
-const HomeIcon = () => (
-  <svg {...iconProps}>
-    <path d="M3 11l9-7 9 7" />
-    <path d="M5 10v10h14V10" />
-    <path d="M10 20v-6h4v6" />
-  </svg>
-);
-
 const CancionesIcon = () => (
   <svg {...iconProps}>
     <path d="M9 18V5l11-2v13" />
@@ -205,12 +197,6 @@ const AboutIcon = () => (
   </svg>
 );
 
-const HamburgerIcon = () => (
-  <svg {...iconProps}>
-    <path d="M4 7h16M4 12h16M4 17h16" />
-  </svg>
-);
-
 // Debe coincidir con la transición de .app-shell en globals.css.
 const MENU_ANIM_MS = 300;
 
@@ -225,7 +211,6 @@ export function SiteHeader() {
   const menuRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const router = useRouter();
   const showQr = true;
   const { theme, toggle } = useTheme();
   const { favorites } = useFavorites();
@@ -342,71 +327,16 @@ export function SiteHeader() {
       style={{ backgroundColor: "#436bb0" }}
       className={`${/^\/canciones\/[^/]+/.test(pathname ?? "") ? "" : "sticky top-0"} z-30 border-b border-border`}
     >
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between py-1 pl-6 pr-2">
-        {brand ? (
-          <Link
-            href={brand.href}
-            className="-ml-2 flex min-w-0 items-center gap-3"
-            aria-label={brand.name}
-          >
-            {brand.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={brand.logoUrl}
-                alt=""
-                referrerPolicy="no-referrer"
-                className="h-10 w-10 shrink-0 rounded-full border border-white/40 object-cover"
-              />
-            ) : (
-              <span
-                aria-hidden="true"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/10 text-lg text-white"
-              >
-                {brand.name.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="line-clamp-2 min-w-0 break-words text-xs font-semibold leading-tight text-white sm:text-sm">
-              {brand.name}
-            </span>
-          </Link>
-        ) : (
-          <Link href="/" className="-ml-3.5 flex items-center gap-3" aria-label={displayTitle}>
-            <Image
-              src="/logo-comis-cordero.png"
-              alt=""
-              width={90}
-              height={90}
-              priority
-              className="h-10 w-auto"
-            />
-            <Image
-              src="/logo-comis-liturgia.png"
-              alt="Comisión de Liturgia"
-              width={300}
-              height={100}
-              priority
-              className="h-8 w-auto"
-            />
-          </Link>
-        )}
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-2 py-1">
+        <CircleButton
+          label="Buscar"
+          onClick={() => setSearchOpen(true)}
+          icon={<SearchIcon />}
+        />
+
+        <ParishSwitcher brand={brand} />
 
         <div className="flex items-center gap-1">
-          <CircleButton
-            label="Inicio"
-            onClick={() => router.push("/")}
-            icon={<HomeIcon />}
-          />
-          <CircleButton
-            label="Buscar"
-            onClick={() => setSearchOpen(true)}
-            icon={<SearchIcon />}
-          />
-          <CircleButton
-            label="Favoritos"
-            onClick={() => setFavOpen(true)}
-            icon={<HeartIcon filled={favorites.length > 0} />}
-          />
-
           <div ref={menuRef} className="relative">
             <AccountButton
               user={user}
@@ -423,6 +353,7 @@ export function SiteHeader() {
               >
                 <ProfileSummary
                   user={user}
+                  onClose={closeMenu}
                   onSignIn={() => {
                     closeMenu();
                     handleSignIn();
@@ -604,9 +535,11 @@ function CircleButton({
 function ProfileSummary({
   user,
   onSignIn,
+  onClose,
 }: {
   user: User | null;
   onSignIn: () => void;
+  onClose: () => void;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
 
@@ -626,9 +559,14 @@ function ProfileSummary({
             Iniciá sesión
           </button>
         </div>
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-muted-foreground">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar menú"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-muted-foreground"
+        >
           <UserIcon />
-        </div>
+        </button>
       </div>
     );
   }
@@ -650,27 +588,35 @@ function ProfileSummary({
           </p>
         )}
       </div>
-      {showImg ? (
-        <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border bg-background">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={avatarUrl}
-            alt=""
-            referrerPolicy="no-referrer"
-            onError={() => setImgFailed(true)}
-            className="h-full w-full object-cover"
-          />
-        </span>
-      ) : (
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-muted-foreground">
-          {displayName.charAt(0).toUpperCase()}
-        </div>
-      )}
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Cerrar menú"
+        className="shrink-0"
+      >
+        {showImg ? (
+          <span className="block h-16 w-16 overflow-hidden rounded-full border border-border bg-background">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              onError={() => setImgFailed(true)}
+              className="h-full w-full object-cover"
+            />
+          </span>
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-sidebar text-2xl text-muted-foreground">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </button>
     </div>
   );
 }
 
 function AccountButton({
+  user,
   onClick,
   ariaExpanded,
 }: {
@@ -678,11 +624,33 @@ function AccountButton({
   onClick: () => void;
   ariaExpanded: boolean;
 }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const meta = user?.user_metadata as
+    | { avatar_url?: string; picture?: string }
+    | undefined;
+  const avatarUrl = meta?.avatar_url ?? meta?.picture ?? null;
+  const showImg = avatarUrl && !imgFailed;
+
   return (
     <CircleButton
       label="Menú"
       onClick={onClick}
-      icon={<HamburgerIcon />}
+      icon={
+        showImg ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            referrerPolicy="no-referrer"
+            onError={() => setImgFailed(true)}
+            className="header-user-avatar h-7 w-7 rounded-full border border-white/40 object-cover"
+          />
+        ) : (
+          <span className="header-user-avatar">
+            <UserIcon />
+          </span>
+        )
+      }
       ariaHaspopup="menu"
       ariaExpanded={ariaExpanded}
     />

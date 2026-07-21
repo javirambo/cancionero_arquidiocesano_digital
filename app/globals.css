@@ -236,6 +236,15 @@ html.menu-open .app-drawer {
   transform: translateX(0);
 }
 
+/* La foto de usuario del header se desvanece a la par que la pantalla se
+ * desplaza a la izquierda, hasta quedar invisible con el menú abierto. */
+.header-user-avatar {
+  transition: opacity var(--drawer-ms) var(--drawer-ease);
+}
+html.menu-open .header-user-avatar {
+  opacity: 0;
+}
+
 /* El panel usa blanco y negro puros a pedido, no el fondo general del tema
  * (crema #fafaf7 / gris azulado #1a1f29): así se despega de la pantalla. */
 .app-drawer {
