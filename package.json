@@ -1,6 +1,6 @@
 {
   "name": "cancionero-arquidiocesano",
-  "version": "0.1.44",
+  "version": "0.1.45",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack -p 4000",
