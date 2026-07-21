@@ -10,3 +10,10 @@
 - Categorias -> Salmo responsorial esta vacio !
 -    "       -> Adoracion no tiene todos los cantos
 - Preparar un aviso parroquial DEMO
+
+
+- hay 2 pagina iguales:
+--http://localhost:4000/playlists
+--http://localhost:4000/parroquias/maria_auxiliadora_rosario/playlists
+
+se puede sacar una?

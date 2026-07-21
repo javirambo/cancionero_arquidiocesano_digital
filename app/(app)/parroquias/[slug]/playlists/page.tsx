@@ -81,7 +81,7 @@ export default async function ParroquiaPlaylistsPage({
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-col gap-1">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl text-page-title">Listas</h1>
+          <h1 className="text-2xl text-page-title">Mis listas</h1>
           {canManage && (
             <Link
               href={`/parroquias/${parish.slug}/playlists/nueva`}
