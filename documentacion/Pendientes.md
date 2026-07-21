@@ -17,3 +17,11 @@
 --http://localhost:4000/parroquias/maria_auxiliadora_rosario/playlists
 
 se puede sacar una?
+
+-dejar el login para casos de edicion o para compartir opciones entre varios dispositivos.
+-el member puede crear listas, favoritos, seleccionar parroquia, tener su favorita (con estrella) todo se graba en local storage.
+
+
+- mostrar las imagenes en la edicion de anuncios
+http://localhost:4000/parroquias/maria_auxiliadora_rosario/anuncios
+
