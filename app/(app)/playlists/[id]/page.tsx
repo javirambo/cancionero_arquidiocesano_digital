@@ -6,6 +6,8 @@ import { loadSchedulesForEntity } from "@/lib/schedule.server";
 import { describeSchedule, isVisibleNow } from "@/lib/schedule";
 import { PlaylistView } from "./playlist-view";
 import { PrecacheButton } from "@/app/components/precache-button";
+import { EditIcon } from "@/app/components/icons";
+import { FavoritePlaylistHeart } from "./favorite-playlist-heart";
 
 export default async function PlaylistPage({
   params,
@@ -61,11 +63,46 @@ export default async function PlaylistPage({
     }
   }
 
+  // Subtítulo de creador para playlists personales (parish_id IS NULL):
+  // mostramos el nombre del creador si no es el usuario logueado (CU-17).
+  let creatorName: string | null = null;
+  if (!pl.parish) {
+    const { data: creatorRows } = await supabase.rpc("get_playlist_creator", {
+      p_playlist_id: pl.id,
+    });
+    const creator = (Array.isArray(creatorRows) ? creatorRows[0] : creatorRows) as
+      | { created_by: string | null; display_name: string | null }
+      | null
+      | undefined;
+    if (creator && creator.created_by !== user?.id) {
+      creatorName = creator.display_name ?? "usuario desconocido";
+    }
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl text-page-title">{pl.name}</h1>
+          <div className="flex items-start gap-2">
+            <h1 className="text-3xl text-page-title">{pl.name}</h1>
+            <div className="flex flex-col items-center gap-1">
+              <FavoritePlaylistHeart
+                playlistId={pl.id}
+                playlistName={pl.name}
+                subtitle={pl.parish?.name}
+              />
+              {canEdit && (
+                <Link
+                  href={`/playlists/${pl.id}/editar`}
+                  aria-label="Editar lista"
+                  title="Editar lista"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-colors hover:border-border hover:text-primary [&>svg]:h-6 [&>svg]:w-6"
+                >
+                  <EditIcon />
+                </Link>
+              )}
+            </div>
+          </div>
           {pl.is_archdiocesan && (
             <span className="text-xs uppercase tracking-wide text-secondary">
               De la Arquidiócesis
@@ -79,6 +116,11 @@ export default async function PlaylistPage({
               >
                 {pl.parish.name}
               </Link>
+            </p>
+          )}
+          {!pl.parish && creatorName && (
+            <p className="text-xs normal-case text-muted-foreground">
+              Autor: {creatorName}
             </p>
           )}
           {pl.description && (
@@ -117,14 +159,6 @@ export default async function PlaylistPage({
           })()}
         </div>
         <div className="flex flex-col items-end gap-2">
-          {canEdit && (
-            <Link
-              href={`/playlists/${pl.id}/editar`}
-              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
-            >
-              Editar Lista
-            </Link>
-          )}
           <PrecacheButton
             slugs={pl.songs.filter((s) => s.status === "published").map((s) => s.slug)}
             storageKey={`playlist:${pl.id}`}

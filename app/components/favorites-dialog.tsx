@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon, HeartIcon } from "./icons";
 import { useFavorites, type FavoriteEntry, type FavoriteKind } from "./favorites";
 
@@ -132,6 +133,7 @@ export function FavoritesDialog({ open, onClose }: Props) {
   }
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   const showDownload =
     swReady && (grouped.song.length > 0 || grouped.playlist.length > 0);
@@ -149,18 +151,17 @@ export function FavoritesDialog({ open, onClose }: Props) {
     return "Descargar favoritos";
   }
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Mis favoritos"
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-10"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-10 backdrop-blur-[2px]"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
-      >
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
         <header className="flex items-center gap-3 border-b border-border px-5 py-3">
           <span className="text-song-title">
             <HeartIcon filled />
@@ -244,6 +245,7 @@ export function FavoritesDialog({ open, onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

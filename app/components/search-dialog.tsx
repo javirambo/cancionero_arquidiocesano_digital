@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon, SearchIcon } from "./icons";
 import { useGlobalSearch } from "./use-global-search";
 import { useRecentSearches } from "./use-recent-searches";
@@ -33,6 +34,7 @@ export function SearchDialog({ open, onClose }: Props) {
   }, [open, onClose]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   const close = () => {
     reset();
@@ -51,18 +53,17 @@ export function SearchDialog({ open, onClose }: Props) {
     inputRef.current?.focus();
   };
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Buscar"
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-10"
-      onClick={close}
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-10 backdrop-blur-[2px]"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) close();
+      }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
-      >
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
         <header className="flex items-center gap-3 border-b border-border px-5 py-3">
           <span className="text-muted-foreground">
             <SearchIcon />
@@ -97,7 +98,8 @@ export function SearchDialog({ open, onClose }: Props) {
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
