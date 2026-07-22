@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useHomeTitle } from "./home-title-context";
+import { useUnsavedChanges } from "./unsaved-changes-context";
 import { BibleIcon, HomeIcon } from "./icons";
 import { CancionesIcon, ListasIcon } from "./site-header";
 
@@ -24,6 +25,15 @@ function isActive(pathname: string, href: string): boolean {
 export function BottomNav() {
   const pathname = usePathname() ?? "";
   const { brand } = useHomeTitle();
+  const { dirty } = useUnsavedChanges();
+
+  // Si hay una edición sin guardar (editor de lecturas / salmos), confirmar
+  // antes de que la botonera navegue y se pierdan los cambios.
+  function guard(e: MouseEvent<HTMLAnchorElement>) {
+    if (dirty && !window.confirm("Tenés cambios sin guardar. Si salís se pierden. ¿Salir igual?")) {
+      e.preventDefault();
+    }
+  }
 
   // Solo Inicio sigue el brand seleccionado: diocesano (null) → home de la
   // Arquidiócesis; una parroquia → home de esa parroquia. Listas va siempre a
@@ -54,6 +64,7 @@ export function BottomNav() {
             <Link
               key={item.label}
               href={item.href}
+              onClick={guard}
               aria-current={active ? "page" : undefined}
               className="flex flex-1 flex-col items-center justify-center gap-1 normal-case"
             >

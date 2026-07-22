@@ -1,12 +1,14 @@
 // Merge del calendario litúrgico: romcal (capa base, sin huecos) + las
-// lecturas de `liturgical_readings` (curas / manual). Precedencia por campo:
-// la fila de lecturas manda sobre romcal para nombre/tiempo/color; romcal
-// aporta rango/ciclo (que curas no da estructurados) y rellena los días sin
-// fila. Server-only (romcal es Node; usa el cliente server de Supabase).
+// lecturas de `liturgical_readings` (curas / manual) + la media del salmo
+// (audio/partitura) que vive en la tabla `salmos`, unida por `salmo_id`.
+// Precedencia por campo: la fila de lecturas manda sobre romcal para
+// nombre/tiempo/color; romcal aporta rango/ciclo y rellena los días sin fila.
+// Server-only (romcal es Node; usa el cliente server de Supabase).
 //
 // Ver documentacion/calendario-liturgico-y-lecturas.md (§1, §4).
 
 import { createClient } from "@/lib/supabase/server";
+import { getPublicImageUrl } from "@/lib/supabase/storage";
 import { getLiturgicalDay, getRomcalMonth, type LiturgicalDay } from "@/lib/liturgical";
 
 export type LecturaSeccion = {
@@ -15,11 +17,14 @@ export type LecturaSeccion = {
   body: string;
 } | null;
 
+export type SalmoMediaUrl = { label: string; url: string };
+
 export type LecturaSalmo = {
   ref: string | null;
   response: string | null;
   stanzas: string[];
-  files?: { kind: string; path: string }[];
+  audios: SalmoMediaUrl[]; // audios del salmo linkeado (versiones, URLs públicas)
+  scores: SalmoMediaUrl[]; // partituras del salmo linkeado (Simple / SATB)
 } | null;
 
 export type LecturasDelDia = {
@@ -48,13 +53,47 @@ export type DiaLiturgico = {
   fuente: "manual" | "curas" | "romcal";
 };
 
-type ReadingRow = LecturasDelDia & { event_date: string };
+// Fila cruda de la query (con el salmo embebido por FK salmo_id → salmos).
+type RawRow = {
+  event_date: string;
+  reading_set: "principal" | "memoria";
+  celebration: string | null;
+  color: string | null;
+  liturgical_time: string | null;
+  day_label: string | null;
+  first_reading: LecturaSeccion;
+  psalm: { ref: string | null; response: string | null; stanzas: string[] } | null;
+  second_reading: LecturaSeccion;
+  gospel_accl: LecturaSeccion;
+  gospel: LecturaSeccion;
+  locked: boolean;
+  salmos: {
+    audios: { label: string; path: string }[] | null;
+    scores: { label: string; path: string }[] | null;
+  } | null;
+};
 
 const SELECT_COLS =
   "event_date, reading_set, celebration, color, liturgical_time, day_label, " +
-  "first_reading, psalm, second_reading, gospel_accl, gospel, locked";
+  "first_reading, psalm, second_reading, gospel_accl, gospel, locked, salmo_id, " +
+  "salmos(audios, scores)";
 
-function toLecturas(row: ReadingRow): LecturasDelDia {
+function toUrls(items: { label: string; path: string }[] | null | undefined): SalmoMediaUrl[] {
+  return (items ?? [])
+    .map((m) => ({ label: m.label, url: getPublicImageUrl(m.path) }))
+    .filter((x): x is SalmoMediaUrl => x.url !== null);
+}
+
+function toLecturas(row: RawRow): LecturasDelDia {
+  const psalm: LecturaSalmo = row.psalm
+    ? {
+        ref: row.psalm.ref ?? null,
+        response: row.psalm.response ?? null,
+        stanzas: row.psalm.stanzas ?? [],
+        audios: toUrls(row.salmos?.audios),
+        scores: toUrls(row.salmos?.scores),
+      }
+    : null;
   return {
     reading_set: row.reading_set,
     celebration: row.celebration,
@@ -62,7 +101,7 @@ function toLecturas(row: ReadingRow): LecturasDelDia {
     liturgical_time: row.liturgical_time,
     day_label: row.day_label,
     first_reading: row.first_reading,
-    psalm: row.psalm,
+    psalm,
     second_reading: row.second_reading,
     gospel_accl: row.gospel_accl,
     gospel: row.gospel,
@@ -70,11 +109,7 @@ function toLecturas(row: ReadingRow): LecturasDelDia {
   };
 }
 
-function merge(
-  fecha: string,
-  base: LiturgicalDay | null,
-  rows: ReadingRow[]
-): DiaLiturgico {
+function merge(fecha: string, base: LiturgicalDay | null, rows: RawRow[]): DiaLiturgico {
   const principal = rows.find((r) => r.reading_set === "principal") ?? null;
   const memoria = rows.find((r) => r.reading_set === "memoria") ?? null;
   const fuente: DiaLiturgico["fuente"] = principal
@@ -100,7 +135,7 @@ function merge(
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/** Día litúrgico unificado (romcal + lecturas) para una fecha "YYYY-MM-DD". */
+/** Día litúrgico unificado (romcal + lecturas + media del salmo) para "YYYY-MM-DD". */
 export async function getDiaLiturgico(fecha: string): Promise<DiaLiturgico> {
   const base = await getLiturgicalDay(fecha);
   const supabase = await createClient();
@@ -108,7 +143,7 @@ export async function getDiaLiturgico(fecha: string): Promise<DiaLiturgico> {
     .from("liturgical_readings")
     .select(SELECT_COLS)
     .eq("event_date", fecha);
-  return merge(fecha, base, (data ?? []) as unknown as ReadingRow[]);
+  return merge(fecha, base, (data ?? []) as unknown as RawRow[]);
 }
 
 /** Mes litúrgico unificado: un `DiaLiturgico` por día, ordenado por fecha. */
@@ -128,14 +163,12 @@ export async function getMesLiturgico(
     .gte("event_date", start)
     .lt("event_date", nextStart);
 
-  const byDate = new Map<string, ReadingRow[]>();
-  for (const r of (data ?? []) as unknown as ReadingRow[]) {
+  const byDate = new Map<string, RawRow[]>();
+  for (const r of (data ?? []) as unknown as RawRow[]) {
     const arr = byDate.get(r.event_date) ?? [];
     arr.push(r);
     byDate.set(r.event_date, arr);
   }
   const fechas = new Set<string>([...Object.keys(base), ...byDate.keys()]);
-  return [...fechas]
-    .sort()
-    .map((d) => merge(d, base[d] ?? null, byDate.get(d) ?? []));
+  return [...fechas].sort().map((d) => merge(d, base[d] ?? null, byDate.get(d) ?? []));
 }

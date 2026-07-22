@@ -307,9 +307,25 @@ function SongCategoryShortcuts({
 }: {
   categories: PublicCategoryOption[];
 }) {
-  const shortcuts = SHORTCUT_SLUGS.map((slug) =>
-    categories.find((c) => c.slug === slug)
-  ).filter((c): c is PublicCategoryOption => Boolean(c));
+  const bySlug = new Map(categories.map((c) => [c.slug, c]));
+  const shortcuts = SHORTCUT_SLUGS.flatMap((slug) => {
+    // "Salmo responsorial" es un atajo FIJO a la página /salmos: no depende de
+    // que exista la categoría (que se dio de baja).
+    if (slug === "salmo-responsorial") {
+      return [{ key: slug, name: "Salmo responsorial", href: "/salmos", tooltip: undefined }];
+    }
+    const c = bySlug.get(slug);
+    if (!c) return [];
+    // El tooltip muestra solo el texto previo al marcador ">>>".
+    return [
+      {
+        key: slug,
+        name: c.name,
+        href: `/canciones?cat=${c.slug}`,
+        tooltip: c.description?.split(">>>")[0].trim() || undefined,
+      },
+    ];
+  });
 
   if (shortcuts.length === 0) return null;
 
@@ -317,21 +333,17 @@ function SongCategoryShortcuts({
     <section className="flex flex-col gap-2">
       <h2 className="text-lg text-page-title">Categorías</h2>
       <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {shortcuts.map((c) => {
-          // El tooltip muestra solo el texto previo al marcador ">>>".
-          const tooltip = c.description?.split(">>>")[0].trim() || undefined;
-          return (
-          <li key={c.slug}>
+        {shortcuts.map((s) => (
+          <li key={s.key}>
             <Link
-              href={`/canciones?cat=${c.slug}`}
-              title={tooltip}
+              href={s.href}
+              title={s.tooltip}
               className="flex h-full items-center justify-center rounded-xl border border-page-title bg-sidebar px-4 py-4 text-center text-sm uppercase text-page-title transition-opacity hover:opacity-90"
             >
-              {c.name}
+              {s.name}
             </Link>
           </li>
-          );
-        })}
+        ))}
       </ul>
     </section>
   );

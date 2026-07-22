@@ -40,6 +40,12 @@ const secciones: Seccion[] = [
     show: (a) => a.isAdmin || a.isEditor,
   },
   {
+    href: "/admin/salmos",
+    titulo: "Salmos",
+    descripcion: "Audio cantado y partitura de cada salmo responsorial, reusables en todas las fechas que usan ese salmo.",
+    show: (a) => a.isAdmin || a.isEditor,
+  },
+  {
     href: "/admin/usuarios",
     titulo: "Usuarios",
     descripcion: "Asignación de roles globales y membresías por parroquia. El alta sigue siendo automática vía OAuth.",

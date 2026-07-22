@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { STORAGE_BUCKETS, getPublicImageUrl } from "@/lib/supabase/storage";
-import type { PsalmFile, ReadingRowFull, ReadingSet } from "@/lib/lecturas-admin";
+import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
+import { getPublicImageUrl } from "@/lib/supabase/storage";
+import { AudioButton, ImagePreviewButton } from "../../media-controls";
+import type { ReadingRowFull, ReadingSet, SalmoMini } from "@/lib/lecturas-admin";
 
 const COLORS = ["verde", "rojo", "blanco", "morado", "rosa", "negro"] as const;
 
-// Colores litúrgicos reales (dato, no tema de la app), iguales al punto de la
-// lista mensual, para el círculo del selector de color.
+// Colores litúrgicos reales (dato, no tema de la app) para el círculo del selector.
 const COLOR_HEX: Record<string, string> = {
   verde: "#2e7d32",
   rojo: "#c62828",
@@ -19,39 +20,11 @@ const COLOR_HEX: Record<string, string> = {
   negro: "#222222",
 };
 
-// Archivos del salmo (audio cantado / partitura). Van al bucket público
-// `images` (URL directa, sin signed URL) bajo la carpeta `lecturas/`.
-const IMAGE_EXT = ["gif", "png", "jpg", "jpeg", "webp", "avif"];
-const FILE_ACCEPT =
-  ".mp3,.ogg,.oga,.pdf,.gif,.png,.jpg,.jpeg,.webp,audio/mpeg,audio/ogg,application/pdf,image/*";
-const FILE_HELP =
-  "El tipo se detecta según el archivo. Los MP3 y OGG son audios y se reproducen con un play. " +
-  "Las partituras pueden ser PDF o imágenes escaneadas, y se descargan desde el menú de la canción. " +
-  "En los salmos, en cambio, la imagen se muestra debajo del título.";
-const MAX_FILE_BYTES = 15 * 1024 * 1024;
-
-// El tipo se deduce del archivo mismo (manda la extensión; el mime es respaldo).
-function kindForPsalmFile(file: File): string | null {
-  const name = file.name.toLowerCase();
-  const ext = name.includes(".") ? name.split(".").pop() ?? "" : "";
-  if (ext === "mp3") return "audio_mp3";
-  if (ext === "ogg" || ext === "oga") return "audio_ogg";
-  if (ext === "pdf") return "score_pdf";
-  if (IMAGE_EXT.includes(ext)) return `score_${ext === "jpeg" ? "jpg" : ext}`;
-  const mime = file.type;
-  if (mime === "application/pdf") return "score_pdf";
-  if (mime === "audio/ogg") return "audio_ogg";
-  if (mime.startsWith("audio/")) return "audio_mp3";
-  if (mime.startsWith("image/")) return "score_png";
-  return null;
-}
-
-const isAudioKind = (kind: string) => kind.startsWith("audio_");
-
 type Romcal = { name: string; color: string | null; seasonName: string } | null;
 
 type SectionState = { ref: string; heading: string; body: string };
-type PsalmState = { ref: string; response: string; stanzas: string; files: PsalmFile[] };
+type PsalmState = { ref: string; response: string; stanzas: string };
+type SectionKey = "first_reading" | "second_reading" | "gospel_accl" | "gospel";
 
 type SetState = {
   id: string | null;
@@ -66,12 +39,11 @@ type SetState = {
   gospel_accl: SectionState;
   gospel: SectionState;
   locked: boolean;
+  salmo_id: string | null;
 };
 
-type SectionKey = "first_reading" | "second_reading" | "gospel_accl" | "gospel";
-
 const emptySection = (): SectionState => ({ ref: "", heading: "", body: "" });
-const emptyPsalm = (): PsalmState => ({ ref: "", response: "", stanzas: "", files: [] });
+const emptyPsalm = (): PsalmState => ({ ref: "", response: "", stanzas: "" });
 
 function sectionToState(s: ReadingRowFull["first_reading"]): SectionState {
   return { ref: s?.ref ?? "", heading: s?.heading ?? "", body: s?.body ?? "" };
@@ -82,7 +54,6 @@ function psalmToState(p: ReadingRowFull["psalm"]): PsalmState {
     ref: p?.ref ?? "",
     response: p?.response ?? "",
     stanzas: (p?.stanzas ?? []).join("\n\n"),
-    files: p?.files ?? [],
   };
 }
 
@@ -100,11 +71,12 @@ function rowToState(row: ReadingRowFull): SetState {
     gospel_accl: sectionToState(row.gospel_accl),
     gospel: sectionToState(row.gospel),
     locked: row.locked,
+    salmo_id: row.salmo_id,
   };
 }
 
-// Fila nueva. Para la principal de un día sin lecturas, precargamos nombre,
-// color y tiempo desde romcal para no arrancar de cero. Nueva = bloqueada.
+// Fila nueva. La principal de un día sin lecturas precarga nombre/color/tiempo
+// desde romcal. Nueva = bloqueada.
 function blankSet(reading_set: ReadingSet, romcal: Romcal): SetState {
   const pre = reading_set === "principal" && romcal;
   return {
@@ -120,6 +92,7 @@ function blankSet(reading_set: ReadingSet, romcal: Romcal): SetState {
     gospel_accl: emptySection(),
     gospel: emptySection(),
     locked: true,
+    salmo_id: null,
   };
 }
 
@@ -130,15 +103,8 @@ function sectionToJson(s: SectionState) {
 
 function psalmToJson(p: PsalmState) {
   const stanzas = p.stanzas.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
-  if (!p.ref.trim() && !p.response.trim() && stanzas.length === 0 && p.files.length === 0) {
-    return null;
-  }
-  return {
-    ref: p.ref.trim() || null,
-    response: p.response.trim() || null,
-    stanzas,
-    files: p.files,
-  };
+  if (!p.ref.trim() && !p.response.trim() && stanzas.length === 0) return null;
+  return { ref: p.ref.trim() || null, response: p.response.trim() || null, stanzas };
 }
 
 function buildPayload(s: SetState) {
@@ -153,10 +119,12 @@ function buildPayload(s: SetState) {
     gospel_accl: sectionToJson(s.gospel_accl),
     gospel: sectionToJson(s.gospel),
     locked: s.locked,
+    salmo_id: s.salmo_id,
   };
 }
 
 function isEmptySet(s: SetState): boolean {
+  if (s.salmo_id) return false;
   const p = buildPayload(s);
   return (
     !p.celebration && !p.color && !p.liturgical_time && !p.day_label &&
@@ -167,33 +135,37 @@ function isEmptySet(s: SetState): boolean {
 export function LecturasForm({
   date,
   rows,
+  salmos,
   romcal,
 }: {
   date: string;
   rows: ReadingRowFull[];
+  salmos: SalmoMini[];
   romcal: Romcal;
 }) {
   const router = useRouter();
   const principalRow = rows.find((r) => r.reading_set === "principal");
   const memoriaRow = rows.find((r) => r.reading_set === "memoria");
 
-  const [sets, setSets] = useState<SetState[]>(() => {
+  const makeInitialSets = (): SetState[] => {
     const initial: SetState[] = [
       principalRow ? rowToState(principalRow) : blankSet("principal", romcal),
     ];
     if (memoriaRow) initial.push(rowToState(memoriaRow));
     return initial;
-  });
+  };
+  const [sets, setSets] = useState<SetState[]>(makeInitialSets);
+  const [initialJson] = useState(() => JSON.stringify(makeInitialSets()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-  // Para limpiar Storage al guardar: los archivos que había al abrir + los
-  // subidos en esta sesión. Al guardar se borran los que ya no estén en ningún salmo.
-  const sessionUploaded = useRef<Set<string>>(new Set());
-  const initialPaths = useRef<Set<string>>(
-    new Set(rows.flatMap((r) => (r.psalm?.files ?? []).map((f) => f.path)))
-  );
+
+  // Reportar a la botonera si hay cambios sin guardar (para confirmar al salir).
+  const dirty = JSON.stringify(sets) !== initialJson;
+  const { setDirty } = useUnsavedChanges();
+  useEffect(() => {
+    setDirty(dirty);
+    return () => setDirty(false);
+  }, [dirty, setDirty]);
 
   const backHref = `/admin/lecturas?mes=${date.slice(0, 7)}`;
   const hasMemoria = sets.some((s) => s.reading_set === "memoria");
@@ -209,52 +181,6 @@ export function LecturasForm({
   function patchPsalm(i: number, patch: Partial<PsalmState>) {
     setSets((prev) =>
       prev.map((s, idx) => (idx === i ? { ...s, psalm: { ...s.psalm, ...patch } } : s))
-    );
-  }
-
-  async function handleUploadPsalmFile(i: number, file: File) {
-    setFileError(null);
-    const kind = kindForPsalmFile(file);
-    if (!kind) {
-      setFileError("Formato no soportado. Audio (MP3/OGG) o partitura (PDF/GIF/PNG/JPG/WEBP).");
-      return;
-    }
-    if (file.size > MAX_FILE_BYTES) {
-      setFileError("El archivo supera los 15 MB.");
-      return;
-    }
-    setUploading(true);
-    const supabase = createClient();
-    const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
-    const path = `lecturas/${crypto.randomUUID()}${ext ? "." + ext : ""}`;
-    const { error: upErr } = await supabase.storage
-      .from(STORAGE_BUCKETS.images)
-      .upload(path, file, { upsert: false, contentType: file.type || undefined });
-    setUploading(false);
-    if (upErr) {
-      setFileError(`No se pudo subir: ${upErr.message}`);
-      return;
-    }
-    sessionUploaded.current.add(path);
-    setSets((prev) =>
-      prev.map((s, idx) =>
-        idx === i ? { ...s, psalm: { ...s.psalm, files: [...s.psalm.files, { kind, path }] } } : s
-      )
-    );
-  }
-
-  // Se quita de la lista; el archivo en Storage se borra recién al Guardar (así
-  // Cancelar no deja referencias rotas en la base).
-  function handleRemovePsalmFile(i: number, path: string) {
-    const file = sets[i]?.psalm.files.find((f) => f.path === path);
-    const tipo = file && isAudioKind(file.kind) ? "audio" : "partitura";
-    if (!window.confirm(`¿Quitar el archivo de ${tipo} del salmo?`)) return;
-    setSets((prev) =>
-      prev.map((s, idx) =>
-        idx === i
-          ? { ...s, psalm: { ...s.psalm, files: s.psalm.files.filter((f) => f.path !== path) } }
-          : s
-      )
     );
   }
 
@@ -293,16 +219,6 @@ export function LecturasForm({
         }
       }
     }
-    // Limpieza de Storage: borra los archivos que quedaron fuera del set final
-    // (los que el usuario quitó y los subidos en esta sesión que no persistieron).
-    const finalPaths = new Set(sets.flatMap((s) => s.psalm.files.map((f) => f.path)));
-    const toDelete = [...initialPaths.current, ...sessionUploaded.current].filter(
-      (p) => !finalPaths.has(p)
-    );
-    if (toDelete.length > 0) {
-      await supabase.storage.from(STORAGE_BUCKETS.images).remove([...new Set(toDelete)]);
-    }
-
     router.push(backHref);
     router.refresh();
   }
@@ -378,12 +294,11 @@ export function LecturasForm({
             value={s.first_reading}
             onChange={(patch) => patchSection(i, "first_reading", patch)}
           />
-          <SalmoEditor
-            value={s.psalm}
-            onChange={(patch) => patchPsalm(i, patch)}
-            onUpload={(file) => handleUploadPsalmFile(i, file)}
-            onRemoveFile={(path) => handleRemovePsalmFile(i, path)}
-            uploading={uploading}
+          <SalmoEditor value={s.psalm} onChange={(patch) => patchPsalm(i, patch)} />
+          <SalmoLink
+            salmoId={s.salmo_id}
+            salmos={salmos}
+            onChange={(id) => patchSet(i, { salmo_id: id })}
           />
           <SeccionEditor
             titulo="Segunda lectura (opcional)"
@@ -413,7 +328,6 @@ export function LecturasForm({
         </button>
       )}
 
-      {fileError && <p className="text-sm normal-case text-destructive">{fileError}</p>}
       {error && <p className="text-sm normal-case text-destructive">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -490,19 +404,13 @@ function SeccionEditor({
 function SalmoEditor({
   value,
   onChange,
-  onUpload,
-  onRemoveFile,
-  uploading,
 }: {
   value: PsalmState;
   onChange: (patch: Partial<PsalmState>) => void;
-  onUpload: (file: File) => void;
-  onRemoveFile: (path: string) => void;
-  uploading: boolean;
 }) {
   return (
     <fieldset className="rounded-lg border border-border p-3">
-      <legend className="px-1 text-xs uppercase tracking-wide text-secondary">Salmo</legend>
+      <legend className="px-1 text-xs uppercase tracking-wide text-secondary">Salmo (texto)</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         <input
           type="text"
@@ -526,265 +434,141 @@ function SalmoEditor({
         rows={5}
         className={`${inputClass} mt-2`}
       />
-
-      <div className="mt-3 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs uppercase tracking-wide text-secondary">
-            Archivos del salmo
-          </span>
-          <label
-            className={`inline-flex cursor-pointer items-center rounded-full border border-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground ${
-              uploading ? "pointer-events-none opacity-60" : ""
-            }`}
-          >
-            <input
-              type="file"
-              accept={FILE_ACCEPT}
-              disabled={uploading}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = "";
-                if (f) onUpload(f);
-              }}
-              className="hidden"
-            />
-            {uploading ? "Subiendo…" : "Subir Archivo"}
-          </label>
-        </div>
-        <p className="text-[10px] leading-4 text-muted-foreground normal-case">{FILE_HELP}</p>
-        {value.files.length > 0 && (
-          <ul className="divide-y divide-border rounded-lg border border-border">
-            {value.files.map((f) => (
-              <FileRow key={f.path} file={f} onRemove={() => onRemoveFile(f.path)} />
-            ))}
-          </ul>
-        )}
-      </div>
     </fieldset>
   );
 }
 
-// "audio_mp3" → "Audio MP3", "score_gif" → "Imagen GIF", "score_pdf" → "Partitura PDF".
-function kindLabel(kind: string): string {
-  const [type, ext = ""] = kind.split("_");
-  const e = ext.toUpperCase();
-  if (type === "audio") return `Audio ${e}`;
-  if (ext === "pdf") return `Partitura ${e}`;
-  return `Imagen ${e}`;
-}
+// Vínculo al salmo del catálogo (audio + partitura). Muestra el linkeado en modo
+// lectura y permite cambiar/desvincular buscando por nº o antífona.
+function SalmoLink({
+  salmoId,
+  salmos,
+  onChange,
+}: {
+  salmoId: string | null;
+  salmos: SalmoMini[];
+  onChange: (id: string | null) => void;
+}) {
+  const linked = salmos.find((s) => s.id === salmoId) ?? null;
+  const [initialId] = useState(salmoId);
+  const changed = salmoId !== initialId;
+  const [picking, setPicking] = useState(false);
+  const [q, setQ] = useState("");
+  const term = q.trim().toLowerCase();
+  const results = term
+    ? salmos
+        .filter(
+          (s) => String(s.psalm_number) === term || s.response.toLowerCase().includes(term)
+        )
+        .slice(0, 12)
+    : [];
 
-function FileRow({ file, onRemove }: { file: PsalmFile; onRemove: () => void }) {
-  const url = getPublicImageUrl(file.path);
-  const audio = isAudioKind(file.kind);
-  const isPdf = file.kind === "score_pdf";
-  const isImage = !audio && !isPdf;
   return (
-    <li className="flex items-center gap-3 px-3 py-2">
-      {audio ? (
-        <AudioButton url={url} label={kindLabel(file.kind)} />
-      ) : (
-        <>
-          <span className="min-w-0 flex-1 truncate text-sm text-foreground normal-case">
-            {kindLabel(file.kind)}
+    <fieldset className="rounded-lg border border-border p-3">
+      <legend className="px-1 text-xs uppercase tracking-wide text-secondary">
+        Salmo (audio / partitura)
+      </legend>
+
+      {linked ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-foreground normal-case">
+            Sal {linked.psalm_number} — {linked.response}
           </span>
-          {isImage && <ImagePreviewButton url={url} />}
-          {isPdf && (
-            <a
-              href={url ?? "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Ver"
-              title="Ver"
-              className="shrink-0 text-primary hover:opacity-70"
-            >
-              <EyeIcon />
-            </a>
+          {linked.audios.map((a, i) => (
+            <div key={`a${i}`} className="flex items-center gap-2">
+              <span className="w-20 shrink-0 truncate text-[10px] uppercase tracking-wide text-muted-foreground">
+                {a.label}
+              </span>
+              <AudioButton url={getPublicImageUrl(a.path)} label={a.label} />
+            </div>
+          ))}
+          {linked.scores.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              {linked.scores.map((s, i) => (
+                <span
+                  key={`s${i}`}
+                  className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"
+                >
+                  {s.label}
+                  <ImagePreviewButton url={getPublicImageUrl(s.path)} />
+                </span>
+              ))}
+            </div>
           )}
-        </>
-      )}
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label="Eliminar"
-        title="Eliminar"
-        className="shrink-0 text-muted-foreground hover:text-destructive"
-      >
-        <TrashIcon />
-      </button>
-    </li>
-  );
-}
-
-function formatTime(s: number): string {
-  if (!Number.isFinite(s) || s < 0) return "0:00";
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${String(sec).padStart(2, "0")}`;
-}
-
-// Reproduce el audio inline. Al darle play el ícono pasa a pausa y aparece una
-// barra de progreso para mover el punto de reproducción.
-function AudioButton({ url, label }: { url: string | null; label: string }) {
-  const ref = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [started, setStarted] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  function toggle() {
-    const el = ref.current;
-    if (!el) return;
-    if (playing) el.pause();
-    else void el.play();
-  }
-  function seek(v: number) {
-    const el = ref.current;
-    if (!el) return;
-    el.currentTime = v;
-    setCurrent(v);
-  }
-
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      {started ? (
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step="any"
-            value={current}
-            onChange={(e) => seek(Number(e.target.value))}
-            aria-label="Progreso del audio"
-            className="h-1 min-w-0 flex-1 cursor-pointer accent-primary"
-          />
-          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-            {formatTime(current)} / {formatTime(duration)}
-          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPicking((v) => !v)}
+              className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+            >
+              Cambiar
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-destructive hover:text-destructive"
+            >
+              Desvincular
+            </button>
+          </div>
         </div>
       ) : (
-        <span className="min-w-0 flex-1 truncate text-sm text-foreground normal-case">
-          {label}
-        </span>
-      )}
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={playing ? "Pausar" : "Escuchar"}
-        title={playing ? "Pausar" : "Escuchar"}
-        className="shrink-0 text-primary hover:opacity-70"
-      >
-        {playing ? <PauseIcon /> : <PlayIcon />}
-      </button>
-      {url && (
-        <audio
-          ref={ref}
-          src={url}
-          preload="none"
-          onPlay={() => {
-            setPlaying(true);
-            setStarted(true);
-          }}
-          onPause={() => setPlaying(false)}
-          onEnded={() => {
-            setPlaying(false);
-            setCurrent(0);
-            if (ref.current) ref.current.currentTime = 0;
-          }}
-          onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        />
-      )}
-    </div>
-  );
-}
-
-// Muestra la imagen en un popup con el fondo blureado; un click afuera cierra.
-function ImagePreviewButton({ url }: { url: string | null }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Ver"
-        title="Ver"
-        className="shrink-0 text-primary hover:opacity-70"
-      >
-        <EyeIcon />
-      </button>
-      {open && url && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+        <button
+          type="button"
+          onClick={() => setPicking(true)}
+          className="rounded-full border border-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary hover:bg-primary hover:text-primary-foreground"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={url}
-            alt="Partitura"
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[90vh] max-w-full rounded-lg shadow-2xl"
+          Vincular salmo
+        </button>
+      )}
+
+      {picking && (
+        <div className="mt-2 flex flex-col gap-2">
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nº o antífona…"
+            autoFocus
+            className={inputClass}
           />
+          {results.length > 0 && (
+            <ul className="divide-y divide-border rounded-lg border border-border">
+              {results.map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(s.id);
+                      setPicking(false);
+                      setQ("");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm normal-case hover:bg-sidebar"
+                  >
+                    <span className="shrink-0 text-secondary">Sal {s.psalm_number}</span>
+                    <span className="min-w-0 flex-1 truncate">{s.response}</span>
+                    {s.audios.length > 0 && <span className="shrink-0 text-[10px] text-primary">audio</span>}
+                    {s.scores.length > 0 && <span className="shrink-0 text-[10px] text-primary">part.</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
-    </>
-  );
-}
 
-function PlayIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  );
-}
-
-function PauseIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <rect x="6" y="5" width="4" height="14" rx="1" />
-      <rect x="14" y="5" width="4" height="14" rx="1" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
+      {changed ? (
+        <p className="mt-2 text-xs font-semibold normal-case text-destructive">
+          Cambiaste el salmo vinculado. Se aplica al apretar <strong>Guardar</strong>; si salís sin
+          guardar, se pierde.
+        </p>
+      ) : (
+        linked && (
+          <p className="mt-2 text-[11px] normal-case text-muted-foreground">
+            (Para agregar nuevos cantos y partituras de salmos, ir a admin/salmos)
+          </p>
+        )
+      )}
+    </fieldset>
   );
 }

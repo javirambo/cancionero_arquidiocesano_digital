@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getAdminAccess } from "@/app/(app)/admin/access";
-import { getReadingRowsForDate } from "@/lib/lecturas-admin";
+import { getReadingRowsForDate, listSalmosMini } from "@/lib/lecturas-admin";
 import { getLiturgicalDay } from "@/lib/liturgical";
 import { LecturasForm } from "./lecturas-form";
 
@@ -27,9 +27,10 @@ export default async function EditarLecturaPage({
   const { date } = await params;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) notFound();
 
-  const [rows, romcal] = await Promise.all([
+  const [rows, romcal, salmos] = await Promise.all([
     getReadingRowsForDate(date),
     getLiturgicalDay(date),
+    listSalmosMini(),
   ]);
 
   return (
@@ -50,6 +51,7 @@ export default async function EditarLecturaPage({
       <LecturasForm
         date={date}
         rows={rows}
+        salmos={salmos}
         romcal={
           romcal
             ? { name: romcal.name, color: romcal.color, seasonName: romcal.seasonName }

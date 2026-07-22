@@ -45,6 +45,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `announcements`        | Anuncios + festividades litúrgicas de la home              | 2    | CU-07, CU-21                  |
 | `announcement_parishes`| Destino multi-parroquia de un anuncio (N–N)                | 2    | CU-21                         |
 | `liturgical_readings`  | Lecturas del leccionario por fecha (scrape anual)          | 1    | calendario / lecturas         |
+| `salmos`               | Salmos responsoriales reusables (audio + partitura)        | 1    | calendario / salmos           |
 | `settings`             | Configuraciones clave/valor                                | 1    | global                        |
 
 ---
@@ -377,6 +378,7 @@ Textos de las lecturas del leccionario (primera lectura, salmo, segunda lectura,
 | `source_hash`     | text        | sha256 del `.htm` — detectar cambios entre ingestas                                                |
 | `imported_at`     | timestamptz | NOT NULL default now() — se refresca en cada ingesta                                               |
 | `locked`          | boolean     | NOT NULL default false — true = editada a mano (CRUD `/admin/lecturas`); la ingesta la EXCLUYE y no la sobreescribe (mig. **0057**) |
+| `salmo_id`        | uuid        | FK → `salmos.id` ON DELETE SET NULL, nullable — vincula la media (audio/partitura) del salmo. Se setea por match (nº + antífona) o a mano (mig. **0058**) |
 | `created_at`      | timestamptz | default now()                                                                                      |
 | `updated_at`      | timestamptz | default now(), trigger `set_updated_at`                                                            |
 
@@ -391,6 +393,35 @@ Textos de las lecturas del leccionario (primera lectura, salmo, segunda lectura,
 > - **~42 días de Cuaresma sin `gospel_accl`**: en Cuaresma no se canta "Aleluia" (se reemplaza por otra aclamación que el script hoy no captura). El resto de las secciones de esos días sí está.
 
 > ⚖️ **Derechos de autor.** Los textos del leccionario tienen derechos (CEA / Fundación Palabra de Vida – Verbo Divino). Esta tabla los almacena para uso interno; **exponerlos públicamente requiere autorización escrita** (ver §8 de [calendario-liturgico-y-lecturas.md](calendario-liturgico-y-lecturas.md)).
+
+> **Media del salmo (mig. 0058).** El audio cantado y la partitura NO se guardan por fecha: viven una vez en `salmos` y se referencian por `salmo_id`. Reemplaza al `psalm.files` anterior. Ver `salmos` abajo.
+
+---
+
+### `salmos`
+Salmos responsoriales **reusables**: identidad (nº de salmo + antífona) + media. Un salmo puede tener **varias versiones de audio** y **varias partituras** (Simple / SATB), en las listas `audios`/`scores` (mig. **0059**). Un mismo salmo se usa en muchas fechas; tenerlo acá permite **editar la media una vez** y que impacte en todas, y que la re-ingesta de curas no lo pise. Se puebla desde el catálogo del **Coro San Clemente** vía `scripts/import-salmos-coro.ts` (agrupa las versiones por fila y lee la partitura SATB de la página de detalle). Migración **0058** (+ **0059** media). 
+
+| Columna         | Tipo        | Notas                                                                                              |
+| --------------- | ----------- | -------------------------------------------------------------------------------------------------- |
+| `id`            | uuid        | PK                                                                                                 |
+| `psalm_number`  | int         | NOT NULL — nº de salmo (1..150)                                                                     |
+| `ref`           | text        | cita "Sal 1, 1-4.6" (nullable)                                                                      |
+| `response`      | text        | NOT NULL — antífona/respuesta (label del CRUD)                                                      |
+| `response_norm` | text        | NOT NULL — antífona normalizada (sin tildes/puntuación, minúsculas) para match y unicidad          |
+| `source`        | text        | NOT NULL default 'coro_san_clemente', CHECK in ('coro_san_clemente','manual')                      |
+| `source_slug`   | text        | UNIQUE, nullable — id del catálogo del coro ("SR_1_El_que_sigue_al_Sr")                             |
+| `audios`        | jsonb       | NOT NULL default `[]` — versiones de audio: `[{ label, path }]` (mig. **0059**). `path` en bucket `images`, carpeta `salmos/` |
+| `scores`        | jsonb       | NOT NULL default `[]` — partituras: `[{ label, path }]` (Simple / SATB) (mig. **0059**)            |
+| `created_at`    | timestamptz | default now()                                                                                      |
+| `updated_at`    | timestamptz | default now(), trigger `set_updated_at`                                                            |
+
+**Unicidad:** `(psalm_number, response_norm)` — identidad lógica / anti-duplicado.
+**Índices:** `salmos_psalm_number_idx`.
+**RLS:** SELECT público; INSERT/UPDATE/DELETE solo `is_editor()`/`is_admin()`.
+
+> **Vínculo con las fechas.** `liturgical_readings.salmo_id` → `salmos.id`. Se setea **automático** por match (`psalmNumberFromRef(psalm.ref)` + `normalizeResponse(psalm.response)`, en `scripts/import-salmos-coro.ts --link`, que solo llena los `null` → respeta los manuales) y **a mano** desde el CRUD de lecturas (`/admin/lecturas/[fecha]`). El merge (`lib/calendario.ts`) trae la media por join. CRUD propio en `/admin/salmos`.
+
+> ⚖️ **Derechos.** Audios (grabaciones) y partituras (arreglos) son obra del **Coro San Clemente**; su reuso/distribución conviene con su permiso.
 
 ---
 

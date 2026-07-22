@@ -37,7 +37,8 @@ edición manual (fila locked)  >  curas.com.ar (fila importada)  >  romcal (base
 - ✅ romcal ([lib/liturgical.ts](../lib/liturgical.ts)) + tabla `liturgical_readings` (mig. `0056`, poblada con 2026).
 - ✅ API de merge ([lib/calendario.ts](../lib/calendario.ts): `getDiaLiturgico`, `getMesLiturgico`).
 - ✅ CRUD de admin en `/admin/lecturas` (edición manual con flag `locked`); el script de ingesta respeta `locked`.
-- ⚠️ La columna `locked` la crea la migración `0057`: **aplicarla** para habilitar el bloqueo (hasta entonces el CRUD falla al guardar y la ingesta avisa que no puede leer `locked`).
+- ✅ Media del salmo (varias versiones de audio + partituras Simple/SATB) en tabla `salmos` (mig. `0058` + `0059`) + CRUD en `/admin/salmos` + import del Coro San Clemente (`scripts/import-salmos-coro.ts`). Ver §4/§5.
+- ⚠️ Migraciones **`0057`** (`locked`), **`0058`** (`salmos` + `salmo_id`) y **`0059`** (`salmos.audios`/`scores`): **aplicarlas** en orden. Hasta entonces esos CRUD fallan al guardar y las queries con `salmo_id`/`audios` degradan.
 
 ---
 
@@ -232,6 +233,20 @@ La API de calendario ([lib/calendario.ts](../lib/calendario.ts): `getDiaLiturgic
 - `rango/ciclo`: siempre de romcal (curas no los da estructurados).
 - `lecturas`: de la fila (null si el día no tiene fila — p.ej. los 6 especiales de §6).
 - `fuente`: `'manual'` (fila locked), `'curas'` (importada) o `'romcal'` (sin fila).
+- `psalm.audios` / `psalm.scores`: media del salmo linkeado (URLs), join `salmo_id → salmos`.
+
+### Media del salmo — tabla `salmos` (migraciones `0058` + `0059`)
+
+El audio cantado y las partituras **no** se guardan por fecha (reemplazan al viejo `psalm.files`):
+viven una vez en la tabla **`salmos`**, en dos listas jsonb `audios` y `scores` (`[{label, path}]`),
+porque un salmo puede tener **varias versiones de audio** y **varias partituras** (Simple / SATB).
+Cada fecha la referencia por **`liturgical_readings.salmo_id`**. Así, editar la media de un salmo
+impacta en **todas** las fechas que lo usan, y la re-ingesta de curas no la toca. Ver `salmos` en
+[modelo_de_datos.md](modelo_de_datos.md#salmos).
+
+**Vínculo `salmo_id`** (auto + manual): lo setea el match `psalmNumberFromRef + normalizeResponse`
+([lib/salmos.ts](../lib/salmos.ts)) — `scripts/import-salmos-coro.ts --link` solo llena los `null`
+(respeta los manuales) — y el CRUD de lecturas a mano.
 
 ---
 
@@ -256,6 +271,22 @@ npx tsx scripts/import-lecturas.ts --year=2027 --apply
 - Es **idempotente** (`upsert` por `(event_date, reading_set)`), tarda ~3-4 min, y **respeta
   las filas `locked`** (no pisa las ediciones manuales).
 - Flags útiles para probar: `--month=N`, `--limit=N`.
+
+### CRUD de salmos y carga del catálogo
+
+- **CRUD** en `/admin/salmos` (tarjeta "Salmos" en `/admin`): editar la antífona y **subir /
+  reemplazar / eliminar** el audio y la partitura de cada salmo. Cambiarlos acá impacta en **todas**
+  las fechas linkeadas. El editor de lecturas (`/admin/lecturas/[fecha]`) ya **no sube archivos**:
+  muestra la media del salmo linkeado (play / preview) y permite **vincular / cambiar** el salmo.
+- **Carga del catálogo del Coro San Clemente** (281 salmos):
+
+  ```bash
+  npx tsx scripts/import-salmos-coro.ts --apply --link
+  ```
+
+  Baja audio + partitura al bucket `images/salmos/`, hace upsert en `salmos`, y con `--link` vincula
+  `salmo_id` en las fechas por match. Idempotente. Tras una ingesta anual de curas, correr `--link`
+  para vincular las fechas nuevas. ⚖️ La media es obra del Coro San Clemente (reuso con permiso).
 
 ---
 

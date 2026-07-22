@@ -99,13 +99,10 @@ export default async function AdminLecturasPage({
 
 // ¿El salmo del día (principal o memoria) tiene audio y/o partitura?
 function psalmFiles(dia: DiaLiturgico): { hasAudio: boolean; hasScore: boolean } {
-  const files = [
-    ...(dia.lecturas.principal?.psalm?.files ?? []),
-    ...(dia.lecturas.memoria?.psalm?.files ?? []),
-  ];
+  const psalms = [dia.lecturas.principal?.psalm, dia.lecturas.memoria?.psalm];
   return {
-    hasAudio: files.some((f) => f.kind.startsWith("audio_")),
-    hasScore: files.some((f) => f.kind.startsWith("score_")),
+    hasAudio: psalms.some((p) => (p?.audios?.length ?? 0) > 0),
+    hasScore: psalms.some((p) => (p?.scores?.length ?? 0) > 0),
   };
 }
 
