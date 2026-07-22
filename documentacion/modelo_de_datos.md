@@ -44,6 +44,7 @@ Las transiciones se controlan por trigger + RLS en Supabase. Los campos `submitt
 | `user_song_keys`       | Tono preferido del usuario por canción (transposición)     | 2    | CU-03                         |
 | `announcements`        | Anuncios + festividades litúrgicas de la home              | 2    | CU-07, CU-21                  |
 | `announcement_parishes`| Destino multi-parroquia de un anuncio (N–N)                | 2    | CU-21                         |
+| `liturgical_readings`  | Lecturas del leccionario por fecha (scrape anual)          | 1    | calendario / lecturas         |
 | `settings`             | Configuraciones clave/valor                                | 1    | global                        |
 
 ---
@@ -352,6 +353,43 @@ Pares clave/valor globales (config feature flags, textos institucionales).
 - `admin_contact_emails` (jsonb array de strings) — emails del administrador general que se muestran en la vista pública de parroquia cuando esa parroquia no tiene Coordinador asignado, para que un visitante pueda solicitar el alta. Editable desde `/admin/parroquias` (sección "Configuración general"). Seed inicial `[]` en migración 0028.
 
 **RLS:** SELECT público (`using (true)`). INSERT/UPDATE/DELETE solo `is_admin()`.
+
+---
+
+### `liturgical_readings`
+Textos de las lecturas del leccionario (primera lectura, salmo, segunda lectura, aleluya, evangelio) que **romcal no provee**. Se obtienen de curas.com.ar mediante un script de ingesta anual e idempotente (`scripts/import-lecturas.ts`) y se unen por **fecha** al calendario que ya calcula romcal (ver [calendario-liturgico-y-lecturas.md](calendario-liturgico-y-lecturas.md)). Migración **0056**.
+
+| Columna           | Tipo        | Notas                                                                                              |
+| ----------------- | ----------- | -------------------------------------------------------------------------------------------------- |
+| `id`              | uuid        | PK                                                                                                 |
+| `event_date`      | date        | NOT NULL — clave de join con el calendario de romcal                                               |
+| `reading_set`     | text        | NOT NULL default 'principal', CHECK in ('principal','memoria'). 'principal' = propio/tiempo/feria (`ordo2[6]`); 'memoria' = memoria opcional (`ordo2[5]`) cuando el día la ofrece |
+| `celebration`     | text        | `ordo2[0]` sin el color                                                                            |
+| `color`           | text        | CHECK in ('verde','rojo','blanco','morado','rosa','negro'). Del paréntesis de `ordo2[0]`; NULL si no se reconoce |
+| `liturgical_time` | text        | encabezado del `.htm` (ej. "TIEMPO DE NAVIDAD")                                                    |
+| `day_label`       | text        | nombre de la celebración del `.htm` (ej. "DÍA VII DENTRO DE LA OCTAVA DE NAVIDAD")                 |
+| `first_reading`   | jsonb       | `{ref, heading, body}`                                                                             |
+| `psalm`           | jsonb       | `{ref, response, stanzas[]}`                                                                       |
+| `second_reading`  | jsonb       | nullable — solo domingos/solemnidades                                                              |
+| `gospel_accl`     | jsonb       | aleluya `{ref, heading, body}`                                                                     |
+| `gospel`          | jsonb       | `{ref, heading, body}`                                                                             |
+| `source_url`      | text        | NOT NULL — `.htm` de origen (trazabilidad / re-scrape)                                             |
+| `source_hash`     | text        | sha256 del `.htm` — detectar cambios entre ingestas                                                |
+| `imported_at`     | timestamptz | NOT NULL default now() — se refresca en cada ingesta                                               |
+| `created_at`      | timestamptz | default now()                                                                                      |
+| `updated_at`      | timestamptz | default now(), trigger `set_updated_at`                                                            |
+
+**Unicidad:** `(event_date, reading_set)` — permite la re-ingesta idempotente vía `upsert on conflict`.
+**Índices:** `liturgical_readings_event_date_idx` sobre `event_date`.
+**RLS:** SELECT público (`using (true)`); INSERT/UPDATE/DELETE solo `is_editor()` o `is_admin()` (patrón `song_categories`).
+
+> **Recálculo anual.** Los `.js` de curas.com.ar están hardcodeados por año; cada año se corre el script con `--year=YYYY`. El `upsert` sobre `(event_date, reading_set)` hace la operación repetible sin duplicar; `source_hash` detecta si un `.htm` cambió respecto de lo guardado. El script es **upsert-only**: no borra filas que dejaron de generarse (si una fuente cambia el tipo de link de un día, la fila vieja queda residual y hay que limpiarla a mano).
+
+> **Cobertura de la ingesta 2026** (373 filas: 359 `principal` + 14 `memoria`). Todas las filas traen primera lectura, salmo y evangelio; la segunda lectura solo aparece en domingos/solemnidades. Huecos conocidos, por límites de la **fuente** (no del parser):
+> - **6 días especiales sin fila** porque curas.com.ar no publica su leccionario en el slot estándar `[5]`/`[6]` (linkean a Misal/Normas): **Miércoles de Ceniza** (18/2), **Triduo Pascual** (Jueves/Viernes/Sábado Santo, 2-4/4), **Domingo de Pascua** (5/4) y **1º de Adviento** (29/11). Para esos días el calendario lo sigue dando romcal; las lecturas, si se quieren, se cargan a mano.
+> - **~42 días de Cuaresma sin `gospel_accl`**: en Cuaresma no se canta "Aleluia" (se reemplaza por otra aclamación que el script hoy no captura). El resto de las secciones de esos días sí está.
+
+> ⚖️ **Derechos de autor.** Los textos del leccionario tienen derechos (CEA / Fundación Palabra de Vida – Verbo Divino). Esta tabla los almacena para uso interno; **exponerlos públicamente requiere autorización escrita** (ver §8 de [calendario-liturgico-y-lecturas.md](calendario-liturgico-y-lecturas.md)).
 
 ---
 
