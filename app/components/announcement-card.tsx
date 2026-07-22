@@ -1,7 +1,7 @@
 import type { Featured } from "@/lib/songs";
 import { CardWithImage } from "./card-with-image";
 import { ExpandableText } from "./expandable-text";
-import { SimpleMarkdown, simpleMarkdownToPlainText } from "./simple-markdown";
+import { SimpleMarkdown, SimpleMarkdownInline } from "./simple-markdown";
 
 const KIND_LABEL: Record<string, string> = {
   solemnidad: "Solemnidad",
@@ -44,14 +44,14 @@ export function AnnouncementCard({
       {item.body &&
         (compact ? (
           <span className="line-clamp-3 text-sm normal-case leading-5 text-muted-foreground">
-            {simpleMarkdownToPlainText(item.body)}
+            <SimpleMarkdownInline text={item.body} linksClickable={!item.href} />
           </span>
         ) : (
           <ExpandableText
             className="mt-1 text-sm normal-case leading-6 text-muted-foreground"
             maxLines={4}
           >
-            <SimpleMarkdown text={item.body} />
+            <SimpleMarkdown text={item.body} linksClickable={!item.href} />
           </ExpandableText>
         ))}
     </CardWithImage>

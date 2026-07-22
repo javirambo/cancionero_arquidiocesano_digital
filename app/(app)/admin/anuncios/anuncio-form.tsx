@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ScheduleEditor } from "@/app/components/schedule-editor";
 import { replaceSchedulesWith, type ScheduleInput } from "@/lib/schedule";
 import { ImageUploadField } from "@/app/components/image-upload-field";
+import { LinkIcon } from "@/app/components/icons";
 
 export type AnnouncementKind =
   | null
@@ -403,6 +404,9 @@ export function AnuncioForm({
             <span><u>__subrayado__</u></span>
             <span className="font-semibold text-primary"># Título</span>
             <span className="font-semibold text-secondary">## Subtítulo</span>
+            <span>
+              link <span className="text-primary underline">[texto](url)</span>
+            </span>
           </div>
         </div>
         <div className="grid grid-cols-[1fr_1fr_2fr] items-start gap-3 sm:col-span-2">
@@ -880,6 +884,10 @@ function BodyEditor({
   onChange: (v: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkText, setLinkText] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const linkRange = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
 
   function wrap(prefix: string, suffix: string) {
     const el = textareaRef.current;
@@ -896,6 +904,43 @@ function BodyEditor({
       const cursorEnd = cursorStart + selected.length;
       el.setSelectionRange(cursorStart, cursorEnd);
     });
+  }
+
+  function openLinkModal() {
+    const el = textareaRef.current;
+    if (!el) return;
+    linkRange.current = { start: el.selectionStart, end: el.selectionEnd };
+    setLinkText(value.slice(el.selectionStart, el.selectionEnd));
+    setLinkUrl("");
+    setLinkModalOpen(true);
+  }
+
+  function confirmLink() {
+    const url = linkUrl.trim();
+    if (!url) return;
+    const { start, end } = linkRange.current;
+    const text = linkText.trim() || url;
+    const markup = `[${text}](${url})`;
+    const next = value.slice(0, start) + markup + value.slice(end);
+    onChange(next);
+    setLinkModalOpen(false);
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      const pos = start + markup.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  function onLinkKey(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      confirmLink();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setLinkModalOpen(false);
+    }
   }
 
   function prefixLine(marker: string) {
@@ -960,6 +1005,14 @@ function BodyEditor({
         >
           <strong>S</strong>
         </button>
+        <button
+          type="button"
+          onClick={openLinkModal}
+          className={`${btnClass} inline-flex items-center`}
+          title="Insertar enlace"
+        >
+          <LinkIcon />
+        </button>
       </div>
       <textarea
         ref={textareaRef}
@@ -968,6 +1021,63 @@ function BodyEditor({
         onChange={(e) => onChange(e.target.value)}
         className={inputClass}
       />
+      {linkModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="insert-link-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+          <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-border bg-background p-6 shadow-xl">
+            <h2 id="insert-link-title" className="text-xl">
+              Insertar enlace
+            </h2>
+            <label className="flex flex-col gap-1 normal-case">
+              <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+                Texto
+              </span>
+              <input
+                autoFocus
+                type="text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+                onKeyDown={onLinkKey}
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1 normal-case">
+              <span className="text-xs uppercase tracking-[0.15em] text-secondary">
+                Link
+              </span>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={onLinkKey}
+                placeholder="https://…"
+                className={inputClass}
+              />
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={confirmLink}
+                disabled={!linkUrl.trim()}
+                className="rounded-full border border-primary bg-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white hover:opacity-90 disabled:opacity-60"
+              >
+                Insertar
+              </button>
+              <button
+                type="button"
+                onClick={() => setLinkModalOpen(false)}
+                className="rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-foreground hover:border-primary hover:text-primary"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
