@@ -34,6 +34,12 @@ const secciones: Seccion[] = [
     show: (a) => a.isAdmin || a.isEditor,
   },
   {
+    href: "/admin/lecturas",
+    titulo: "Lecturas Litúrgicas",
+    descripcion: "Calendario y leccionario del día: revisión y edición manual de las lecturas, con actualización anual desde curas.com.ar.",
+    show: (a) => a.isAdmin || a.isEditor,
+  },
+  {
     href: "/admin/usuarios",
     titulo: "Usuarios",
     descripcion: "Asignación de roles globales y membresías por parroquia. El alta sigue siendo automática vía OAuth.",

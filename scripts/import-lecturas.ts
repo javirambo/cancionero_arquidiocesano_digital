@@ -14,6 +14,8 @@
  *   4. Baja y deduplica cada .htm de leccionario (muchos días comparten uno).
  *   5. Parsea el .htm → estructura {ref, heading, body} por sección.
  *   6. Upsert idempotente en liturgical_readings (on conflict event_date+reading_set).
+ *      Excluye las filas con `locked=true` (ediciones manuales del CRUD de admin):
+ *      no las pisa. Requiere la migración 0057; si falta, avisa y no filtra.
  *
  * Uso:
  *   npx tsx scripts/import-lecturas.ts                       # dry-run, año actual
@@ -402,6 +404,30 @@ async function upsertRows(rows: Row[]) {
   }
 }
 
+// Excluye del batch las filas marcadas `locked=true` en la BD (ediciones
+// manuales del CRUD), para no pisarlas. Si la columna no existe todavía
+// (falta migración 0057), avisa y no filtra.
+async function excludeLocked(rows: Row[]): Promise<Row[]> {
+  if (!supabase) return rows;
+  const { data, error } = await supabase
+    .from("liturgical_readings")
+    .select("event_date, reading_set")
+    .eq("locked", true);
+  if (error) {
+    console.warn(
+      `  (aviso: no se pudo leer 'locked' (¿falta migración 0057?): ${error.message}). Se importa todo.`
+    );
+    return rows;
+  }
+  const locked = new Set((data ?? []).map((r) => `${r.event_date}|${r.reading_set}`));
+  if (locked.size === 0) return rows;
+  const kept = rows.filter((r) => !locked.has(`${r.event_date}|${r.reading_set}`));
+  console.log(
+    `  ${locked.size} fila(s) locked respetadas: ${rows.length - kept.length} omitidas del batch.`
+  );
+  return kept;
+}
+
 function printSample(rows: Row[]) {
   if (!rows.length) return;
   console.log("\n--- resumen por fila ---");
@@ -492,7 +518,8 @@ async function main() {
     console.log("\n(DRY-RUN: no se escribió nada. Volvé a correr con --apply para persistir.)");
     return;
   }
-  await upsertRows(rows);
+  const toWrite = await excludeLocked(rows);
+  await upsertRows(toWrite);
   console.log("Listo.");
 }
 

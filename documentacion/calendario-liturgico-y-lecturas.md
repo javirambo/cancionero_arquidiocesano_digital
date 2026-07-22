@@ -34,10 +34,10 @@ edición manual (fila locked)  >  curas.com.ar (fila importada)  >  romcal (base
 > romcal (calculada). El merge por `event_date` las une.
 
 **Estado de implementación:**
-- ✅ romcal ([lib/liturgical.ts](../lib/liturgical.ts)) y la tabla `liturgical_readings`
-  (migración `0056`, poblada con 2026) existen.
-- ⏳ Columna `locked`, API de merge y CRUD: diseñados, pendientes de implementar
-  (ver plan del feature).
+- ✅ romcal ([lib/liturgical.ts](../lib/liturgical.ts)) + tabla `liturgical_readings` (mig. `0056`, poblada con 2026).
+- ✅ API de merge ([lib/calendario.ts](../lib/calendario.ts): `getDiaLiturgico`, `getMesLiturgico`).
+- ✅ CRUD de admin en `/admin/lecturas` (edición manual con flag `locked`); el script de ingesta respeta `locked`.
+- ⚠️ La columna `locked` la crea la migración `0057`: **aplicarla** para habilitar el bloqueo (hasta entonces el CRUD falla al guardar y la ingesta avisa que no puede leer `locked`).
 
 ---
 
@@ -220,26 +220,29 @@ Resumen: una fila por `(event_date, reading_set)` con `reading_set ∈ ('princip
 (`first_reading`, `psalm`, `second_reading`, `gospel_accl`, `gospel`); y `source_url` +
 `source_hash` para trazabilidad y re-ingesta idempotente.
 
-> **Columna `locked` (diseñada, pendiente):** al implementar el CRUD se agrega
-> `locked boolean not null default false`. Las filas editadas a mano se marcan `locked=true` y
-> el script de ingesta **no las sobreescribe** en la re-ingesta anual.
+> **Columna `locked` (migración `0057`):** `locked boolean not null default false`. Las filas
+> editadas a mano se marcan `locked=true` y el script de ingesta **las excluye** del upsert (no las
+> pisa). El admin puede des-bloquearla para que la próxima ingesta la retome desde la fuente.
 
 ### Merge por `event_date`
 
-La API de calendario (diseñada) une romcal + `liturgical_readings` por fecha, con precedencia
-por campo:
+La API de calendario ([lib/calendario.ts](../lib/calendario.ts): `getDiaLiturgico(fecha)` y
+`getMesLiturgico(año, mes)`) une romcal + `liturgical_readings` por fecha, con precedencia por campo:
 - `nombre/tiempo/color`: de la fila `liturgical_readings` si existe; si no, de romcal.
 - `rango/ciclo`: siempre de romcal (curas no los da estructurados).
 - `lecturas`: de la fila (null si el día no tiene fila — p.ej. los 6 especiales de §6).
+- `fuente`: `'manual'` (fila locked), `'curas'` (importada) o `'romcal'` (sin fila).
 
 ---
 
 ## 5. Edición manual (CRUD) y actualización anual
 
-**CRUD de admin** (diseñado): permite corregir o dar de alta filas de `liturgical_readings`
-para fechas que estén mal o falten (§6). Al guardar una edición se setea `locked=true` para
-protegerla de la re-ingesta. RLS ya vigente: lectura pública, escritura solo `is_editor()` /
-`is_admin()`.
+**CRUD de admin** (`/admin/lecturas`): lista el mes con el calendario de romcal y el estado de cada
+día (con lecturas / sin lecturas / bloqueada), y permite editar o dar de alta las lecturas de una
+fecha —incluidos los 6 días que curas no cubre (§6)— vía `/admin/lecturas/[fecha]`. Al guardar, la
+fila queda `locked` (editable con un toggle) para que la re-ingesta no la pise. La página nueva se
+alcanza desde la tarjeta "Lecturas Litúrgicas" en `/admin`. RLS: lectura pública, escritura solo
+`is_editor()` / `is_admin()`.
 
 **Actualización anual del leccionario (la corre un admin, no hay botón):**
 

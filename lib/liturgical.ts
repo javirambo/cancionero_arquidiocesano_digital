@@ -1,8 +1,11 @@
 // Calendario litúrgico católico-romano, locale español, con santoral
 // argentino. Usa romcal v3 (`romcal@dev`) y el plugin
 // `@romcal/calendar.argentina`. Los nombres ya vienen traducidos al
-// español; mantenemos un override mínimo solo para corregir mayúsculas
-// en los títulos visibles ("5º domingo" → "5° Domingo").
+// español.
+//
+// Es la CAPA BASE del calendario: siempre disponible, sin huecos. Se
+// combina con las lecturas de `liturgical_readings` (curas/manual) en el
+// merge de `lib/calendario.ts`. Ver documentacion/calendario-liturgico-y-lecturas.md.
 //
 // Nota sobre el dev tag: romcal@dev se actualiza, lo pinneamos por
 // versión exacta en package.json para evitar drift.
@@ -17,9 +20,11 @@ export type LiturgicalDay = {
   seasonKey: string | null; // ej: "EASTER_TIME", "ORDINARY_TIME", "ADVENT", "LENT", "CHRISTMAS_TIME"
   seasonName: string; // ya en español
   rank: number; // 1 = solemnidad, 2 = domingo, 3 = fiesta, 4 = memoria, 5 = mem. opcional, 6 = feria
+  color: string | null; // color litúrgico en español, minúscula (ej. "blanco", "morado")
+  cycle: string | null; // ciclo dominical: "A" | "B" | "C"
 };
 
-// Mapeo del `rank` (string en romcal v3) al número usado por la home.
+// Mapeo del `rank` (string en romcal v3) al número usado internamente.
 const TYPE_RANK: Record<string, number> = {
   SOLEMNITY: 1,
   SUNDAY: 2,
@@ -38,6 +43,8 @@ type LiturgicalEntry = {
   rank: string;
   seasonNames: string[];
   seasons: string[];
+  colorNames: string[];
+  sundayCycle: string | null;
 };
 
 let _romcalInstance: InstanceType<typeof Romcal> | null = null;
@@ -64,8 +71,10 @@ async function calendarFor(
       date: string;
       name: string;
       rank: string;
-      seasonNames: string[];
-      seasons: string[];
+      seasonNames?: string[];
+      seasons?: string[];
+      colorNames?: string[];
+      cycles?: { sundayCycle?: string };
     }>
   >;
   const out: Record<string, LiturgicalEntry[]> = {};
@@ -76,6 +85,8 @@ async function calendarFor(
       rank: e.rank,
       seasonNames: e.seasonNames ?? [],
       seasons: e.seasons ?? [],
+      colorNames: e.colorNames ?? [],
+      sundayCycle: e.cycles?.sundayCycle ?? null,
     }));
   }
   _calendarCache.set(year, out);
@@ -89,28 +100,53 @@ function toDateKey(date: Date): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export async function getLiturgicalDay(
-  date: Date = new Date()
-): Promise<LiturgicalDay | null> {
-  const target = toDateKey(date);
-  const cal = await calendarFor(date.getFullYear());
-  const matches = cal[target];
-  if (!matches || matches.length === 0) return null;
+// "YEAR_A" → "A", "YEAR_B" → "B", "YEAR_C" → "C".
+function mapSundayCycle(c: string | null): string | null {
+  const m = c?.match(/YEAR_([ABC])/);
+  return m ? m[1] : null;
+}
 
-  // El primero en la lista es el de mayor precedencia (romcal v3 los
-  // ordena así). Si por alguna razón no fuera el caso, ordenamos por
-  // rank ascendente (1 = solemnidad, 6 = feria).
-  const sorted = [...matches].sort(
+// El de mayor precedencia del día. romcal v3 los ordena así; por las dudas
+// ordenamos por rank ascendente (1 = solemnidad, 6 = feria).
+function topOf(entries: LiturgicalEntry[]): LiturgicalDay | null {
+  if (!entries || entries.length === 0) return null;
+  const sorted = [...entries].sort(
     (a, b) => (TYPE_RANK[a.rank] ?? 99) - (TYPE_RANK[b.rank] ?? 99)
   );
   const top = sorted[0];
-
   return {
-    date: target,
+    date: top.date,
     name: top.name,
     type: top.rank,
     seasonKey: top.seasons[0] ?? null,
     seasonName: top.seasonNames[0] ?? "Tiempo Ordinario",
     rank: TYPE_RANK[top.rank] ?? 99,
+    color: top.colorNames[0]?.toLowerCase() ?? null,
+    cycle: mapSundayCycle(top.sundayCycle),
   };
+}
+
+export async function getLiturgicalDay(
+  date: Date | string = new Date()
+): Promise<LiturgicalDay | null> {
+  const key = typeof date === "string" ? date : toDateKey(date);
+  const year = Number(key.slice(0, 4));
+  const cal = await calendarFor(year);
+  return topOf(cal[key] ?? []);
+}
+
+// Calendario base (romcal) de un mes completo: Record<"YYYY-MM-DD", LiturgicalDay>.
+export async function getRomcalMonth(
+  year: number,
+  month: number
+): Promise<Record<string, LiturgicalDay>> {
+  const cal = await calendarFor(year);
+  const prefix = `${year}-${String(month).padStart(2, "0")}-`;
+  const out: Record<string, LiturgicalDay> = {};
+  for (const [d, entries] of Object.entries(cal)) {
+    if (!d.startsWith(prefix)) continue;
+    const top = topOf(entries);
+    if (top) out[d] = top;
+  }
+  return out;
 }

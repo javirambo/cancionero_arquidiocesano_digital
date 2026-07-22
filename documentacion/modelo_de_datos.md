@@ -376,6 +376,7 @@ Textos de las lecturas del leccionario (primera lectura, salmo, segunda lectura,
 | `source_url`      | text        | NOT NULL — `.htm` de origen (trazabilidad / re-scrape)                                             |
 | `source_hash`     | text        | sha256 del `.htm` — detectar cambios entre ingestas                                                |
 | `imported_at`     | timestamptz | NOT NULL default now() — se refresca en cada ingesta                                               |
+| `locked`          | boolean     | NOT NULL default false — true = editada a mano (CRUD `/admin/lecturas`); la ingesta la EXCLUYE y no la sobreescribe (mig. **0057**) |
 | `created_at`      | timestamptz | default now()                                                                                      |
 | `updated_at`      | timestamptz | default now(), trigger `set_updated_at`                                                            |
 
