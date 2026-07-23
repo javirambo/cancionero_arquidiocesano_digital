@@ -47,6 +47,10 @@
   --theme-card: #ffffff;             /* TARJETAS */
   --theme-border: #e3ddce;           /* FONDO SUAVE como borde */
   --theme-muted-foreground: #6c717a; /* TEXTO SECUNDARIO */
+
+  /* Fondo del recuadro de vista previa de la antífona (AntifonaPreview).
+     En light: crema notorio sobre el fondo casi blanco. En dark: sigue el card. */
+  --antifona-preview: #efe9d6;
 }
 
 /* Tema dark: se activa explícitamente con data-theme="dark" en <html>.
@@ -69,6 +73,8 @@
   --theme-card: #2a3142;
   --theme-border: #3a4358;
   --theme-muted-foreground: #9aa3b3;
+
+  --antifona-preview: var(--theme-card); /* en dark sigue el card */
 }
 
 @theme inline {

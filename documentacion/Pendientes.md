@@ -43,21 +43,35 @@ http://localhost:4000/parroquias/maria_auxiliadora_rosario/anuncios
 - coloca un texto chico gris debajo de los botones CAMBIAR DESVINCULAR que diga "(Para agregar nuevos cantos y partiruras de salmos, ir a admin/salmos)" cuando se coloca un texto rojo se quita este
 
 # [x] /salmos
-- en http://localhost:4000/salmos cambiar el boton enorme escuchar canto , y coloca solo "Escuchar canto" + (play icon) + linea de tiempo del audio (todo inline) y mas chico por favor!
+-[x] en http://localhost:4000/salmos cambiar el boton enorme escuchar canto , y coloca solo "Escuchar canto" + (play icon) + linea de tiempo del audio (todo inline) y mas chico por favor!
+-[x] reacomodar los salmos con el script, porque ahora podemos tener mas de 1 salmo por dia. Hacer el link en tabla liturgical_readings.
+-[x] faltaria agregar a mano un audio y una partitura cuando no existe en coro san clemente
+    cuando se agregue a mano un audio/partitura usar la tabla salmos y salmos.source='manual'
+    colocar una ayuda de como escribir la referencia biblica (salmos.ref) ejemplo "Sal 80, 3-6.10-11"
+    para esto primero se agrega un canto aca: http://localhost:4000/admin/salmos
+    y luego se vincula en http://localhost:4000/admin/lecturas/2026-07-10
+    colcoar los textos de ayuda en todos lados!
+-[x] cambiar el subtitulo, debajo de la fecha en http://localhost:4000/salmos?fecha=2026-07-23
+    y sacar el texto de liturgical_readings.saints.description (es un array, mostrar separados por " · ")
+-[x] editar notas para guitarra en /admin/salmos:
+    el boton insertar acorde de http://localhost:4000/admin/canciones/{id}/editar muestra un popup para insertar una nota en la edicion. Quiero agregar esta funcionalidad a /admin/salmos.
 
-# [ ] /salmos
--[ ] reacomodar los salmos con el script, porque ahora podemos tener mas de 1 salmo por dia. Hacer el link en tabla liturgical_readings.
--[ ] faltaria agregar a mano un audio y una partitura cuando no existe en coro san clemente
--[ ] y editar notas para guitarra-
--[ ] reacomodemos la edicion del salmo en http://localhost:4000/admin/lecturas/2026-07-03
--un solo recuadro SALMO (sacar SALMO TEXTO y Salmo (audio / partitura) )
--dentro del recuadro unico colocar los campos del viejo cuadro Salmo (audio / partitura) y debajo agregar :
-    >"AUDIO / PARTITURA" + (icono para contraer/mostrar) (este seria un titulo del bloque completo que viene debajo)(por defecto contraido) 
-    >salmo usado
-    >"AUDIO:" + Audio + (icono play) (todo a la izq)
-    >Imagenes de partituras (directamente mostrar aca,primero la simple luego las otras) 
-    >botones CAMBIAR DESVINCULAR (etc)
-    >textos informativos...
+
+http://localhost:4000/admin/salmos/e62e8b21-16e1-4cbf-9613-514225bd24f7
+
+-[x] reacomodemos la edicion del salmo en http://localhost:4000/admin/lecturas/2026-07-03
+    -un solo recuadro SALMO (sacar SALMO TEXTO y Salmo (audio / partitura) )
+    -dentro del recuadro unico colocar los campos del viejo cuadro Salmo (audio / partitura) y -debajo agregar :
+        >"AUDIO / PARTITURA" + (icono para contraer/mostrar) (este seria un titulo del bloque completo que viene debajo)(por defecto contraido) 
+        >salmo usado
+        >"AUDIO:" + Audio + (icono play) (todo a la izq)
+        >Imagenes de partituras (directamente mostrar aca,primero la simple luego las otras) 
+        >botones CAMBIAR DESVINCULAR (etc)
+        >textos informativos...
+
+- se puede poner un boton "hoy" en el calendario?
+http://localhost:4000/salmos?fecha=2026-07-23
+
 
 # [ ] cancion
 - colocar un margen inferior a cada cancion para que la botonera no tape la ultima parte de los textos.
@@ -73,6 +87,12 @@ http://localhost:4000/parroquias/maria_auxiliadora_rosario/anuncios
 Lecturas a cargar/revisar a mano (vigilias/solemnidades con lecturas múltiples que el scraper no cubre bien): Pascua 5/4, Pentecostés 24/5, Vigilia S. Juan Bautista 23/6, Natividad S. Juan Bautista 24/6, S. Pedro y S. Pablo 29/6, Asunción 15/8. En Pascua, ojo que /salmos puede mostrar el salmo de la Vigilia hasta que se cure.
 
 
-- [ ] ver donde usar Se canta Gloria, o Se canta Aleluia. 
+# Buena idea!
+- [ ] ver donde usar "Se canta Gloria", o "Se canta Aleluia". 
     Ya existe una funcion global documentada. lib/rubricas.ts
 
+# AVISO DIARIO
+- armar un aviso diario que muestre la celebracion del dia
+    -que se destaque con un color segun la celebracion.
+    -sacar de liturgical_events.celebration, color, liturgical_time, saints.name y description
+    -hacer un link a la saints.bio (o ampliar tipo popup)

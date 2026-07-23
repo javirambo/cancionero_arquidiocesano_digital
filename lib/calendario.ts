@@ -24,11 +24,23 @@ export type SalmoMediaUrl = { label: string; url: string };
 export type LecturaSalmo = {
   ref: string | null;
   response: string | null;
+  // Antífona del salmo vinculado (tabla salmos). Puede traer acordes ChordPro
+  // ("[Fa]…"); se usa para mostrar la antífona con acordes en el público.
+  linkedResponse: string | null;
   alt_responses: string[]; // antífonas alternativas ("O bien:")
   stanzas: string[];
   audios: SalmoMediaUrl[]; // audios del salmo linkeado (versiones, URLs públicas)
   scores: SalmoMediaUrl[]; // partituras del salmo linkeado (Simple / SATB)
 } | null;
+
+// Santo del día (liturgical_readings.saints, migración 0061). Replicado en cada
+// fila del día. `name` = nombre; `description` = calificador ("presbítero"…).
+export type Santo = {
+  name: string | null;
+  description: string | null;
+  bio_url: string | null;
+  bio: string | null;
+};
 
 export type LecturasDelDia = {
   reading_set: string; // principal | memoria | vigilia | noche | aurora | dia | …
@@ -52,6 +64,7 @@ export type DiaLiturgico = {
   rango: string; // enum de romcal (SOLEMNITY | SUNDAY | ...)
   rangoNum: number; // 1 = solemnidad … 6 = feria
   ciclo: string | null; // "A" | "B" | "C"
+  saints: Santo[] | null; // santos del día (de la fila de lecturas); null = sin santo
   lecturas: { principal: LecturasDelDia | null; memoria: LecturasDelDia | null };
   setsExtra: string[]; // reading_sets extra del día (noche/aurora/vigilia…) — para la UI
   fuente: "manual" | "curas" | "romcal";
@@ -71,7 +84,9 @@ type RawRow = {
   gospel_accl: LecturaSeccion;
   gospel: LecturaSeccion;
   locked: boolean;
+  saints: Santo[] | null;
   salmos: {
+    response: string | null;
     audios: { label: string; path: string }[] | null;
     scores: { label: string; path: string }[] | null;
   } | null;
@@ -79,8 +94,8 @@ type RawRow = {
 
 const SELECT_COLS =
   "event_date, reading_set, celebration, color, liturgical_time, day_label, " +
-  "first_reading, psalm, second_reading, gospel_accl, gospel, locked, salmo_id, " +
-  "salmos(audios, scores)";
+  "first_reading, psalm, second_reading, gospel_accl, gospel, locked, saints, salmo_id, " +
+  "salmos(response, audios, scores)";
 
 function toUrls(items: { label: string; path: string }[] | null | undefined): SalmoMediaUrl[] {
   return (items ?? [])
@@ -93,6 +108,7 @@ function toLecturas(row: RawRow): LecturasDelDia {
     ? {
         ref: row.psalm.ref ?? null,
         response: row.psalm.response ?? null,
+        linkedResponse: row.salmos?.response ?? null,
         alt_responses: row.psalm.alt_responses ?? [],
         stanzas: row.psalm.stanzas ?? [],
         audios: toUrls(row.salmos?.audios),
@@ -140,6 +156,7 @@ function merge(fecha: string, base: LiturgicalDay | null, rows: RawRow[]): DiaLi
     rango: base?.type ?? "WEEKDAY",
     rangoNum: base?.rank ?? 6,
     ciclo: base?.cycle ?? null,
+    saints: principal?.saints ?? null,
     lecturas: {
       principal: principal ? toLecturas(principal) : null,
       memoria: memoria ? toLecturas(memoria) : null,

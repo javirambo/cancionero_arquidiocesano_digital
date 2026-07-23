@@ -6,13 +6,13 @@ import type { SongFormState } from "./song-form";
 import { Accordion } from "./accordion";
 import { ChordEditor, type ChordEditorHandle } from "./chord-editor";
 import { LyricsText } from "@/app/components/song-render";
+import { ChordPicker } from "@/app/components/chord-picker";
 import {
   ChordsIcon,
   EditIcon,
   EyeIcon,
   HelpIcon,
   RepeatIcon,
-  ResponseIcon,
 } from "@/app/components/icons";
 
 export function LyricsSection({
@@ -39,10 +39,6 @@ export function LyricsSection({
       "{start_of_chorus}",
       "{end_of_chorus}"
     );
-  }
-
-  function insertResponse() {
-    editorRef.current?.insertText("{R.}");
   }
 
   return (
@@ -96,12 +92,6 @@ export function LyricsSection({
                         {"{end_of_chorus}"}
                       </code>
                     </li>
-                    <li>
-                      La respuesta del salmo responsorial se marca con{" "}
-                      <code className="rounded bg-sidebar px-1">{"{R.}"}</code>,
-                      en cualquier parte de la línea. Se ve como una{" "}
-                      <strong className="text-response">R.</strong> roja.
-                    </li>
                   </ul>
                   <p className="mt-2 text-muted-foreground">Ejemplo:</p>
                   <pre className="mt-1 overflow-x-auto rounded bg-sidebar p-2 font-mono text-foreground">
@@ -116,16 +106,6 @@ Abba Padre, venga tu Reino
           <div className="flex flex-wrap items-center gap-2">
             {!preview && (
               <>
-                <button
-                  type="button"
-                  onClick={insertResponse}
-                  aria-label="Insertar respuesta del salmo"
-                  title="Insertar la respuesta del salmo responsorial"
-                  className="flex items-center gap-2 rounded-full border border-primary px-3 py-1.5 text-sm uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground sm:px-4"
-                >
-                  <ResponseIcon />
-                  <span className="hidden sm:inline">Respuesta</span>
-                </button>
                 <div className="relative">
                   <button
                     type="button"
@@ -214,92 +194,6 @@ Abba Padre, venga tu Reino
         )}
       </div>
     </Accordion>
-  );
-}
-
-const NOTES_LATIN = [
-  "Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si",
-];
-const NOTES_ENGLISH = [
-  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
-];
-
-type Quality = "" | "m" | "7" | "m7" | "maj7" | "sus4";
-const QUALITIES: { value: Quality; label: string }[] = [
-  { value: "", label: "Mayor" },
-  { value: "m", label: "menor (m)" },
-  { value: "7", label: "7" },
-  { value: "m7", label: "m7" },
-  { value: "maj7", label: "maj7" },
-  { value: "sus4", label: "sus4" },
-];
-
-function ChordPicker({
-  system,
-  onPick,
-  onClose,
-}: {
-  system: "latin" | "english";
-  onPick: (chord: string) => void;
-  onClose: () => void;
-}) {
-  const [sys, setSys] = useState<"latin" | "english">(system);
-  const [quality, setQuality] = useState<Quality>("");
-  const notes = sys === "latin" ? NOTES_LATIN : NOTES_ENGLISH;
-
-  return (
-    <>
-      <div
-        className="fixed inset-0 z-20"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="fixed left-1/2 top-1/2 z-30 w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-background p-3 shadow-lg normal-case sm:absolute sm:right-0 sm:left-auto sm:top-full sm:mt-2 sm:translate-x-0 sm:translate-y-0">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-xs uppercase tracking-[0.15em] text-secondary">
-            Insertar acorde
-          </span>
-          <button
-            type="button"
-            onClick={() =>
-              setSys((s) => (s === "latin" ? "english" : "latin"))
-            }
-            className="text-xs uppercase tracking-wide text-primary hover:underline"
-          >
-            {sys === "latin" ? "Do · Re · Mi" : "C · D · E"}
-          </button>
-        </div>
-
-        <label className="mb-2 flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Sufijo</span>
-          <select
-            value={quality}
-            onChange={(e) => setQuality(e.target.value as Quality)}
-            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-          >
-            {QUALITIES.map((q) => (
-              <option key={q.value} value={q.value}>
-                {q.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="grid grid-cols-4 gap-1.5">
-          {notes.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => onPick(n + quality)}
-              className="rounded-md border border-border px-2 py-1.5 font-mono text-sm text-foreground hover:border-primary hover:text-primary"
-            >
-              {n}
-              {quality}
-            </button>
-          ))}
-        </div>
-      </div>
-    </>
   );
 }
 

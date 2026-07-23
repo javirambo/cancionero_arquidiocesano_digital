@@ -3,6 +3,8 @@ import { getLiturgicalDay } from "@/lib/liturgical";
 import { IntroSalmo } from "./intro-salmo";
 import { SalmoAudioButton } from "./salmo-audio";
 import { CambiarFecha } from "./cambiar-fecha";
+import { AntifonaResponse } from "@/app/components/song-render";
+import { hasAnyChord } from "@/lib/chordpro";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,14 @@ export default async function SalmosPage({
   const base = await getLiturgicalDay(selected); // dato de romcal (nombre · tiempo)
   const psalm = dia.lecturas.principal?.psalm ?? null;
 
+  // Subtítulo: nombres de los santos del día (unidos por " · "); si el día no
+  // tiene santos (feria/domingo), se cae al nombre litúrgico de romcal.
+  const santos = (dia.saints ?? [])
+    .map((s) => s.name?.trim())
+    .filter((n): n is string => !!n)
+    .join(" · ");
+  const subtitulo = santos || base?.name || "";
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
       <h1 className="text-2xl uppercase tracking-wide text-page-title">Salmo responsorial</h1>
@@ -60,9 +70,9 @@ export default async function SalmosPage({
 
       <div className="flex flex-col gap-2">
         <CambiarFecha selected={selected} today={today} dateLabel={displayDate(selected)} />
-        {base && (
-          <p className="text-center text-base normal-case text-foreground first-letter:uppercase">
-            {base.name}
+        {subtitulo && (
+          <p className="text-center text-sm normal-case text-foreground first-letter:uppercase">
+            {subtitulo}
           </p>
         )}
       </div>
@@ -95,6 +105,18 @@ function PsalmView({ psalm }: { psalm: NonNullable<LecturaSalmo> }) {
         )}
       </h3>
 
+      {/* Antífona del salmo vinculado con acordes (solo si los tiene). Fondo del
+          tema y borde igual que la partitura; centrada y pegada al título. */}
+      {psalm.linkedResponse && hasAnyChord(psalm.linkedResponse) && (
+        <div className="-mt-3 flex items-center justify-center rounded-lg border border-border bg-background px-3 py-1 text-sm">
+          <AntifonaResponse
+            response={psalm.linkedResponse}
+            showMarker={false}
+            className="[&>div]:mt-0"
+          />
+        </div>
+      )}
+
       {/* Partituras (antes de la antífona). */}
       {psalm.scores.map((s, i) =>
         s.url.toLowerCase().endsWith(".pdf") ? (
@@ -121,17 +143,21 @@ function PsalmView({ psalm }: { psalm: NonNullable<LecturaSalmo> }) {
       {/* Un solo botón para escuchar, debajo de la partitura. */}
       {audio && <SalmoAudioButton url={audio.url} />}
 
-      {/* Antífona / respuesta (sin negrita). */}
-      <p className="leading-snug normal-case text-foreground">
-        <span className="text-response">R.</span> {psalm.response}
-      </p>
+      {/* Antífona / respuesta (sin negrita, con acordes si los tiene). */}
+      <AntifonaResponse response={psalm.response} />
 
       {/* Respuestas alternativas ("O bien:"). */}
       {psalm.alt_responses.map((r, i) => (
-        <p key={i} className="-mt-3 leading-snug normal-case text-foreground">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">O bien:</span>{" "}
-          <span className="text-response">R.</span> {r}
-        </p>
+        <AntifonaResponse
+          key={i}
+          response={r}
+          className="-mt-3"
+          prefix={
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              O bien:
+            </span>
+          }
+        />
       ))}
 
       {/* Estrofas: cada una termina cantando la respuesta (R.). */}

@@ -12,6 +12,7 @@ export type SalmoMedia = { label: string; path: string };
 export function normalizeResponse(s: string | null | undefined): string {
   if (!s) return "";
   return s
+    .replace(/\[[^\]]*\]/g, " ") // ignorar acordes ChordPro ("[Do]") al normalizar
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()

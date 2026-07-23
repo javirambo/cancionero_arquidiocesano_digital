@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { RESPONSE_TEXT, type ChordLine } from "@/lib/chordpro";
+import { parseLine, RESPONSE_TEXT, type ChordLine } from "@/lib/chordpro";
 
 export type LineBlock = { inChorus: boolean; lines: ChordLine[] };
 
@@ -125,6 +125,78 @@ export function LineView({
           </span>
         </span>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Renderiza la antífona (respuesta) del salmo. Si el texto trae acordes
+ * ChordPro ("[Do]"), los muestra sobre la sílaba (reusa `LineView`); si no,
+ * se ve como texto plano. La "R." roja va como marcador aparte (no está en el
+ * texto guardado). `prefix` sirve para el rótulo "O bien:" de las alternativas.
+ */
+export function AntifonaResponse({
+  response,
+  prefix,
+  className,
+  showMarker = true,
+}: {
+  response: string | null | undefined;
+  prefix?: ReactNode;
+  className?: string;
+  showMarker?: boolean;
+}) {
+  const text = response ?? "";
+  const line = parseLine(text);
+  const base = `leading-snug normal-case text-foreground${
+    className ? ` ${className}` : ""
+  }`;
+
+  if (line.chords.length === 0) {
+    return (
+      <p className={base}>
+        {prefix}
+        {prefix ? " " : null}
+        {showMarker && <span className="text-response">R.</span>}
+        {showMarker ? " " : null}
+        {text}
+      </p>
+    );
+  }
+
+  return (
+    <div className={`flex flex-wrap items-end gap-x-1.5 ${base}`}>
+      {prefix}
+      {showMarker && <span className="text-response">R.</span>}
+      <LineView line={line} showChords />
+    </div>
+  );
+}
+
+/**
+ * Recuadro de vista previa de la antífona: fondo crema, compacto, centrado y
+ * sin el marcador "R.". Se usa en el alta/edición de salmos y en el "Salmo
+ * usado" de lecturas. Reusa `AntifonaResponse` como único render de acordes
+ * (el `[&>div]:mt-0` anula el margen de línea que `LineView` usa en canciones).
+ */
+export function AntifonaPreview({
+  response,
+  className,
+}: {
+  response: string | null | undefined;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex items-center rounded-lg border border-border bg-[var(--antifona-preview)] px-3 py-1${
+        className ? ` ${className}` : ""
+      }`}
+    >
+      <AntifonaResponse
+        response={response}
+        showMarker={false}
+        className="[&>div]:mt-0"
+      />
     </div>
   );
 }

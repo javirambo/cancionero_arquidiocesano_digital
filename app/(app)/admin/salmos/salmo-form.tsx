@@ -1,13 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
 import { HelpHint } from "@/app/components/help-hint";
 import { createClient } from "@/lib/supabase/client";
 import { STORAGE_BUCKETS, getPublicImageUrl } from "@/lib/supabase/storage";
 import { normalizeResponse, type SalmoMedia } from "@/lib/salmos";
 import type { SalmoRow } from "@/lib/salmos-admin";
+import { detectSystem, parseBody } from "@/lib/chordpro";
+import { ChordPicker } from "@/app/components/chord-picker";
+import { ChordsIcon } from "@/app/components/icons";
+import { AntifonaPreview } from "@/app/components/song-render";
 
 const AUDIO_ACCEPT = ".mp3,.ogg,.oga,audio/mpeg,audio/ogg";
 const SCORE_ACCEPT = ".pdf,.gif,.png,.jpg,.jpeg,.webp,application/pdf,image/*";
@@ -57,6 +61,9 @@ export function SalmoForm({ mode, salmo }: { mode: "create" | "edit"; salmo?: Sa
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const antifonaRef = useRef<HTMLInputElement>(null);
+  const [chordPickerOpen, setChordPickerOpen] = useState(false);
+  const antifonaSystem = useMemo(() => detectSystem(parseBody(response)), [response]);
 
   const initialPaths = useRef<string[]>(
     [...(salmo?.audios ?? []), ...(salmo?.scores ?? [])].map((m) => m.path)
@@ -130,6 +137,23 @@ export function SalmoForm({ mode, salmo }: { mode: "create" | "edit"; salmo?: Sa
   const labelScore = (i: number, label: string) =>
     setScores((s) => s.map((x, idx) => (idx === i ? { ...x, label } : x)));
 
+  // Inserta un acorde ChordPro ("[Do]") en la posición del cursor de la antífona.
+  function insertChordInAntifona(chord: string) {
+    setChordPickerOpen(false);
+    const el = antifonaRef.current;
+    const insert = `[${chord}]`;
+    const start = el?.selectionStart ?? response.length;
+    const end = el?.selectionEnd ?? response.length;
+    setResponse(response.slice(0, start) + insert + response.slice(end));
+    requestAnimationFrame(() => {
+      const node = antifonaRef.current;
+      if (!node) return;
+      node.focus();
+      const pos = start + insert.length;
+      node.setSelectionRange(pos, pos);
+    });
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const num = parseInt(psalmNumber, 10);
@@ -197,14 +221,44 @@ export function SalmoForm({ mode, salmo }: { mode: "create" | "edit"; salmo?: Sa
         </Field>
       </div>
 
-      <Field label="Antífona (respuesta)" help={<ResponseHelp />}>
+      <div className="flex flex-col gap-1 normal-case">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-secondary">
+            Antífona (respuesta)
+            <ResponseHelp />
+          </span>
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setChordPickerOpen((v) => !v)}
+              aria-expanded={chordPickerOpen}
+              aria-label="Insertar acorde"
+              title="Insertar acorde"
+              className="flex items-center gap-2 rounded-full border border-primary px-2 py-1 text-xs uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground sm:px-3"
+            >
+              <ChordsIcon />
+              <span className="hidden sm:inline">Insertar acorde</span>
+            </button>
+            {chordPickerOpen && (
+              <ChordPicker
+                system={antifonaSystem}
+                onPick={insertChordInAntifona}
+                onClose={() => setChordPickerOpen(false)}
+              />
+            )}
+          </div>
+        </div>
         <input
+          ref={antifonaRef}
           type="text"
           value={response}
           onChange={(e) => setResponse(e.target.value)}
           className={inputClass}
         />
-      </Field>
+        {response.trim() && (
+          <AntifonaPreview response={response} className="mt-1" />
+        )}
+      </div>
 
       <MediaList
         title="Partituras"
@@ -269,7 +323,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1 normal-case">
-      <span className="flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-secondary">
+      <span className="flex min-h-5 items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-secondary">
         {label}
         {help}
       </span>

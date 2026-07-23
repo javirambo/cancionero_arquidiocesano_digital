@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
 import { HelpHint } from "@/app/components/help-hint";
 import { ExternalLinkIcon } from "@/app/components/icons";
+import { AntifonaPreview } from "@/app/components/song-render";
 import { getPublicImageUrl } from "@/lib/supabase/storage";
 import { AudioButton, PlayIcon, PauseIcon } from "../../media-controls";
 import type { ReadingRowFull, ReadingSet, SalmoMini } from "@/lib/lecturas-admin";
@@ -1014,9 +1015,22 @@ function LinkedSalmoView({
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
           Salmo usado <span className="normal-case">{salmoSourceLabel(linked.source)}</span>
         </span>
-        <span className="text-sm text-foreground normal-case">
-          Sal {linked.psalm_number} — {linked.response}
+        <span className="flex items-center gap-2 text-sm text-foreground normal-case">
+          <span>
+            Sal {linked.psalm_number} — {linked.response}
+          </span>
+          <Link
+            href={`/admin/salmos/${linked.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Ver salmo"
+            title="Ver salmo"
+            className="shrink-0 text-primary transition-opacity hover:opacity-70"
+          >
+            <ExternalLinkIcon />
+          </Link>
         </span>
+        {linked.response && <AntifonaPreview response={linked.response} />}
       </div>
       {linked.audios.map((a, i) => (
         <div key={`a${i}`} className="flex items-center gap-2">
