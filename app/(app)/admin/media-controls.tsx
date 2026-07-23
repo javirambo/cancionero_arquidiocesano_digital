@@ -15,7 +15,17 @@ function formatTime(s: number): string {
 
 // Reproduce el audio inline. Al darle play el ícono pasa a pausa y aparece una
 // barra de progreso para mover el punto de reproducción.
-export function AudioButton({ url, label }: { url: string | null; label: string }) {
+export function AudioButton({
+  url,
+  label,
+  playFirst = false,
+  iconSize = 18,
+}: {
+  url: string | null;
+  label: string;
+  playFirst?: boolean;
+  iconSize?: number;
+}) {
   const ref = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
@@ -35,38 +45,42 @@ export function AudioButton({ url, label }: { url: string | null; label: string 
     setCurrent(v);
   }
 
+  const control = (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={playing ? "Pausar" : "Escuchar"}
+      title={playing ? "Pausar" : "Escuchar"}
+      className="shrink-0 text-primary hover:opacity-70"
+    >
+      {playing ? <PauseIcon size={iconSize} /> : <PlayIcon size={iconSize} />}
+    </button>
+  );
+  const body = started ? (
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <input
+        type="range"
+        min={0}
+        max={duration || 0}
+        step="any"
+        value={current}
+        onChange={(e) => seek(Number(e.target.value))}
+        aria-label="Progreso del audio"
+        className="h-1 min-w-0 flex-1 cursor-pointer accent-primary"
+      />
+      <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+        {formatTime(current)} / {formatTime(duration)}
+      </span>
+    </div>
+  ) : (
+    <span className="min-w-0 flex-1 truncate text-sm text-foreground normal-case">{label}</span>
+  );
+
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3">
-      {started ? (
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step="any"
-            value={current}
-            onChange={(e) => seek(Number(e.target.value))}
-            aria-label="Progreso del audio"
-            className="h-1 min-w-0 flex-1 cursor-pointer accent-primary"
-          />
-          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-            {formatTime(current)} / {formatTime(duration)}
-          </span>
-        </div>
-      ) : (
-        <span className="min-w-0 flex-1 truncate text-sm text-foreground normal-case">
-          {label}
-        </span>
-      )}
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={playing ? "Pausar" : "Escuchar"}
-        title={playing ? "Pausar" : "Escuchar"}
-        className="shrink-0 text-primary hover:opacity-70"
-      >
-        {playing ? <PauseIcon /> : <PlayIcon />}
-      </button>
+      {playFirst ? control : null}
+      {body}
+      {playFirst ? null : control}
       {url && (
         <audio
           ref={ref}
@@ -125,17 +139,17 @@ export function ImagePreviewButton({ url }: { url: string | null }) {
   );
 }
 
-export function PlayIcon() {
+export function PlayIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M8 5v14l11-7z" />
     </svg>
   );
 }
 
-export function PauseIcon() {
+export function PauseIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <rect x="6" y="5" width="4" height="14" rx="1" />
       <rect x="14" y="5" width="4" height="14" rx="1" />
     </svg>

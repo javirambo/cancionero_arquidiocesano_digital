@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
 import { getPublicImageUrl } from "@/lib/supabase/storage";
-import { AudioButton, ImagePreviewButton } from "../../media-controls";
+import { AudioButton } from "../../media-controls";
 import type { ReadingRowFull, ReadingSet, SalmoMini } from "@/lib/lecturas-admin";
 import { LITURGICAL_COLORS, colorHex, splitColors } from "@/lib/liturgical-colors";
 import {
@@ -370,12 +370,12 @@ export function LecturasForm({
             value={s.first_reading}
             onChange={(patch) => patchSection(i, "first_reading", patch)}
           />
-          <SalmoEditor value={s.psalm} onChange={(patch) => patchPsalm(i, patch)} />
-          <SalmoLink
+          <SalmoBox
+            psalm={s.psalm}
+            onPsalmChange={(patch) => patchPsalm(i, patch)}
             salmoId={s.salmo_id}
             salmos={salmos}
-            psalm={s.psalm}
-            onChange={(id) => patchSet(i, { salmo_id: id })}
+            onSalmoChange={(id) => patchSet(i, { salmo_id: id })}
           />
           <SeccionEditor
             titulo="Segunda lectura (opcional)"
@@ -504,6 +504,47 @@ const ACCENT = {
   red: "#bd7d7d",
 } as const;
 
+// Recuadro de sección colapsable: el título es un botón con chevron (contraído
+// por defecto). El borde izquierdo de color distingue el tipo de sección.
+function CollapsibleSection({
+  titulo,
+  accent,
+  defaultOpen = false,
+  children,
+}: {
+  titulo: string;
+  accent: keyof typeof ACCENT;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(defaultOpen);
+  return (
+    <fieldset
+      className="rounded-lg border p-3"
+      style={{ borderColor: ACCENT[accent], borderLeftWidth: 3 }}
+    >
+      <legend className="px-1">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex items-center gap-2 text-xs uppercase tracking-wide text-secondary hover:text-primary"
+        >
+          {titulo}
+          <ChevronIcon open={expanded} />
+        </button>
+      </legend>
+      {expanded ? (
+        children
+      ) : (
+        <p className="px-1 text-sm leading-none text-muted-foreground" aria-hidden="true">
+          …
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
 function SeccionEditor({
   titulo,
   accent,
@@ -518,11 +559,7 @@ function SeccionEditor({
   const alts = value.alternatives;
   const setAlts = (next: SectionFields[]) => onChange({ alternatives: next });
   return (
-    <fieldset
-      className="rounded-lg border p-3"
-      style={{ borderColor: ACCENT[accent], borderLeftWidth: 3 }}
-    >
-      <legend className="px-1 text-xs uppercase tracking-wide text-secondary">{titulo}</legend>
+    <CollapsibleSection titulo={titulo} accent={accent}>
       <div className="grid gap-2 sm:grid-cols-2">
         <input
           type="text"
@@ -593,11 +630,35 @@ function SeccionEditor({
       >
         + O bien (alternativa)
       </button>
-    </fieldset>
+    </CollapsibleSection>
   );
 }
 
-function SalmoEditor({
+// Recuadro único "Salmo": arriba los campos de texto (cita, antífona, estrofas)
+// y debajo el bloque colapsable de audio/partitura (vínculo al catálogo).
+function SalmoBox({
+  psalm,
+  onPsalmChange,
+  salmoId,
+  salmos,
+  onSalmoChange,
+}: {
+  psalm: PsalmState;
+  onPsalmChange: (patch: Partial<PsalmState>) => void;
+  salmoId: string | null;
+  salmos: SalmoMini[];
+  onSalmoChange: (id: string | null) => void;
+}) {
+  return (
+    <CollapsibleSection titulo="Salmo" accent="blue" defaultOpen>
+      <SalmoTextFields value={psalm} onChange={onPsalmChange} />
+      <AudioPartituraBlock salmoId={salmoId} salmos={salmos} psalm={psalm} onChange={onSalmoChange} />
+    </CollapsibleSection>
+  );
+}
+
+// Campos de texto del salmo (cita, antífona/respuesta + "o bien", estrofas).
+function SalmoTextFields({
   value,
   onChange,
 }: {
@@ -605,11 +666,7 @@ function SalmoEditor({
   onChange: (patch: Partial<PsalmState>) => void;
 }) {
   return (
-    <fieldset
-      className="rounded-lg border p-3"
-      style={{ borderColor: ACCENT.blue, borderLeftWidth: 3 }}
-    >
-      <legend className="px-1 text-xs uppercase tracking-wide text-secondary">Salmo (texto)</legend>
+    <>
       <div className="grid gap-2 sm:grid-cols-2">
         <input
           type="text"
@@ -664,7 +721,32 @@ function SalmoEditor({
         rows={5}
         className={`${inputClass} mt-2`}
       />
-    </fieldset>
+    </>
+  );
+}
+
+// Bloque "Audio / partitura": encabezado fijo + vínculo al salmo del catálogo.
+// Siempre visible (sin contraer).
+function AudioPartituraBlock({
+  salmoId,
+  salmos,
+  psalm,
+  onChange,
+}: {
+  salmoId: string | null;
+  salmos: SalmoMini[];
+  psalm: PsalmState;
+  onChange: (id: string | null) => void;
+}) {
+  return (
+    <div className="mt-3 rounded-md border border-border/70">
+      <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-secondary">
+        Audio / partitura
+      </div>
+      <div className="border-t border-border/70 p-3">
+        <SalmoLink salmoId={salmoId} salmos={salmos} psalm={psalm} onChange={onChange} />
+      </div>
+    </div>
   );
 }
 
@@ -734,14 +816,7 @@ function SalmoLink({
   const listItems = candidates ?? searchResults;
 
   return (
-    <fieldset
-      className="rounded-lg border p-3"
-      style={{ borderColor: ACCENT.blue, borderLeftWidth: 3 }}
-    >
-      <legend className="px-1 text-xs uppercase tracking-wide text-secondary">
-        Salmo (audio / partitura)
-      </legend>
-
+    <div className="flex flex-col">
       {linked && !open ? (
         <LinkedSalmoView
           linked={linked}
@@ -804,7 +879,7 @@ function SalmoLink({
           </p>
         )
       )}
-    </fieldset>
+    </div>
   );
 }
 
@@ -890,6 +965,12 @@ function StrategyButtons({
   );
 }
 
+// Texto de procedencia del salmo del catálogo (campo salmos.source). Por ahora
+// solo hay 'coro_san_clemente' o 'manual' (ver migración 0058).
+function salmoSourceLabel(source: string): string {
+  return source === "manual" ? "(cargado manualmente)" : "(obtenido de coro san clemente)";
+}
+
 // Vista del salmo ya linkeado: antífona + media + acciones.
 function LinkedSalmoView({
   linked,
@@ -901,31 +982,38 @@ function LinkedSalmoView({
   onDesvincular: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm text-foreground normal-case">
-        Sal {linked.psalm_number} — {linked.response}
-      </span>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+          Salmo usado <span className="normal-case">{salmoSourceLabel(linked.source)}</span>
+        </span>
+        <span className="text-sm text-foreground normal-case">
+          Sal {linked.psalm_number} — {linked.response}
+        </span>
+      </div>
       {linked.audios.map((a, i) => (
         <div key={`a${i}`} className="flex items-center gap-2">
-          <span className="w-20 shrink-0 truncate text-[10px] uppercase tracking-wide text-muted-foreground">
-            {a.label}
+          <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Audio
           </span>
-          <AudioButton url={getPublicImageUrl(a.path)} label={a.label} />
+          <div className="flex max-w-sm flex-1">
+            <AudioButton url={getPublicImageUrl(a.path)} label={a.label} playFirst iconSize={28} />
+          </div>
         </div>
       ))}
-      {linked.scores.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3">
-          {linked.scores.map((s, i) => (
-            <span
-              key={`s${i}`}
-              className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"
-            >
-              {s.label}
-              <ImagePreviewButton url={getPublicImageUrl(s.path)} />
-            </span>
-          ))}
+      {/* Partituras mostradas directamente (primero la primera del array), al
+          ancho máximo del recuadro. Sin popup. */}
+      {linked.scores.map((s, i) => (
+        <div key={`s${i}`} className="flex flex-col gap-1">
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.label}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={getPublicImageUrl(s.path) ?? undefined}
+            alt={s.label}
+            className="w-full max-w-full rounded-lg border border-border"
+          />
         </div>
-      )}
+      ))}
       <div className="flex gap-2">
         <button type="button" onClick={onCambiar} className={ghostBtnClass}>
           Cambiar
@@ -967,5 +1055,25 @@ function CandidateList({
         </li>
       ))}
     </ul>
+  );
+}
+
+// Chevron del encabezado colapsable: apunta hacia abajo cerrado, gira 180° abierto.
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
   );
 }
