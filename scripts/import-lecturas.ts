@@ -551,9 +551,17 @@ function parseHeader(html: string): { liturgical_time: string | null; day_label:
   // bloque; en las ferias no hay rojo y es la primera línea no-fecha
   // (ej. "TIEMPO DE NAVIDAD", con la fecha "DÍA 2 DE ENERO" aparte).
   const red = block.match(/<font[^>]*#FF0000[^>]*>([\s\S]*?)<\/font>/i);
-  const redText = clean(red ? red[1] : null);
+  // El bloque rojo del título puede abarcar dos líneas con <br> ("TIEMPO
+  // DURANTE EL AÑO" + "DECIMOCUARTA SEMANA"): es UN solo título litúrgico, así
+  // que colapsamos los saltos internos a un espacio (si no, al mostrarse queda
+  // "AÑODECIMOCUARTA" pegado).
+  const redRaw = clean(red ? red[1] : null);
+  const redLines = redRaw ? redRaw.split("\n").map((l) => l.trim()).filter(Boolean) : [];
+  const redText = redRaw ? redRaw.replace(/\s*\n+\s*/g, " ") : null;
   const liturgical_time = (redText && !isDate(redText) ? redText : null) || lines.find((l) => !isDate(l)) || null;
-  const rest = lines.filter((l) => l !== liturgical_time && !isDate(l));
+  // day_label: las líneas que no forman parte del título rojo ni son fechas
+  // (evita duplicar el tiempo litúrgico dentro del label).
+  const rest = lines.filter((l) => !redLines.includes(l) && l !== liturgical_time && !isDate(l));
   return { liturgical_time, day_label: rest.join(" ") || null };
 }
 
