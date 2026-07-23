@@ -829,7 +829,7 @@ function SalmoLink({
         />
       ) : (
         <div className="flex flex-col gap-2">
-          <StrategyButtons num={num} hasVerses={hasVerses} withHelp={!linked} onRun={runStrategy} />
+          <StrategyButtons num={num} hasVerses={hasVerses} withHelp onRun={runStrategy} />
           <div className="relative">
             <input
               type="text"
