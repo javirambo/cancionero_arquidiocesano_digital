@@ -126,6 +126,14 @@ function PsalmView({ psalm }: { psalm: NonNullable<LecturaSalmo> }) {
         <span className="text-response">R.</span> {psalm.response}
       </p>
 
+      {/* Respuestas alternativas ("O bien:"). */}
+      {psalm.alt_responses.map((r, i) => (
+        <p key={i} className="-mt-3 leading-snug normal-case text-foreground">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">O bien:</span>{" "}
+          <span className="text-response">R.</span> {r}
+        </p>
+      ))}
+
       {/* Estrofas: cada una termina cantando la respuesta (R.). */}
       {psalm.stanzas.map((stanza, i) => (
         <p key={i} className="whitespace-pre-line leading-relaxed normal-case text-foreground">

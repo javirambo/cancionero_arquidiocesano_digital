@@ -41,3 +41,6 @@ next-env.d.ts
 
 # database backups (locales, no versionar)
 /backups
+
+# caché local del scraper de lecturas (contenido con derechos, no versionar)
+/scripts/.ordo-cache

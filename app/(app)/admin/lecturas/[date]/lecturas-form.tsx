@@ -7,6 +7,7 @@ import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
 import { getPublicImageUrl } from "@/lib/supabase/storage";
 import { AudioButton, ImagePreviewButton } from "../../media-controls";
 import type { ReadingRowFull, ReadingSet, SalmoMini } from "@/lib/lecturas-admin";
+import { LITURGICAL_COLORS, colorHex, splitColors } from "@/lib/liturgical-colors";
 import {
   candidatosAutomagico,
   candidatosPorNumero,
@@ -15,22 +16,40 @@ import {
   psalmNumberFromRef,
 } from "@/lib/salmos";
 
-const COLORS = ["verde", "rojo", "blanco", "morado", "rosa", "negro"] as const;
-
-// Colores litúrgicos reales (dato, no tema de la app) para el círculo del selector.
-const COLOR_HEX: Record<string, string> = {
-  verde: "#2e7d32",
-  rojo: "#c62828",
-  blanco: "#f5f5f5",
-  morado: "#6a1b9a",
-  rosa: "#ec8fb5",
-  negro: "#222222",
-};
-
 type Romcal = { name: string; color: string | null; seasonName: string } | null;
 
-type SectionState = { ref: string; heading: string; body: string };
-type PsalmState = { ref: string; response: string; stanzas: string };
+// Rótulo legible por reading_set. Los días empaquetados (Navidad) generan sets
+// noche/aurora/dia/vigilia además de principal/memoria.
+const SET_LABEL: Record<string, string> = {
+  principal: "Lecturas (principal)",
+  memoria: "Lecturas de la memoria",
+  vigilia: "Vigilia",
+  noche: "Misa de la noche",
+  aurora: "Misa de la aurora",
+  dia: "Misa del día",
+};
+const setLabel = (rs: string) => SET_LABEL[rs] ?? `Lecturas (${rs})`;
+// Orden de presentación de los sets.
+const SET_ORDER = ["principal", "memoria", "vigilia", "noche", "aurora", "dia"];
+const setOrder = (rs: string) => {
+  const i = SET_ORDER.indexOf(rs);
+  return i < 0 ? 99 : i;
+};
+// Sets que se pueden agregar a mano desde el form.
+const ADDABLE_SETS: ReadingSet[] = ["memoria", "vigilia", "noche", "aurora", "dia"];
+
+// Reemplaza el color en la posición idx (0 = principal, 1 = alternativo) y
+// recompone el string combinado "a o b".
+function setColorAt(color: string, idx: 0 | 1, value: string): string {
+  const parts = splitColors(color);
+  const c0 = idx === 0 ? value : parts[0] ?? "";
+  const c1 = idx === 1 ? value : parts[1] ?? "";
+  return [c0, c1].filter(Boolean).join(" o ");
+}
+
+type SectionFields = { ref: string; heading: string; body: string };
+type SectionState = SectionFields & { alternatives: SectionFields[] };
+type PsalmState = { ref: string; response: string; alt_responses: string[]; stanzas: string };
 type SectionKey = "first_reading" | "second_reading" | "gospel_accl" | "gospel";
 
 type SetState = {
@@ -49,17 +68,28 @@ type SetState = {
   salmo_id: string | null;
 };
 
-const emptySection = (): SectionState => ({ ref: "", heading: "", body: "" });
-const emptyPsalm = (): PsalmState => ({ ref: "", response: "", stanzas: "" });
+const emptyFields = (): SectionFields => ({ ref: "", heading: "", body: "" });
+const emptySection = (): SectionState => ({ ...emptyFields(), alternatives: [] });
+const emptyPsalm = (): PsalmState => ({ ref: "", response: "", alt_responses: [], stanzas: "" });
 
 function sectionToState(s: ReadingRowFull["first_reading"]): SectionState {
-  return { ref: s?.ref ?? "", heading: s?.heading ?? "", body: s?.body ?? "" };
+  return {
+    ref: s?.ref ?? "",
+    heading: s?.heading ?? "",
+    body: s?.body ?? "",
+    alternatives: (s?.alternatives ?? []).map((a) => ({
+      ref: a.ref ?? "",
+      heading: a.heading ?? "",
+      body: a.body ?? "",
+    })),
+  };
 }
 
 function psalmToState(p: ReadingRowFull["psalm"]): PsalmState {
   return {
     ref: p?.ref ?? "",
     response: p?.response ?? "",
+    alt_responses: p?.alt_responses ?? [],
     stanzas: (p?.stanzas ?? []).join("\n\n"),
   };
 }
@@ -104,14 +134,20 @@ function blankSet(reading_set: ReadingSet, romcal: Romcal): SetState {
 }
 
 function sectionToJson(s: SectionState) {
-  if (!s.ref.trim() && !s.heading.trim() && !s.body.trim()) return null;
-  return { ref: s.ref.trim() || null, heading: s.heading.trim() || null, body: s.body };
+  const alternatives = s.alternatives
+    .map((a) => ({ ref: a.ref.trim() || null, heading: a.heading.trim() || null, body: a.body }))
+    .filter((a) => a.ref || a.heading || a.body.trim());
+  if (!s.ref.trim() && !s.heading.trim() && !s.body.trim() && alternatives.length === 0) return null;
+  const base = { ref: s.ref.trim() || null, heading: s.heading.trim() || null, body: s.body };
+  return alternatives.length ? { ...base, alternatives } : base;
 }
 
 function psalmToJson(p: PsalmState) {
   const stanzas = p.stanzas.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
-  if (!p.ref.trim() && !p.response.trim() && stanzas.length === 0) return null;
-  return { ref: p.ref.trim() || null, response: p.response.trim() || null, stanzas };
+  const alt_responses = p.alt_responses.map((x) => x.trim()).filter(Boolean);
+  if (!p.ref.trim() && !p.response.trim() && stanzas.length === 0 && alt_responses.length === 0) return null;
+  const base = { ref: p.ref.trim() || null, response: p.response.trim() || null, stanzas };
+  return alt_responses.length ? { ...base, alt_responses } : base;
 }
 
 function buildPayload(s: SetState) {
@@ -151,18 +187,20 @@ export function LecturasForm({
   romcal: Romcal;
 }) {
   const router = useRouter();
-  const principalRow = rows.find((r) => r.reading_set === "principal");
-  const memoriaRow = rows.find((r) => r.reading_set === "memoria");
 
-  const makeInitialSets = (): SetState[] => {
-    const initial: SetState[] = [
-      principalRow ? rowToState(principalRow) : blankSet("principal", romcal),
-    ];
-    if (memoriaRow) initial.push(rowToState(memoriaRow));
-    return initial;
-  };
+  // Renderizamos TODAS las filas del día (principal/memoria y, en días
+  // empaquetados, noche/aurora/dia/vigilia). Sin filas: se precarga una
+  // principal desde romcal.
+  const makeInitialSets = (): SetState[] =>
+    rows.length
+      ? rows
+          .slice()
+          .sort((a, b) => setOrder(a.reading_set) - setOrder(b.reading_set))
+          .map(rowToState)
+      : [blankSet("principal", romcal)];
   const [sets, setSets] = useState<SetState[]>(makeInitialSets);
   const [initialJson] = useState(() => JSON.stringify(makeInitialSets()));
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -175,10 +213,20 @@ export function LecturasForm({
   }, [dirty, setDirty]);
 
   const backHref = `/admin/lecturas?mes=${date.slice(0, 7)}`;
-  const hasMemoria = sets.some((s) => s.reading_set === "memoria");
+  const usedSets = sets.map((s) => s.reading_set);
 
   function patchSet(i: number, patch: Partial<SetState>) {
     setSets((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+  function addSet(reading_set: ReadingSet) {
+    setSets((prev) => [...prev, blankSet(reading_set, romcal)]);
+  }
+  function removeSet(i: number) {
+    setSets((prev) => {
+      const s = prev[i];
+      if (s.id) setDeletedIds((d) => [...d, s.id!]);
+      return prev.filter((_, idx) => idx !== i);
+    });
   }
   function patchSection(i: number, key: SectionKey, patch: Partial<SectionState>) {
     setSets((prev) =>
@@ -196,6 +244,15 @@ export function LecturasForm({
     setSaving(true);
     setError(null);
     const supabase = createClient();
+    // Borrar los sets que se eliminaron y ya existían en la BD.
+    for (const id of deletedIds) {
+      const { error: delErr } = await supabase.from("liturgical_readings").delete().eq("id", id);
+      if (delErr) {
+        setError(delErr.message);
+        setSaving(false);
+        return;
+      }
+    }
     for (const s of sets) {
       const payload = buildPayload(s);
       if (s.id) {
@@ -233,19 +290,28 @@ export function LecturasForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {sets.map((s, i) => (
-        <section key={s.reading_set} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg text-page-title">
-              {s.reading_set === "principal" ? "Lecturas (principal)" : "Lecturas de la memoria"}
-            </h2>
-            <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-foreground normal-case">
-              <input
-                type="checkbox"
-                checked={s.locked}
-                onChange={(e) => patchSet(i, { locked: e.target.checked })}
-              />
-              Bloqueada (no la pisa la ingesta anual)
-            </label>
+        <section key={s.id ?? s.reading_set} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg text-page-title">{setLabel(s.reading_set)}</h2>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-foreground normal-case">
+                <input
+                  type="checkbox"
+                  checked={s.locked}
+                  onChange={(e) => patchSet(i, { locked: e.target.checked })}
+                />
+                Bloqueada (no la pisa la ingesta anual)
+              </label>
+              {sets.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeSet(i)}
+                  className="rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:border-destructive hover:text-destructive"
+                >
+                  Eliminar set
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -257,25 +323,27 @@ export function LecturasForm({
                 className={inputClass}
               />
             </Field>
-            <Field label="Color">
-              <div className="flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="h-6 w-6 shrink-0 rounded-full border border-border"
-                  style={{ backgroundColor: s.color ? COLOR_HEX[s.color] : "transparent" }}
-                />
-                <select
-                  value={s.color}
-                  onChange={(e) => patchSet(i, { color: e.target.value })}
-                  className={inputClass}
-                >
-                  <option value="">— sin color —</option>
-                  {COLORS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
+            <Field label="Color (hasta 2)">
+              <div className="flex flex-wrap items-center gap-2">
+                <span aria-hidden="true" className="flex shrink-0">
+                  {(splitColors(s.color).length ? splitColors(s.color) : [""]).map((c, ci) => (
+                    <span
+                      key={ci}
+                      className="h-6 w-6 rounded-full border border-border"
+                      style={{ backgroundColor: c ? colorHex(c) ?? "transparent" : "transparent", marginLeft: ci ? -4 : 0 }}
+                    />
                   ))}
-                </select>
+                </span>
+                <ColorSelect
+                  value={splitColors(s.color)[0] ?? ""}
+                  onChange={(v) => patchSet(i, { color: setColorAt(s.color, 0, v) })}
+                />
+                <span className="text-xs normal-case text-muted-foreground">o</span>
+                <ColorSelect
+                  value={splitColors(s.color)[1] ?? ""}
+                  placeholder="— ninguno —"
+                  onChange={(v) => patchSet(i, { color: setColorAt(s.color, 1, v) })}
+                />
               </div>
             </Field>
             <Field label="Tiempo litúrgico">
@@ -330,15 +398,7 @@ export function LecturasForm({
         </section>
       ))}
 
-      {!hasMemoria && (
-        <button
-          type="button"
-          onClick={() => setSets((prev) => [...prev, blankSet("memoria", romcal)])}
-          className="self-start rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
-        >
-          + Agregar lecturas de la memoria
-        </button>
-      )}
+      <AddSetControl usedSets={usedSets} onAdd={addSet} />
 
       {error && <p className="text-sm normal-case text-destructive">{error}</p>}
 
@@ -374,6 +434,68 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+function ColorSelect({
+  value,
+  onChange,
+  placeholder = "— sin color —",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
+    >
+      <option value="">{placeholder}</option>
+      {LITURGICAL_COLORS.map((c) => (
+        <option key={c} value={c}>
+          {c}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// Agrega un set nuevo del día (memoria, o los tiempos de un día empaquetado:
+// vigilia/noche/aurora/dia). Solo ofrece los que aún no existen (UNIQUE por
+// event_date, reading_set).
+function AddSetControl({ usedSets, onAdd }: { usedSets: string[]; onAdd: (rs: ReadingSet) => void }) {
+  const options = ADDABLE_SETS.filter((rs) => !usedSets.includes(rs));
+  const [choice, setChoice] = useState<string>("");
+  if (options.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 self-start">
+      <select
+        value={choice}
+        onChange={(e) => setChoice(e.target.value)}
+        className="rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case"
+      >
+        <option value="">— agregar set… —</option>
+        {options.map((rs) => (
+          <option key={rs} value={rs}>
+            {setLabel(rs)}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        disabled={!choice}
+        onClick={() => {
+          if (!choice) return;
+          onAdd(choice as ReadingSet);
+          setChoice("");
+        }}
+        className="rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-40"
+      >
+        + Agregar
+      </button>
+    </div>
+  );
+}
+
 // Color del borde del recuadro por tipo de sección (los 4 lados del mismo color;
 // el izquierdo a 3px). lecturas = verde, aleluya/evangelio = rojo, salmo = azul.
 const ACCENT = {
@@ -393,6 +515,8 @@ function SeccionEditor({
   value: SectionState;
   onChange: (patch: Partial<SectionState>) => void;
 }) {
+  const alts = value.alternatives;
+  const setAlts = (next: SectionFields[]) => onChange({ alternatives: next });
   return (
     <fieldset
       className="rounded-lg border p-3"
@@ -422,6 +546,53 @@ function SeccionEditor({
         rows={4}
         className={`${inputClass} mt-2`}
       />
+
+      {alts.map((alt, j) => (
+        <div key={j} className="mt-2 rounded-md border border-border/70 p-2">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+              O bien
+            </span>
+            <button
+              type="button"
+              onClick={() => setAlts(alts.filter((_, k) => k !== j))}
+              className="text-xs normal-case text-muted-foreground hover:text-destructive"
+            >
+              Quitar
+            </button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input
+              type="text"
+              placeholder="Cita"
+              value={alt.ref}
+              onChange={(e) => setAlts(alts.map((a, k) => (k === j ? { ...a, ref: e.target.value } : a)))}
+              className={inputClass}
+            />
+            <input
+              type="text"
+              placeholder="Encabezado"
+              value={alt.heading}
+              onChange={(e) => setAlts(alts.map((a, k) => (k === j ? { ...a, heading: e.target.value } : a)))}
+              className={inputClass}
+            />
+          </div>
+          <textarea
+            placeholder="Texto de la lectura alternativa"
+            value={alt.body}
+            onChange={(e) => setAlts(alts.map((a, k) => (k === j ? { ...a, body: e.target.value } : a)))}
+            rows={3}
+            className={`${inputClass} mt-2`}
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => setAlts([...alts, { ref: "", heading: "", body: "" }])}
+        className={`${ghostBtnClass} mt-2`}
+      >
+        + O bien (alternativa)
+      </button>
     </fieldset>
   );
 }
@@ -455,6 +626,37 @@ function SalmoEditor({
           className={inputClass}
         />
       </div>
+      {value.alt_responses.map((r, j) => (
+        <div key={j} className="mt-2 flex items-center gap-2">
+          <span className="shrink-0 rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+            O bien
+          </span>
+          <input
+            type="text"
+            placeholder="Respuesta alternativa"
+            value={r}
+            onChange={(e) =>
+              onChange({ alt_responses: value.alt_responses.map((a, k) => (k === j ? e.target.value : a)) })
+            }
+            className={inputClass}
+          />
+          <button
+            type="button"
+            aria-label="Quitar respuesta"
+            onClick={() => onChange({ alt_responses: value.alt_responses.filter((_, k) => k !== j) })}
+            className="shrink-0 text-base leading-none text-muted-foreground hover:text-destructive"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange({ alt_responses: [...value.alt_responses, ""] })}
+        className={`${ghostBtnClass} mt-2`}
+      >
+        + O bien (respuesta)
+      </button>
       <textarea
         placeholder="Estrofas — una por bloque, separadas por una línea en blanco"
         value={value.stanzas}

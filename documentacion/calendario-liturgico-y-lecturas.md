@@ -104,6 +104,40 @@ const TYPE_RANK = { SOLEMNITY: 1, SUNDAY: 2, FEAST: 3, MEMORIAL: 4, OPTIONAL_MEM
 | 2026-12-08 | SOLEMNITY | Inmaculada Concepción de María |
 | 2026-12-25 | SOLEMNITY | Navidad |
 
+### Rúbricas derivadas: Gloria y Aleluya
+
+Si en la Misa de un día **se canta el Gloria** y **se canta el Aleluya** NO se scrapea
+ni se guarda: se **deriva** de las reglas litúrgicas con el `type` (rango) y el
+`seasonKey` (tiempo) que ya da romcal. Implementado en
+[lib/rubricas.ts](../lib/rubricas.ts) — función pura `rubricasDe(day)` y por fecha
+`rubricasEnFecha("YYYY-MM-DD")`, que devuelven `{ gloria, aleluya }`.
+
+**Gloria** — se canta si: `type ∈ {SOLEMNITY, FEAST}` **o** (`type === SUNDAY` **y**
+`seasonKey ∉ {ADVENT, LENT}`). No en ferias ni memorias, ni en domingos de
+Adviento/Cuaresma. Excepción: el **Jueves Santo** (Misa de la Cena) sí lo canta
+(se detecta por nombre, porque romcal lo marca WEEKDAY/LENT).
+
+**Aleluya** — se canta **siempre salvo en Cuaresma** (`seasonKey === LENT`, donde se
+reemplaza por otra aclamación) y en **Viernes/Sábado Santo** (`PASCHAL_TRIDUUM`
+no-solemnidad). Vuelve en el Domingo de Pascua (que ya es solemnidad).
+Señal de datos que lo corrobora: en Cuaresma el `gospel_accl` de `liturgical_readings`
+queda `null` (~42 días), porque el parser no captura la aclamación sustituta.
+
+| Fecha | type / season | Gloria | Aleluya |
+|---|---|:--:|:--:|
+| 05/07 domingo T.O. | SUNDAY / ORDINARY | ✅ | ✅ |
+| 06/07 memoria opcional | OPT_MEMORIAL / ORDINARY | ❌ | ✅ |
+| 22/02 domingo de Cuaresma | SUNDAY / LENT | ❌ | ❌ |
+| 25/12 Navidad | SOLEMNITY / CHRISTMAS | ✅ | ✅ |
+| 29/11 1º Adviento (dom.) | SUNDAY / ADVENT | ❌ | ✅ |
+| 19/03 San José (solemnidad en Cuaresma) | SOLEMNITY / LENT | ✅ | ❌ |
+| 02/04 Jueves Santo | WEEKDAY / LENT | ✅ | ❌ |
+| 03-04/04 Viernes/Sábado Santo | WEEKDAY / TRIDUUM | ❌ | ❌ |
+| 05/04 Pascua | SOLEMNITY / TRIDUUM | ✅ | ✅ |
+
+> Alcance: cubre el año litúrgico general. Casos muy particulares (misas rituales,
+> votivas, de difuntos) no se contemplan; se resuelven con la regla general del día.
+
 ---
 
 ## 3. Capa de lecturas — curas.com.ar
@@ -154,6 +188,27 @@ Tres bloques:
    Las lecturas de cada día están en `[5]` (memoria) y/o `[6]` (principal) como
    `"texto".link("../Leccionarios/.../Xxxx.htm")`.
 
+   **Días "empaquetados" (más de 10 posiciones).** Algunos días traen varias
+   celebraciones/lecturas en una sola entrada, fuera del esquema fijo:
+   - **24/12**: bloque estándar `[0..9]` (feria de Adviento) **+ bloque anexado en
+     `[10..]`** ("Natividad del Señor (Blanco)" en `[10]`, misa vigilia en `[13]`,
+     lectura en `[16]`).
+   - **25/12**: **un solo bloque con links en línea** — misas noche/aurora/día en
+     `[2..4]` y lecturas noche/aurora/día en `[5..7]`, cada `.link()` con su etiqueta.
+   Como los índices NO son fijos, la ingesta **recolecta TODOS los links
+   `/Leccionarios/` de la entrada** (con su etiqueta de ancla) y les asigna la
+   celebración+color de la celebración `"Nombre (Color)"` más cercana. La etiqueta
+   define el `reading_set` (noche/aurora/dia/vigilia; "de la memoria" → memoria; el
+   resto → principal). Ver mig. **0060** y `modelo_de_datos.md`.
+
+   **Santos del día (`[1]`/`[2]`).** Los santos vienen como
+   `"Nombre".link(".../Misal3/Biografias3/BiografiasMM.htm#ancla") + ", descriptor"`
+   (hasta 2 por día; el 2º a veces sin link). La ingesta los extrae y **baja la
+   página de biografías** (HTML plano, anclas `<a name="23">`, cuerpo en
+   `<p align="justify">`) para guardar el texto de la bio. Se almacenan en la
+   columna `saints` jsonb (`[{name, description, bio_url, bio}]`), replicada en
+   cada fila del día. Ver mig. **0061**.
+
 3. **Overrides del santoral**: bloque de `if` que sobreescribe entradas de `ordo2` según la
    precedencia litúrgica (fiestas móviles, si un santo cae en domingo, etc.). **El `.js` ya
    resuelve la precedencia**: el resultado final está en `ordo2` después de aplicar todos los
@@ -170,12 +225,23 @@ HTML plano y regular. Reglas de parsing (implementadas en el script):
 - **Secciones**: la 1ª/2ª lectura traen su `<b>Lectura de… / Principio de… / Comienzo de…</b>`;
   `SALMO`, `ALELUIA`/`ALELUYA` y `EVANGELIO` se detectan por su etiqueta (que puede venir en
   mayúsculas o como `Salmo</b>` / `Evangelio</b>`). **Ojo:** en Cuaresma no hay "Aleluia".
+- **1ª vs 2ª lectura — el SALMO es el DIVISOR**: las lecturas **antes** del salmo son la 1ª
+  (no se cuentan los `<b>Lectura>` a ciegas); las que van **entre el salmo y el evangelio**
+  son la 2ª. Así una memoria con dos lecturas separadas por `O bien:` (ej. Sta. M. Magdalena:
+  Cantar de los Cantares *o bien* 2ª Corintios) queda como **alternativas de la 1ª lectura**,
+  no como 1ª + 2ª.
+- **"O bien:" = alternativas del mismo slot**: lecturas consecutivas separadas por `O bien:`
+  (sin salmo/evangelio entremedio) se agrupan → la primera arriba, el resto en
+  `alternatives[]`. `Palabra de Dios` cierra una lectura; `Palabra del Señor`, el evangelio.
 - **Cita bíblica**: el `<font color="#FF0000">` que sigue al encabezado (ignorando las
   antífonas, que son rojas **e itálicas**).
 - **Cuerpo**: líneas separadas por `<br>`; `<br><br>` marca párrafo. Los saltos de línea del
   HTML fuente (`\r\n`) son *soft-wrap* → se colapsan a espacio.
-- **Salmo**: `{ref, response, stanzas[]}` — la respuesta es el `<i>` tras la primera `R.`.
-- **El color litúrgico NO está en el `.htm`** — viene del `.js` (`ordo2[0]`).
+- **Salmo**: `{ref, response, alt_responses[], stanzas[]}` — `response` es el `<i>` tras la
+  primera `R.`; cada `O bien:` posterior aporta una antífona alternativa en `alt_responses[]`
+  (ej. "Aleluia." como respuesta alterna en el T.O.).
+- **El color litúrgico NO está en el `.htm`** — viene del `.js` (`ordo2[0]`); puede ser
+  **combinado** ("morado o rosa", "verde o blanco") cuando el día ofrece dos colores.
 
 ### 3.5 Convención de nombres de los `.htm`
 
@@ -198,9 +264,11 @@ Implementado en [scripts/import-lecturas.ts](../scripts/import-lecturas.ts):
 2. **Ejecutar cada `.js` en un sandbox `vm`** con `document.write` y `String.prototype.link`
    mockeados → materializar `ordo2` **ya con los overrides aplicados** (no reimplementa la
    precedencia litúrgica).
-3. Por día extraer: fecha, celebración (`[0]`), color (paréntesis de `[0]`) y las URLs de
-   lecturas (`[5]`/`[6]`). **Solo se aceptan links a `/Leccionarios/`** (algunos días especiales
-   traen link a Misal o a Normas → se descartan).
+3. Por día extraer: fecha, y **todos los links `/Leccionarios/` de la entrada** (no solo
+   `[5]`/`[6]`: los días empaquetados los traen en otros índices, ver §3.3). Cada link → una
+   fila, con `reading_set` según su etiqueta y celebración+color (paréntesis, puede ser
+   combinado) de la celebración más cercana. **Solo se aceptan links a `/Leccionarios/`**
+   (algunos días especiales traen link a Misal o a Normas → se descartan).
 4. Descargar y **deduplicar** cada `.htm`.
 5. Parsear el `.htm` (§3.4) → los jsonb.
 6. `upsert` idempotente en `liturgical_readings` por `(event_date, reading_set)`, guardando

@@ -15,6 +15,8 @@ export type LecturaSeccion = {
   ref: string | null;
   heading: string | null;
   body: string;
+  // Opciones "O bien:" de la lectura (misma forma). La primera va arriba.
+  alternatives?: { ref: string | null; heading: string | null; body: string }[];
 } | null;
 
 export type SalmoMediaUrl = { label: string; url: string };
@@ -22,13 +24,14 @@ export type SalmoMediaUrl = { label: string; url: string };
 export type LecturaSalmo = {
   ref: string | null;
   response: string | null;
+  alt_responses: string[]; // antífonas alternativas ("O bien:")
   stanzas: string[];
   audios: SalmoMediaUrl[]; // audios del salmo linkeado (versiones, URLs públicas)
   scores: SalmoMediaUrl[]; // partituras del salmo linkeado (Simple / SATB)
 } | null;
 
 export type LecturasDelDia = {
-  reading_set: "principal" | "memoria";
+  reading_set: string; // principal | memoria | vigilia | noche | aurora | dia | …
   celebration: string | null;
   color: string | null;
   liturgical_time: string | null;
@@ -50,19 +53,20 @@ export type DiaLiturgico = {
   rangoNum: number; // 1 = solemnidad … 6 = feria
   ciclo: string | null; // "A" | "B" | "C"
   lecturas: { principal: LecturasDelDia | null; memoria: LecturasDelDia | null };
+  setsExtra: string[]; // reading_sets extra del día (noche/aurora/vigilia…) — para la UI
   fuente: "manual" | "curas" | "romcal";
 };
 
 // Fila cruda de la query (con el salmo embebido por FK salmo_id → salmos).
 type RawRow = {
   event_date: string;
-  reading_set: "principal" | "memoria";
+  reading_set: string;
   celebration: string | null;
   color: string | null;
   liturgical_time: string | null;
   day_label: string | null;
   first_reading: LecturaSeccion;
-  psalm: { ref: string | null; response: string | null; stanzas: string[] } | null;
+  psalm: { ref: string | null; response: string | null; alt_responses?: string[]; stanzas: string[] } | null;
   second_reading: LecturaSeccion;
   gospel_accl: LecturaSeccion;
   gospel: LecturaSeccion;
@@ -89,6 +93,7 @@ function toLecturas(row: RawRow): LecturasDelDia {
     ? {
         ref: row.psalm.ref ?? null,
         response: row.psalm.response ?? null,
+        alt_responses: row.psalm.alt_responses ?? [],
         stanzas: row.psalm.stanzas ?? [],
         audios: toUrls(row.salmos?.audios),
         scores: toUrls(row.salmos?.scores),
@@ -110,8 +115,18 @@ function toLecturas(row: RawRow): LecturasDelDia {
 }
 
 function merge(fecha: string, base: LiturgicalDay | null, rows: RawRow[]): DiaLiturgico {
-  const principal = rows.find((r) => r.reading_set === "principal") ?? null;
+  // "principal" del día: la fila principal; si no hay (días empaquetados, ej.
+  // Navidad tiene noche/aurora/dia), se usa la del "día" y, en última instancia,
+  // la primera disponible, para que el salmo y las lecturas aparezcan igual.
+  const principal =
+    rows.find((r) => r.reading_set === "principal") ??
+    rows.find((r) => r.reading_set === "dia") ??
+    rows[0] ??
+    null;
   const memoria = rows.find((r) => r.reading_set === "memoria") ?? null;
+  const setsExtra = rows
+    .map((r) => r.reading_set)
+    .filter((rs) => rs !== principal?.reading_set && rs !== "memoria");
   const fuente: DiaLiturgico["fuente"] = principal
     ? principal.locked
       ? "manual"
@@ -129,6 +144,7 @@ function merge(fecha: string, base: LiturgicalDay | null, rows: RawRow[]): DiaLi
       principal: principal ? toLecturas(principal) : null,
       memoria: memoria ? toLecturas(memoria) : null,
     },
+    setsExtra,
     fuente,
   };
 }

@@ -364,14 +364,15 @@ Textos de las lecturas del leccionario (primera lectura, salmo, segunda lectura,
 | ----------------- | ----------- | -------------------------------------------------------------------------------------------------- |
 | `id`              | uuid        | PK                                                                                                 |
 | `event_date`      | date        | NOT NULL — clave de join con el calendario de romcal                                               |
-| `reading_set`     | text        | NOT NULL default 'principal', CHECK in ('principal','memoria'). 'principal' = propio/tiempo/feria (`ordo2[6]`); 'memoria' = memoria opcional (`ordo2[5]`) cuando el día la ofrece |
+| `reading_set`     | text        | NOT NULL default 'principal'. **Texto libre** desde mig. **0060** (antes CHECK principal/memoria). Convención: `principal` (propio/tiempo/feria) · `memoria` (memoria opcional) · `vigilia`/`noche`/`aurora`/`dia` (días empaquetados: Navidad, vigilias) · sufijo `-2` ante colisión. Único por `event_date` |
 | `celebration`     | text        | `ordo2[0]` sin el color                                                                            |
-| `color`           | text        | CHECK in ('verde','rojo','blanco','morado','rosa','negro'). Del paréntesis de `ordo2[0]`; NULL si no se reconoce |
+| `color`           | text        | **Texto libre** desde mig. **0060** (antes CHECK de 6 valores). Puede venir **combinado**: `"morado o rosa"`, `"verde o blanco"` (feria vs memoria libre). La UI lo parte por `" o "` (`lib/liturgical-colors.ts`). NULL si no se reconoce |
 | `liturgical_time` | text        | encabezado del `.htm` (ej. "TIEMPO DE NAVIDAD")                                                    |
 | `day_label`       | text        | nombre de la celebración del `.htm` (ej. "DÍA VII DENTRO DE LA OCTAVA DE NAVIDAD")                 |
-| `first_reading`   | jsonb       | `{ref, heading, body}`                                                                             |
-| `psalm`           | jsonb       | `{ref, response, stanzas[]}`                                                                       |
-| `second_reading`  | jsonb       | nullable — solo domingos/solemnidades                                                              |
+| `saints`          | jsonb       | Santo(s) del día (mig. **0061**): `[{name, description, bio_url, bio}]`. De `ordo2[1]`/`[2]` (hasta 2, a veces sin link → `bio` null). `bio` = texto de la biografía (`Misal3/Biografias3/BiografiasMM.htm`). Se replica en cada fila del día. NULL = sin santo |
+| `first_reading`   | jsonb       | `{ref, heading, body, alternatives?[]}`. `alternatives[]` = opciones "O bien:" (misma forma `{ref,heading,body}`) |
+| `psalm`           | jsonb       | `{ref, response, alt_responses?[], stanzas[]}`. `alt_responses[]` = antífonas alternativas ("O bien:"; ej. "Aleluia.") |
+| `second_reading`  | jsonb       | `{ref, heading, body, alternatives?[]}` — nullable, solo domingos/solemnidades. Se separa de la 1ª por el **SALMO** (divisor) |
 | `gospel_accl`     | jsonb       | aleluya `{ref, heading, body}`                                                                     |
 | `gospel`          | jsonb       | `{ref, heading, body}`                                                                             |
 | `source_url`      | text        | NOT NULL — `.htm` de origen (trazabilidad / re-scrape)                                             |
@@ -388,7 +389,9 @@ Textos de las lecturas del leccionario (primera lectura, salmo, segunda lectura,
 
 > **Recálculo anual.** Los `.js` de curas.com.ar están hardcodeados por año; cada año se corre el script con `--year=YYYY`. El `upsert` sobre `(event_date, reading_set)` hace la operación repetible sin duplicar; `source_hash` detecta si un `.htm` cambió respecto de lo guardado. El script es **upsert-only**: no borra filas que dejaron de generarse (si una fuente cambia el tipo de link de un día, la fila vieja queda residual y hay que limpiarla a mano).
 
-> **Cobertura de la ingesta 2026** (373 filas: 359 `principal` + 14 `memoria`). Todas las filas traen primera lectura, salmo y evangelio; la segunda lectura solo aparece en domingos/solemnidades. Huecos conocidos, por límites de la **fuente** (no del parser):
+> **Días con más de dos filas (mig. 0060).** Los días "empaquetados" del ORDO generan varias filas por fecha: **Navidad 25/12** → `noche` + `aurora` + `dia`; **24/12** → `principal` (feria de Adviento) + `vigilia` (Natividad). El parser recolecta TODOS los links `/Leccionarios/` de la entrada (no solo `[5]`/`[6]`) y asigna la celebración+color de la celebración más cercana. Las alternativas "O bien:" de las lecturas van en `first/second_reading.alternatives[]` y las del salmo en `psalm.alt_responses[]` (no generan fila nueva).
+
+> **Cobertura de la ingesta 2026** (~373 filas base + extras de días empaquetados). Todas las filas traen primera lectura, salmo y evangelio; la segunda lectura solo aparece en domingos/solemnidades (se separa de la 1ª por el SALMO). Huecos conocidos, por límites de la **fuente** (no del parser):
 > - **6 días especiales sin fila** porque curas.com.ar no publica su leccionario en el slot estándar `[5]`/`[6]` (linkean a Misal/Normas): **Miércoles de Ceniza** (18/2), **Triduo Pascual** (Jueves/Viernes/Sábado Santo, 2-4/4), **Domingo de Pascua** (5/4) y **1º de Adviento** (29/11). Para esos días el calendario lo sigue dando romcal; las lecturas, si se quieren, se cargan a mano.
 > - **~42 días de Cuaresma sin `gospel_accl`**: en Cuaresma no se canta "Aleluia" (se reemplaza por otra aclamación que el script hoy no captura). El resto de las secciones de esos días sí está.
 

@@ -4,17 +4,33 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SalmoMedia } from "@/lib/salmos";
 
-export type ReadingSet = "principal" | "memoria";
+// Discriminador de la lectura dentro de la fecha. Los días "empaquetados"
+// (Navidad, vigilias) generan más de dos filas; ver migración 0060.
+// El `(string & {})` mantiene el autocompletado de los valores conocidos sin
+// cerrar el tipo (admite p. ej. "principal-2").
+export type ReadingSet =
+  | "principal"
+  | "memoria"
+  | "vigilia"
+  | "noche"
+  | "aurora"
+  | "dia"
+  | (string & {});
 
-export type ReadingSection = {
+// Una opción de lectura. Cuando la página trae alternativas "O bien:", la
+// primera va arriba y el resto en `alternatives`.
+export type ReadingOption = {
   ref: string | null;
   heading: string | null;
   body: string;
-} | null;
+};
+
+export type ReadingSection = (ReadingOption & { alternatives?: ReadingOption[] }) | null;
 
 export type PsalmSection = {
   ref: string | null;
   response: string | null;
+  alt_responses?: string[]; // respuestas/antífonas alternativas ("O bien:")
   stanzas: string[];
 } | null;
 

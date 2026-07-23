@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminAccess } from "../access";
 import { getMesLiturgico, type DiaLiturgico } from "@/lib/calendario";
+import { colorHex, splitColors } from "@/lib/liturgical-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -10,16 +11,6 @@ const MESES = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-
-// Colores litúrgicos reales (dato, no tema de la app) para el punto de color.
-const COLOR_HEX: Record<string, string> = {
-  verde: "#2e7d32",
-  rojo: "#c62828",
-  blanco: "#f5f5f5",
-  morado: "#6a1b9a",
-  rosa: "#ec8fb5",
-  negro: "#222222",
-};
 
 function parseMes(mes: string | undefined): { year: number; month: number } {
   const m = mes?.match(/^(\d{4})-(\d{2})$/);
@@ -148,7 +139,7 @@ function ScoreIcon() {
 
 function DiaRow({ dia }: { dia: DiaLiturgico }) {
   const day = Number(dia.fecha.slice(8, 10));
-  const hex = dia.color ? COLOR_HEX[dia.color] : null;
+  const colors = splitColors(dia.color);
   const { hasAudio, hasScore } = psalmFiles(dia);
   const isSunday = weekday(dia.fecha) === "dom";
   return (
@@ -170,12 +161,16 @@ function DiaRow({ dia }: { dia: DiaLiturgico }) {
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-start gap-2 text-sm text-foreground normal-case">
-          {hex && (
-            <span
-              aria-hidden="true"
-              className="mt-1 inline-block h-3 w-3 shrink-0 rounded-full border border-border"
-              style={{ backgroundColor: hex }}
-            />
+          {colors.length > 0 && (
+            <span aria-hidden="true" className="mt-1 flex shrink-0">
+              {colors.map((c, ci) => (
+                <span
+                  key={ci}
+                  className="inline-block h-3 w-3 rounded-full border border-border"
+                  style={{ backgroundColor: colorHex(c) ?? "transparent", marginLeft: ci ? -2 : 0 }}
+                />
+              ))}
+            </span>
           )}
           <span className="min-w-0">{dia.nombre || "—"}</span>
         </span>
@@ -208,6 +203,14 @@ function DiaRow({ dia }: { dia: DiaLiturgico }) {
               + memoria
             </span>
           )}
+          {dia.setsExtra.map((rs) => (
+            <span
+              key={rs}
+              className="shrink-0 rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary"
+            >
+              + {rs}
+            </span>
+          ))}
           <EstadoBadge dia={dia} />
           <svg
             width="18"

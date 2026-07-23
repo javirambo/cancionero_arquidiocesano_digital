@@ -16,12 +16,20 @@
  *   6. Upsert idempotente en liturgical_readings (on conflict event_date+reading_set).
  *      Excluye las filas con `locked=true` (ediciones manuales del CRUD de admin):
  *      no las pisa. Requiere la migración 0057; si falta, avisa y no filtra.
+ *   7. Prune: borra las filas no-locked de los meses importados que ya no se
+ *      generan (residuales de ingestas anteriores). Se puede desactivar con
+ *      --no-prune; se omite en corridas parciales (--limit).
  *
  * Uso:
  *   npx tsx scripts/import-lecturas.ts                       # dry-run, año actual
  *   npx tsx scripts/import-lecturas.ts --year=2027           # dry-run de 2027
  *   npx tsx scripts/import-lecturas.ts --year=2027 --apply   # escribe en la BD
  *   npx tsx scripts/import-lecturas.ts --month=7 --limit=3   # probar pocos días
+ *   npx tsx scripts/import-lecturas.ts --refresh             # ignora la caché y re-descarga
+ *   npx tsx scripts/import-lecturas.ts --apply --no-prune    # no borra residuales
+ *
+ * Caché: los .js/.htm bajados se guardan en scripts/.ordo-cache/ (git la ignora)
+ * y se reusan en las siguientes corridas para no re-descargar. `--refresh` la ignora.
  *
  * Requiere en .env.local: SUPABASE_URL (o NEXT_PUBLIC_SUPABASE_URL) y
  * SUPABASE_SERVICE_ROLE_KEY.
@@ -31,7 +39,7 @@
  * heurísticos de parseLeccionario() si algún caso queda mal.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import vm from "node:vm";
@@ -44,9 +52,15 @@ import { createClient } from "@supabase/supabase-js";
 const BASE = "https://www.curas.com.ar/Calendario/";
 const UA = "cancionero-arquidiocesano-import/1.0";
 const THROTTLE_MS = 400; // servidor chico: throttling suave entre requests
+// Caché en disco de los .js/.htm bajados (se re-corre el script muchas veces).
+// Se crea sola; git la ignora (contenido con derechos de autor). `--refresh`
+// fuerza la re-descarga.
+const CACHE_DIR = resolve(process.cwd(), "scripts/.ordo-cache");
 
 const ARGS = process.argv.slice(2);
 const APPLY = ARGS.includes("--apply");
+const REFRESH = ARGS.includes("--refresh");
+const NO_PRUNE = ARGS.includes("--no-prune");
 const getFlag = (k: string): string | null => {
   const hit = ARGS.find((a) => a.startsWith(`--${k}=`));
   return hit ? hit.slice(k.length + 3) : null;
@@ -91,24 +105,46 @@ const supabase =
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let lastFetch = 0;
 
+// Nombre de archivo de caché para una URL (host + path saneados).
+function cachePathFor(url: string): string {
+  const name = url.replace(/^https?:\/\//, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+  return resolve(CACHE_DIR, name);
+}
+
 async function fetchText(url: string): Promise<string> {
+  const cacheFile = cachePathFor(url);
+  if (!REFRESH && existsSync(cacheFile)) return readFileSync(cacheFile, "utf8");
   const wait = THROTTLE_MS - (Date.now() - lastFetch);
   if (wait > 0) await sleep(wait);
   lastFetch = Date.now();
   const res = await fetch(url, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
-  return res.text();
+  const buf = Buffer.from(await res.arrayBuffer());
+  // Casi todo es UTF-8, pero alguna página (ej. Biografias02.htm) está en
+  // latin1: si el decode UTF-8 dejó caracteres de reemplazo, re-decodificamos
+  // como windows-1252. La caché guarda ya el texto correcto (UTF-8).
+  let text = new TextDecoder("utf-8").decode(buf);
+  if (text.includes("�")) text = new TextDecoder("windows-1252").decode(buf);
+  mkdirSync(CACHE_DIR, { recursive: true });
+  writeFileSync(cacheFile, text, "utf8");
+  return text;
 }
 
 // -----------------------------------------------------------------------------
 // Capa 1: ejecutar el .js del mes y materializar ordo2 con overrides aplicados
 // -----------------------------------------------------------------------------
 
+type DaySet = {
+  reading_set: string;
+  href: string;
+  celebration: string | null;
+  color: string | null;
+};
+
 type DayRaw = {
   day: number;
-  celebrationRaw: string | null;
-  principalHref: string | null; // ordo2[6]
-  memoriaHref: string | null; // ordo2[5]
+  sets: DaySet[];
+  saints: SaintRaw[];
 };
 
 function extractHref(cell: unknown): string | null {
@@ -120,6 +156,241 @@ function extractHref(cell: unknown): string | null {
     if (/\/Leccionarios\//i.test(m[1])) return m[1];
   }
   return null;
+}
+
+// Texto del ancla de un link a leccionario: la etiqueta que el ORDO le pone
+// ("de la feria" / "de la memoria" / "del Propio…" / "noche" / "aurora" / "dia").
+function linkLabel(cell: string, href: string): string {
+  const esc = href.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = cell.match(new RegExp(`<a[^>]*href="${esc}"[^>]*>([\\s\\S]*?)</a>`, "i"));
+  return (m ? htmlToText(m[1]) : htmlToText(cell)).trim();
+}
+
+// ¿La celda es una celebración "Nombre (Color)"? (tiene un color entre
+// paréntesis y no es una línea de "Misa:"/"Lecturas:"). Sirve para asociar
+// cada lectura a su celebración en los días "empaquetados" (ej. 24/12: feria
+// + "Natividad del Señor (Blanco)").
+function isCelebrationCell(cell: unknown): cell is string {
+  if (typeof cell !== "string") return false;
+  const t = htmlToText(cell);
+  return (
+    /\([^)]*(?:verde|rojo|rosado|rosa|blanco|morado|negro)[^)]*\)/i.test(t) &&
+    !/Lecturas:|Misa:/i.test(t)
+  );
+}
+
+// Clasifica una etiqueta de leccionario en un reading_set. Las etiquetas
+// EXACTAS noche/aurora/dia/vigilia marcan los tiempos de un día empaquetado
+// (Navidad); "de la memoria" → memoria; el resto ("de la feria", "del
+// Propio…", "del Propio del día") → principal.
+function classifySet(label: string): string {
+  const t = label.trim().toLowerCase();
+  if (t === "noche") return "noche";
+  if (t === "aurora") return "aurora";
+  if (t === "dia" || t === "día") return "dia";
+  if (/vigilia/.test(t)) return "vigilia";
+  if (/de la memoria/.test(t)) return "memoria";
+  return "principal";
+}
+
+function uniqueSet(base: string, used: Set<string>): string {
+  let n = 2;
+  while (used.has(`${base}-${n}`)) n++;
+  return `${base}-${n}`;
+}
+
+// Arma los sets (una fila por lectura) de una entrada de ordo2, recolectando
+// TODOS los links /Leccionarios/ en cualquier índice (no solo [5]/[6]), para
+// soportar los días empaquetados. Cada set recibe celebración+color de la
+// celebración más cercana que lo precede, y desambigua sets genéricos
+// colisionados usando la etiqueta de misa cercana (vigilia/noche/aurora).
+function buildDaySets(entry: unknown[]): DaySet[] {
+  const celebs: { index: number; celebration: string | null; color: string | null }[] = [];
+  entry.forEach((cell, i) => {
+    if (i === 0 || isCelebrationCell(cell)) {
+      const { celebration, color } = parseCelebration(typeof cell === "string" ? cell : null);
+      if (celebration || color) celebs.push({ index: i, celebration, color });
+    }
+  });
+  const celebFor = (index: number) => {
+    let best: { celebration: string | null; color: string | null } = celebs[0] ?? {
+      celebration: null,
+      color: null,
+    };
+    for (const c of celebs) if (c.index <= index) best = c;
+    return best;
+  };
+  // Palabra clave de tiempo en las celdas de misa/celebración anteriores (para
+  // desambiguar dos sets genéricos: 24/12 feria(principal) + vigilia).
+  const contextKeyword = (before: number): string | null => {
+    let found: string | null = null;
+    entry.forEach((cell, i) => {
+      if (i >= before || typeof cell !== "string") return;
+      const t = cell.toLowerCase();
+      if (/vigilia/.test(t)) found = "vigilia";
+      else if (/\bnoche\b/.test(t)) found = "noche";
+      else if (/\baurora\b/.test(t)) found = "aurora";
+    });
+    return found;
+  };
+
+  const used = new Set<string>();
+  const sets: DaySet[] = [];
+  entry.forEach((cell, i) => {
+    if (typeof cell !== "string") return;
+    const href = extractHref(cell);
+    if (!href) return;
+    let set = classifySet(linkLabel(cell, href));
+    if (used.has(set)) {
+      const kw = contextKeyword(i);
+      set = kw && !used.has(kw) ? kw : uniqueSet(set, used);
+    }
+    used.add(set);
+    const { celebration, color } = celebFor(i);
+    sets.push({ reading_set: set, href, celebration, color });
+  });
+  return sets;
+}
+
+// -----------------------------------------------------------------------------
+// Santos del día (ordo2[1]/[2] + páginas Biografias)
+// -----------------------------------------------------------------------------
+
+type SaintRaw = { name: string; description: string | null; bioHref: string | null };
+type Saint = { name: string; description: string | null; bio_url: string | null; bio: string | null };
+
+// Extrae el/los santo(s) de una entrada de ordo2. Los santos vienen en [1] y
+// [2] como `"Nombre".link(".../Biografias3/BiografiasMM.htm#ancla") + ", desc"`.
+// El 2º santo a veces viene sin link (solo texto).
+// El descriptor ("presbítero", "Papa", …) nunca lleva paréntesis legítimos;
+// curas a veces le pega el color litúrgico ("Papa (Blanco)"): lo quitamos.
+const cleanDesc = (s: string): string | null =>
+  s.replace(/\([^)]*\)/g, "").replace(/^[\s,]+|[\s,]+$/g, "").replace(/\s+/g, " ").trim() || null;
+// El nombre en Cuaresma viene entre corchetes ("[San Casimiro]", memoria
+// opcional): los quitamos.
+const cleanName = (s: string): string => s.replace(/[[\]]/g, "").replace(/\s+/g, " ").trim();
+
+function extractSaints(entry: unknown[]): SaintRaw[] {
+  const out: SaintRaw[] = [];
+  for (const idx of [1, 2]) {
+    const cell = entry[idx];
+    if (typeof cell !== "string") continue;
+    const hrefMatch = cell.match(/href="([^"]*Biografias3[^"]*)"/i);
+    if (hrefMatch) {
+      const a = cell.match(/<a[^>]*>([\s\S]*?)<\/a>([\s\S]*)/i);
+      const name = cleanName(htmlToText(a?.[1] ?? ""));
+      const description = cleanDesc(htmlToText(a?.[2] ?? ""));
+      if (name) out.push({ name, description, bioHref: hrefMatch[1] });
+    } else if (idx === 2 && out.length > 0) {
+      // 2º santo sin link (solo texto). Evitar títulos en rojo / Misa/Lecturas.
+      if (/<font/i.test(cell) || /Misa:|Lecturas:/i.test(cell)) continue;
+      const t = htmlToText(cell).trim();
+      if (!t) continue;
+      const [name, ...desc] = t.split(/,\s*/);
+      out.push({ name: cleanName(name), description: cleanDesc(desc.join(", ")), bioHref: null });
+    }
+  }
+  return out;
+}
+
+const MONTHS = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+const stripAccents = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+const norm = (s: string) => stripAccents(s).toLowerCase().replace(/\s+/g, " ").trim();
+// Fecha de un encabezado de biografía: "4 de marzo", "1° de noviembre".
+const DATE_RE = /(?<!\d)(\d{1,2})(?!\d)\D{0,12}?de\s+([a-zñáéíóú]+)/i;
+
+// Posiciones candidatas del bloque de una bio, de más a menos confiable. Las
+// anclas de curas son poco confiables (faltan, tienen typo, o el 1er santo del
+// mes no tiene ancla), así que además probamos por día y por el encabezado de
+// fecha "N de MES", y por el nombre en <b>.
+function bioCandidateStarts(html: string, anchor: string, name: string, day: number, monthName: string): number[] {
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const starts: number[] = [];
+  const push = (re: RegExp) => {
+    const i = html.search(re);
+    if (i >= 0) starts.push(i);
+  };
+  if (anchor) push(new RegExp(`<a\\s+name="${esc(anchor)}"`, "i"));
+  push(new RegExp(`<a\\s+name="${day}"`, "i"));
+  push(new RegExp(`<a\\s+name="${String(day).padStart(2, "0")}"`, "i"));
+  push(new RegExp(`(?<!\\d)${day}(?!\\d)\\D{0,12}?de\\s+${monthName}`, "i"));
+  if (name) {
+    const target = norm(name);
+    for (const m of html.matchAll(/<b>([\s\S]*?)<\/b>/gi)) {
+      const t = norm(htmlToText(m[1]));
+      if (t && (t === target || t.includes(target) || target.includes(t))) {
+        starts.push(m.index ?? -1);
+        break;
+      }
+    }
+  }
+  return [...new Set(starts.filter((i) => i >= 0))].sort((a, b) => a - b);
+}
+
+// Extrae la bio a partir de un start: sección hasta el próximo <a name=> o
+// <p align="center"> (encabezado del día siguiente); cuerpo = <p align="justify">.
+// DOBLE-CHECK: si la sección trae un encabezado "N de MES", debe coincidir con
+// el día/mes esperado; si no, no es esta bio (devuelve null).
+function bioAtStart(html: string, start: number, day: number, monthName: string): string | null {
+  const rest = html.slice(start);
+  const after = rest.slice(1);
+  const cuts = [after.search(/<a\s+name="/i), after.search(/<p[^>]*align="?center"?/i)].filter((x) => x >= 0);
+  const section = cuts.length ? rest.slice(0, Math.min(...cuts) + 1) : rest;
+  const head = htmlToText(section.slice(0, 220));
+  const dm = head.match(DATE_RE);
+  if (dm && (Number(dm[1]) !== day || norm(dm[2]) !== monthName)) return null;
+  const paras = [...section.matchAll(/<p[^>]*align="?justify"?[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((m) => htmlToText(m[1]))
+    .filter(Boolean);
+  return paras.join("\n\n") || null;
+}
+
+function parseBio(html: string, anchor: string, name: string, day: number, month: number): string | null {
+  const monthName = MONTHS[month - 1] ?? "";
+  for (const start of bioCandidateStarts(html, anchor, name, day, monthName)) {
+    const bio = bioAtStart(html, start, day, monthName);
+    if (bio) return bio;
+  }
+  return null;
+}
+
+// Resuelve los santos de un día: baja (cacheada) la página de biografías y
+// extrae el texto de cada uno (localización robusta + verificación de fecha).
+async function resolveSaints(
+  raw: SaintRaw[],
+  htmCache: Map<string, string>,
+  month: number,
+  day: number
+): Promise<Saint[]> {
+  const out: Saint[] = [];
+  for (const s of raw) {
+    let bio: string | null = null;
+    let bio_url: string | null = null;
+    if (s.bioHref) {
+      const full = new URL(s.bioHref, BASE);
+      bio_url = full.href;
+      const pageUrl = full.href.split("#")[0];
+      const anchor = decodeURIComponent(full.hash.replace(/^#/, ""));
+      let html = htmCache.get(pageUrl) ?? null;
+      if (html == null) {
+        try {
+          html = await fetchText(pageUrl);
+          htmCache.set(pageUrl, html);
+        } catch (e) {
+          console.warn(`  bio "${s.name}": ${(e as Error).message}`);
+        }
+      }
+      if (html) {
+        bio = parseBio(html, anchor, s.name, day, month);
+        if (!bio) console.warn(`  bio "${s.name}" (${MONTHS[month - 1]} ${day}): no se pudo extraer/verificar`);
+      }
+    }
+    out.push({ name: s.name, description: s.description, bio_url, bio });
+  }
+  return out;
 }
 
 function runMonthJs(src: string, month: number): DayRaw[] {
@@ -163,9 +434,8 @@ function runMonthJs(src: string, month: number): DayRaw[] {
   if (!Array.isArray(ordo2)) throw new Error(`ordo2 no se materializó para el mes ${month}`);
   return (ordo2 as unknown[][]).map((entry, i) => ({
     day: i + 1,
-    celebrationRaw: typeof entry?.[0] === "string" ? (entry[0] as string) : null,
-    principalHref: extractHref(entry?.[6]),
-    memoriaHref: extractHref(entry?.[5]),
+    sets: Array.isArray(entry) ? buildDaySets(entry) : [],
+    saints: Array.isArray(entry) ? extractSaints(entry) : [],
   }));
 }
 
@@ -256,8 +526,11 @@ function bodyOf(slice: string): string {
 // Capa 2: parsear el .htm del leccionario
 // -----------------------------------------------------------------------------
 
-type Reading = { ref: string | null; heading: string | null; body: string };
-type Psalm = { ref: string | null; response: string | null; stanzas: string[] };
+type ReadingOption = { ref: string | null; heading: string | null; body: string };
+// Una lectura puede traer opciones alternativas separadas por "O bien:" en la
+// página; la primera va arriba y el resto en `alternatives`.
+type Reading = ReadingOption & { alternatives?: ReadingOption[] };
+type Psalm = { ref: string | null; response: string | null; alt_responses?: string[]; stanzas: string[] };
 type Leccionario = {
   liturgical_time: string | null;
   day_label: string | null;
@@ -284,68 +557,107 @@ function parseHeader(html: string): { liturgical_time: string | null; day_label:
   return { liturgical_time, day_label: rest.join(" ") || null };
 }
 
-// Divide el .htm en las secciones por sus encabezados <b> (§4 del análisis).
+// Divide el .htm en secciones por sus encabezados <b> (§4 del análisis).
+// El SALMO actúa de DIVISOR: las lecturas antes del salmo son la 1ª lectura
+// (con sus alternativas "O bien:"); las que van entre el salmo y el evangelio
+// son la 2ª lectura. Devuelve `slots`: slots[0] = opciones de la 1ª lectura,
+// slots[1] = opciones de la 2ª (cada opción es un slice de HTML).
 function splitSections(html: string) {
-  const markers: { kind: string; index: number }[] = [];
-  const push = (re: RegExp, kind: string) => {
+  type Kind = "reading" | "psalm" | "accl" | "gospel";
+  const markers: { kind: Kind; index: number }[] = [];
+  const push = (re: RegExp, kind: Kind) => {
     for (const m of html.matchAll(re)) markers.push({ kind, index: m.index ?? 0 });
   };
-  // La primera/segunda lectura traen su propio <b>. SALMO/ALELUIA van siempre
-  // en MAYÚSCULAS como etiqueta (nunca en el cuerpo, que usa "Aleluia." en
-  // itálica). El EVANGELIO puede venir "EVANGELIO" o —en algunos días— con la
-  // etiqueta "Evangelio</b>"; excluimos el encabezado largo "Evangelio de
-  // nuestro Señor…" pidiendo que sea la palabra sola o justo antes de </b>.
   push(/<b>\s*(?:<[^>]+>)?\s*(?:Lectura|Principio|Comienzo|Continuaci[óo]n)\s+del?\b/gi, "reading");
   push(/\bSALMO\b|Salmo<\/b>/g, "psalm");
   push(/\bALELU[IY]A\b|Alelu[iy]a<\/b>/g, "accl");
   push(/EVANGELIO\b|Evangelio<\/b>/g, "gospel");
   markers.sort((a, b) => a.index - b.index);
+  // Posiciones de "O bien:" — agrupan lecturas alternativas del mismo slot
+  // (el "O bien:" del salmo/evangelio no cae entre dos encabezados de lectura,
+  // así que no afecta el agrupamiento).
+  const obien = [...html.matchAll(/O\s*bien/gi)].map((m) => m.index ?? 0);
 
-  const out = { readings: [] as string[], psalm: null as string | null, accl: null as string | null, gospel: null as string | null };
+  let psalm: string | null = null;
+  let accl: string | null = null;
+  let gospel: string | null = null;
+  const slots: string[][] = [];
+  let prevReadingIndex = -1;
+  let sawDivider = true; // true al inicio → la 1ª lectura abre un slot
   markers.forEach((mk, i) => {
     const end = i + 1 < markers.length ? markers[i + 1].index : html.length;
     const slice = html.slice(mk.index, end);
-    if (mk.kind === "reading") out.readings.push(slice);
-    else if (mk.kind === "psalm") out.psalm ??= slice;
-    else if (mk.kind === "accl") out.accl ??= slice;
-    else if (mk.kind === "gospel") out.gospel ??= slice;
+    if (mk.kind === "reading") {
+      const isAlt = !sawDivider && slots.length > 0 && obien.some((oi) => oi > prevReadingIndex && oi < mk.index);
+      if (isAlt) slots[slots.length - 1].push(slice);
+      else slots.push([slice]);
+      prevReadingIndex = mk.index;
+      sawDivider = false;
+    } else {
+      sawDivider = true; // salmo/aleluya/evangelio separan slots
+      if (mk.kind === "psalm") psalm ??= slice;
+      else if (mk.kind === "accl") accl ??= slice;
+      else gospel ??= slice;
+    }
   });
-  return out;
+  return { slots, psalm, accl, gospel };
 }
 
-function toReading(slice: string): Reading {
+function toReadingOption(slice: string): ReadingOption {
   return { ref: refOf(slice), heading: headingOf(slice), body: bodyOf(slice) };
 }
 
+// Construye una lectura (1ª o 2ª) a partir de sus opciones: la primera arriba,
+// el resto como `alternatives`.
+function readingFromSlices(slices: string[] | undefined): Reading | null {
+  if (!slices || !slices.length) return null;
+  const [primary, ...alts] = slices.map(toReadingOption);
+  return alts.length ? { ...primary, alternatives: alts } : primary;
+}
+
 function toPsalm(slice: string): Psalm {
+  // Trabajamos sobre el slice SIN los bloques <p align="right"> (antífonas del
+  // evangelio que pueden caer dentro cuando no hay Aleluia).
+  const core = slice.replace(/<p[^>]*align="?right"?[^>]*>[\s\S]*?<\/p>/gi, "");
   const ref = refOf(slice);
-  const iMatch = slice.match(/<i>([\s\S]*?)<\/i>/i);
-  const response = clean(iMatch ? iMatch[1] : null);
-  // Cuerpo: quitar la antífona de la lectura siguiente (<p align="right"> que
-  // cae dentro del slice), luego "SALMO … <font rojo>cita…R.</font>" (hasta el
-  // primer </font>) y la respuesta inicial <i>…</i>; el resto son las estrofas.
-  const body = slice
-    .replace(/<p[^>]*align="?right"?[^>]*>[\s\S]*?<\/p>/gi, "")
-    .replace(/^[\s\S]*?<\/font>/i, "")
-    .replace(/^\s*<i>[\s\S]*?<\/i>/i, "");
+  // Antífonas/respuestas: la primera es `response`; las que siguen a cada
+  // "O bien:" son alternativas.
+  const italics = ([...core.matchAll(/<i>([\s\S]*?)<\/i>/gi)].map((m) => clean(m[1])).filter(Boolean)) as string[];
+  const response = italics[0] ?? null;
+  const obienCount = (core.match(/O\s*bien/gi) || []).length;
+  const alt_responses = obienCount ? italics.slice(1, 1 + obienCount) : [];
+  // Estrofas: quitar el encabezado "SALMO…ref…R.</font>" y, del inicio, las
+  // antífonas <i> y los marcadores "O bien:"; el resto son las estrofas.
+  let body = core.replace(/^[\s\S]*?<\/font>/i, "");
+  let prev = "";
+  while (body !== prev) {
+    prev = body;
+    body = body
+      .replace(/^\s*(?:<br\s*\/?>\s*)+/i, "")
+      .replace(/^\s*<i>[\s\S]*?<\/i>/i, "")
+      .replace(/^\s*<font[^>]*>\s*O\s*bien\s*:?\s*<\/font>/i, "");
+  }
   const stanzas = htmlToText(body)
     .split(/\n\s*\n/)
     .map((s) => s.replace(/\s*R\.?\s*$/i, "").trim()) // quita la "R." final de la estrofa
     .filter(Boolean);
-  return { ref, response, stanzas };
+  return alt_responses.length ? { ref, response, alt_responses, stanzas } : { ref, response, stanzas };
 }
 
 function parseLeccionario(html: string): Leccionario {
   const header = parseHeader(html);
   const s = splitSections(html);
+  if (s.slots.length > 2) {
+    console.warn(`  (aviso: ${s.slots.length} grupos de lectura en una página; se usan los 2 primeros)`);
+  }
   return {
     liturgical_time: header.liturgical_time,
     day_label: header.day_label,
-    first_reading: s.readings[0] ? toReading(s.readings[0]) : null,
-    second_reading: s.readings[1] ? toReading(s.readings[1]) : null,
+    first_reading: readingFromSlices(s.slots[0]),
+    second_reading: readingFromSlices(s.slots[1]),
     psalm: s.psalm ? toPsalm(s.psalm) : null,
-    gospel_accl: s.accl ? toReading(s.accl) : null,
-    gospel: s.gospel ? toReading(s.gospel) : null,
+    gospel_accl: s.accl ? toReadingOption(s.accl) : null,
+    gospel: s.gospel ? toReadingOption(s.gospel) : null,
   };
 }
 
@@ -359,20 +671,20 @@ function parseCelebration(raw: string | null): { celebration: string | null; col
   if (!raw) return { celebration: null, color: null };
   const text = htmlToText(raw).replace(/\s+/g, " ").trim();
   // El color va entre paréntesis, pero: (a) no siempre al final —"Solemnidad
-  // (Blanco) NOMBRE"—, y (b) a veces da opciones —"(Morado o Rosado)". Tomamos
-  // la primera palabra de color reconocida dentro de algún paréntesis.
-  let color: string | null = null;
+  // (Blanco) NOMBRE"—, y (b) a veces hay DOS —"(Morado o Rosado)" o
+  // "Feria (Verde) o Memoria libre (Blanco)". Recolectamos TODOS los colores y
+  // los guardamos combinados ("morado o rosa", "verde o blanco"). "rosado" → "rosa".
+  const found: string[] = [];
   for (const pm of text.matchAll(/\(([^)]*)\)/g)) {
-    const cm = pm[1].toLowerCase().match(/verde|rojo|rosado|rosa|blanco|morado|negro/);
-    if (cm) {
-      color = cm[0] === "rosado" ? "rosa" : cm[0];
-      break;
+    for (const cm of pm[1].toLowerCase().matchAll(/verde|rojo|rosado|rosa|blanco|morado|negro/g)) {
+      const c = cm[0] === "rosado" ? "rosa" : cm[0];
+      if (COLORS.has(c) && !found.includes(c)) found.push(c);
     }
   }
   const celebration =
     text.replace(/\([^)]*(?:verde|rojo|rosado|rosa|blanco|morado|negro)[^)]*\)/gi, "").replace(/\s+/g, " ").trim() ||
     null;
-  return { celebration, color: color && COLORS.has(color) ? color : null };
+  return { celebration, color: found.length ? found.join(" o ") : null };
 }
 
 // -----------------------------------------------------------------------------
@@ -381,9 +693,10 @@ function parseCelebration(raw: string | null): { celebration: string | null; col
 
 type Row = Leccionario & {
   event_date: string;
-  reading_set: "principal" | "memoria";
+  reading_set: string; // principal | memoria | vigilia | noche | aurora | dia | …
   celebration: string | null;
   color: string | null;
+  saints: Saint[] | null; // santos del día (mismo array en todas las filas del día)
   source_url: string;
   source_hash: string;
   imported_at: string;
@@ -428,23 +741,74 @@ async function excludeLocked(rows: Row[]): Promise<Row[]> {
   return kept;
 }
 
+// Borra las filas RESIDUALES: no-locked, dentro de los meses efectivamente
+// importados, cuya (event_date, reading_set) ya NO genera el parser. El upsert
+// por sí solo no borra, así que sin esto quedarían colgadas filas de una
+// ingesta anterior (ej. Navidad pasó de principal/memoria a noche/aurora/dia).
+// Nunca toca filas `locked` (ediciones manuales) ni meses que no se importaron.
+async function pruneStale(rows: Row[]) {
+  if (!supabase || rows.length === 0) return;
+  const genKeys = new Set(rows.map((r) => `${r.event_date}|${r.reading_set}`));
+  const genMonths = new Set(rows.map((r) => r.event_date.slice(0, 7)));
+  const dates = rows.map((r) => r.event_date);
+  const start = dates.reduce((a, b) => (a < b ? a : b));
+  const end = dates.reduce((a, b) => (a > b ? a : b));
+  const { data, error } = await supabase
+    .from("liturgical_readings")
+    .select("id, event_date, reading_set, locked")
+    .gte("event_date", start)
+    .lte("event_date", end);
+  if (error) {
+    console.warn(`  (aviso: no se pudo hacer prune: ${error.message})`);
+    return;
+  }
+  const stale = ((data ?? []) as { id: string; event_date: string; reading_set: string; locked: boolean }[]).filter(
+    (r) =>
+      !r.locked &&
+      genMonths.has(r.event_date.slice(0, 7)) &&
+      !genKeys.has(`${r.event_date}|${r.reading_set}`)
+  );
+  if (stale.length === 0) {
+    console.log("  prune: sin filas residuales.");
+    return;
+  }
+  const ids = stale.map((r) => r.id);
+  for (let i = 0; i < ids.length; i += 100) {
+    const { error: delErr } = await supabase
+      .from("liturgical_readings")
+      .delete()
+      .in("id", ids.slice(i, i + 100));
+    if (delErr) throw new Error(`prune delete: ${delErr.message}`);
+  }
+  console.log(
+    `  prune: ${stale.length} fila(s) residual(es) borrada(s): ` +
+      stale.map((r) => `${r.event_date}/${r.reading_set}`).join(", ")
+  );
+}
+
 function printSample(rows: Row[]) {
   if (!rows.length) return;
   console.log("\n--- resumen por fila ---");
   for (const r of rows) {
     const sec = [
-      r.first_reading ? "L1" : "--",
-      r.psalm ? "Sal" : "---",
-      r.second_reading ? "L2" : "--",
+      r.first_reading ? (r.first_reading.alternatives?.length ? "L1+" : "L1 ") : "-- ",
+      r.psalm ? (r.psalm.alt_responses?.length ? "Sal+" : "Sal ") : "--- ",
+      r.second_reading ? (r.second_reading.alternatives?.length ? "L2+" : "L2 ") : "-- ",
       r.gospel_accl ? "Al" : "--",
       r.gospel ? "Ev" : "--",
     ].join(" ");
+    const santos = r.saints?.length ? ` · ${r.saints.length} santo(s)` : "";
     console.log(
-      `${r.event_date} ${r.reading_set.padEnd(9)} ${(r.color ?? "?").padEnd(7)} [${sec}] ${(r.liturgical_time ?? "").slice(0, 40)}`
+      `${r.event_date} ${r.reading_set.padEnd(10)} ${(r.color ?? "?").padEnd(16)} [${sec}] ${(r.liturgical_time ?? "").slice(0, 30)}${santos}`
     );
   }
-  console.log("\n--- muestra completa (primera fila) ---");
-  console.log(JSON.stringify(rows[0], null, 2).slice(0, 2500));
+  // Muestra completa: preferimos una fila con santos, alternativas o alt_responses.
+  const interesting =
+    rows.find((r) => r.saints?.length) ??
+    rows.find((r) => r.first_reading?.alternatives?.length || r.psalm?.alt_responses?.length) ??
+    rows[0];
+  console.log("\n--- muestra completa ---");
+  console.log(JSON.stringify(interesting, null, 2).slice(0, 2800));
 }
 
 // -----------------------------------------------------------------------------
@@ -454,7 +818,8 @@ function printSample(rows: Row[]) {
 async function main() {
   console.log(
     `Año: ${YEAR} · Modo: ${APPLY ? "APPLY (escribe)" : "DRY-RUN"}` +
-      `${ONLY_MONTH ? ` · mes ${ONLY_MONTH}` : ""}${LIMIT ? ` · limit ${LIMIT}` : ""}`
+      `${ONLY_MONTH ? ` · mes ${ONLY_MONTH}` : ""}${LIMIT ? ` · limit ${LIMIT}` : ""}` +
+      `${REFRESH ? " · refresh (ignora caché)" : ""}`
   );
 
   const htmCache = new Map<string, string>(); // url → html (dedup)
@@ -477,14 +842,11 @@ async function main() {
 
     for (const d of days) {
       if (LIMIT && processed >= LIMIT) break;
-      const { celebration, color } = parseCelebration(d.celebrationRaw);
       const event_date = `${YEAR}-${pad(month)}-${pad(d.day)}`;
-      const sets: { reading_set: "principal" | "memoria"; href: string | null }[] = [
-        { reading_set: "principal", href: d.principalHref },
-        { reading_set: "memoria", href: d.memoriaHref },
-      ];
-      for (const s of sets) {
-        if (!s.href) continue;
+      // Santos del día (se replican en cada fila del día). Solo si hay lecturas.
+      const saints =
+        d.sets.length && d.saints.length ? await resolveSaints(d.saints, htmCache, month, d.day) : [];
+      for (const s of d.sets) {
         const url = new URL(s.href, BASE).href;
         let html = htmCache.get(url) ?? null;
         if (html == null) {
@@ -499,8 +861,9 @@ async function main() {
         rows.push({
           event_date,
           reading_set: s.reading_set,
-          celebration,
-          color,
+          celebration: s.celebration,
+          color: s.color,
+          saints: saints.length ? saints : null,
           ...parseLeccionario(html),
           source_url: url,
           source_hash: createHash("sha256").update(html).digest("hex"),
@@ -520,6 +883,9 @@ async function main() {
   }
   const toWrite = await excludeLocked(rows);
   await upsertRows(toWrite);
+  if (NO_PRUNE) console.log("  (prune desactivado con --no-prune)");
+  else if (LIMIT) console.log("  (prune omitido: corrida parcial con --limit)");
+  else await pruneStale(rows);
   console.log("Listo.");
 }
 
