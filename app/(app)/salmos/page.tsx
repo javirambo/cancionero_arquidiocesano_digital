@@ -1,6 +1,8 @@
 import { getDiaLiturgico, type LecturaSalmo } from "@/lib/calendario";
+import { getLiturgicalDay } from "@/lib/liturgical";
 import { IntroSalmo } from "./intro-salmo";
 import { SalmoAudioButton } from "./salmo-audio";
+import { CambiarFecha } from "./cambiar-fecha";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,14 @@ function todayBA(): string {
   }).format(new Date());
 }
 
+// Valida "YYYY-MM-DD" y que sea una fecha real (evita fechas inventadas por URL).
+function isValidISODate(s: string | undefined): s is string {
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
 // "miércoles, 22 de julio de 2026"
 function displayDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -30,9 +40,16 @@ function displayDate(iso: string): string {
   }).format(new Date(Date.UTC(y, m - 1, d, 12)));
 }
 
-export default async function SalmosPage() {
+export default async function SalmosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fecha?: string }>;
+}) {
+  const sp = await searchParams;
   const today = todayBA();
-  const dia = await getDiaLiturgico(today);
+  const selected = isValidISODate(sp.fecha) ? sp.fecha : today;
+  const dia = await getDiaLiturgico(selected);
+  const base = await getLiturgicalDay(selected); // dato de romcal (nombre · tiempo)
   const psalm = dia.lecturas.principal?.psalm ?? null;
 
   return (
@@ -41,18 +58,20 @@ export default async function SalmosPage() {
 
       <IntroSalmo />
 
-      <h2 className="mt-4 text-lg font-semibold uppercase tracking-[0.15em] text-secondary">
-        Salmo de hoy
-      </h2>
-      <p className="-mt-4 text-xs normal-case text-muted-foreground first-letter:uppercase">
-        {displayDate(today)}
-      </p>
+      <div className="flex flex-col gap-2">
+        <CambiarFecha selected={selected} today={today} dateLabel={displayDate(selected)} />
+        {base && (
+          <p className="text-center text-base normal-case text-foreground first-letter:uppercase">
+            {base.name}
+          </p>
+        )}
+      </div>
 
       {psalm ? (
         <PsalmView psalm={psalm} />
       ) : (
         <p className="text-sm normal-case text-muted-foreground">
-          No hay salmo cargado para hoy.
+          No hay salmo cargado para esta fecha.
         </p>
       )}
     </main>
@@ -61,19 +80,20 @@ export default async function SalmosPage() {
 
 function PsalmView({ psalm }: { psalm: NonNullable<LecturaSalmo> }) {
   const audio = psalm.audios[0] ?? null;
-  // El título es la cita; lo previo a la coma va grande y los versículos, chicos.
-  const refIdx = psalm.ref ? psalm.ref.indexOf(",") : -1;
-  const refHead = psalm.ref ? (refIdx >= 0 ? psalm.ref.slice(0, refIdx) : psalm.ref) : "";
-  const refTail = psalm.ref && refIdx >= 0 ? psalm.ref.slice(refIdx) : "";
+  // Cita del salmo sin el prefijo "Sal" (ej. "Sal 62, 2-6.8-9" → "62, 2-6.8-9").
+  const cleanRef = psalm.ref ? psalm.ref.replace(/^\s*Sal\b\.?\s*/i, "").trim() : "";
   return (
     <div className="flex flex-col gap-5">
-      {/* Título del salmo: la cita, en rojo. */}
-      {psalm.ref && (
-        <h3 className="font-bold normal-case text-song-title">
-          <span className="text-xl">{refHead}</span>
-          {refTail && <span className="text-sm">{refTail}</span>}
-        </h3>
-      )}
+      {/* Título: "SALMO" en negro + la cita (sin "Sal") en rojo. */}
+      <h3 className="text-xl font-bold normal-case">
+        <span className="text-foreground">SALMO</span>
+        {cleanRef && (
+          <>
+            {" "}
+            <span className="text-base text-song-title">{cleanRef}</span>
+          </>
+        )}
+      </h3>
 
       {/* Partituras (antes de la antífona). */}
       {psalm.scores.map((s, i) =>

@@ -42,5 +42,5 @@ http://localhost:4000/parroquias/maria_auxiliadora_rosario/anuncios
 - el ojo para ver la partitura debe tener la simple y la otra (2 ojos)
 - coloca un texto chico gris debajo de los botones CAMBIAR DESVINCULAR que diga "(Para agregar nuevos cantos y partiruras de salmos, ir a admin/salmos)" cuando se coloca un texto rojo se quita este
 
-# [ ] /salmos
+# [X] /salmos
 - en http://localhost:4000/salmos cambiar el boton enorme escuchar canto , y coloca solo "Escuchar canto" + (play icon) + linea de tiempo del audio (todo inline) y mas chico por favor!

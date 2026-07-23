@@ -288,6 +288,17 @@ npx tsx scripts/import-lecturas.ts --year=2027 --apply
   `salmo_id` en las fechas por match. Idempotente. Tras una ingesta anual de curas, correr `--link`
   para vincular las fechas nuevas. ⚖️ La media es obra del Coro San Clemente (reuso con permiso).
 
+> **Texto del Coro vs. curas — por qué las antífonas difieren.** El Coro toma sus textos de
+> _"los Leccionarios oficiales de las Conferencias Episcopales de Argentina, Bolivia, Chile,
+> Uruguay y Paraguay (Ed. del año 2000)"_ — el **Leccionario del Cono Sur, ed. 2000** —, mientras
+> que curas.com.ar usa **"El Libro del Pueblo de Dios"** (Levoratti–Trusso, ver §8.2). Son **dos
+> ediciones/traducciones distintas** del leccionario, así que el fraseo de una misma antífona puede
+> variar de verdad, no solo en tildes/puntuación. Además, donde la melodía no coincidía con la
+> antífona, el Coro hizo **musicalizaciones propias respetando el texto original**. Por eso el match
+> por `normalizeResponse`/`looseKey` ([lib/salmos.ts](../lib/salmos.ts)) a veces **no** une las dos
+> fuentes y hace falta el **vínculo manual** del `salmo_id` (§4). Fuente: nota del propio Coro en
+> https://www.corosanclemente.com.ar/Part/responsoriales.php (relevada 2026-07-22).
+
 ---
 
 ## 6. Cobertura conocida y huecos (ingesta 2026)

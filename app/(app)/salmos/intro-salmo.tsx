@@ -22,8 +22,8 @@ const LONG = [
 export function IntroSalmo() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-base leading-relaxed text-foreground normal-case">
+    <div className="-mt-3 mb-3 flex flex-col gap-3">
+      <p className="text-sm leading-relaxed text-foreground normal-case">
         {SHORT}{" "}
         <button
           type="button"
@@ -53,7 +53,7 @@ export function IntroSalmo() {
       {open && (
         <div className="flex flex-col gap-3">
           {LONG.map((p, i) => (
-            <p key={i} className="text-base leading-relaxed text-foreground normal-case">
+            <p key={i} className="text-sm leading-relaxed text-foreground normal-case">
               {p}
             </p>
           ))}
