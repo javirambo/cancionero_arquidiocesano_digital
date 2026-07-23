@@ -21,6 +21,8 @@
  *   npx tsx scripts/import-salmos-coro.ts --apply         # baja media + upsert
  *   npx tsx scripts/import-salmos-coro.ts --apply --link  # + vincula salmo_id
  *   npx tsx scripts/import-salmos-coro.ts --link          # solo re-vincular
+ *   npx tsx scripts/import-salmos-coro.ts --ref-only --apply  # backfill de salmos.ref
+ *                                                             # (versículos, NO toca media)
  *
  * Requiere en .env.local: SUPABASE_URL (o NEXT_PUBLIC_SUPABASE_URL) y
  * SUPABASE_SERVICE_ROLE_KEY.
@@ -41,6 +43,8 @@ const THROTTLE_MS = 300;
 const ARGS = process.argv.slice(2);
 const APPLY = ARGS.includes("--apply");
 const LINK = ARGS.includes("--link");
+// Backfill de solo `salmos.ref` (versículos, del detalle) sin tocar media.
+const REF_ONLY = ARGS.includes("--ref-only");
 
 function loadDotEnv(path: string) {
   try {
@@ -168,6 +172,18 @@ function sanitizeName(name: string): string {
   return name.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
 }
 
+// Cita de versículos de la página de detalle. La tabla muestra
+// "SALMO <nº>, <versículos>" (ej. "SALMO 66, 2-3.5-6.8"). Se normaliza a
+// "Sal 66, 2-3.5-6.8" (mismo formato que liturgical_readings.psalm.ref).
+// Devuelve null si no hay número. Ver documentacion/calendario-liturgico-y-lecturas.md §5.
+function parseRefFromDetail(html: string): string | null {
+  const text = decodeEntities(html.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
+  const m = text.match(/SALMO\s+(\d+)\s*(?:,\s*([\d][\d.,;\s-]*?)(?=[^\d.,;\s-]|$))?/i);
+  if (!m) return null;
+  const verses = (m[2] ?? "").replace(/\s+/g, "").replace(/[.,;-]+$/, "");
+  return verses ? `Sal ${m[1]}, ${verses}` : `Sal ${m[1]}`;
+}
+
 // -----------------------------------------------------------------------------
 // Storage
 // -----------------------------------------------------------------------------
@@ -198,6 +214,7 @@ async function ensureFile(storagePath: string, remoteUrl: string): Promise<boole
 type MediaItem = { label: string; path: string };
 type SalmoRow = {
   psalm_number: number;
+  ref: string | null;
   response: string;
   response_norm: string;
   source: "coro_san_clemente";
@@ -292,11 +309,64 @@ async function linkSalmoIds() {
 }
 
 // -----------------------------------------------------------------------------
+// Backfill de solo `salmos.ref` (versículos). NO toca media, response ni
+// salmo_id: hace UPDATE de la columna ref por source_slug. Idempotente.
+// -----------------------------------------------------------------------------
+
+async function backfillRefs(catalog: CatalogEntry[]) {
+  let conRef = 0;
+  let sinRef = 0;
+  let updated = 0;
+  let failed = 0;
+  for (const e of catalog) {
+    let detail: string | null = null;
+    try {
+      detail = await fetchText(`${BASE}${e.slug}.php`);
+    } catch {
+      detail = null;
+    }
+    const ref = detail ? parseRefFromDetail(detail) : null;
+    if (!ref) {
+      sinRef++;
+      continue;
+    }
+    conRef++;
+    if (APPLY && supabase) {
+      const { error } = await supabase
+        .from("salmos")
+        .update({ ref })
+        .eq("source_slug", e.audioSlugs[0]);
+      if (error) {
+        failed++;
+        console.warn(`  ${e.slug}: ${error.message}`);
+        continue;
+      }
+      updated++;
+    }
+  }
+  console.log(
+    `Backfill ref: con ref ${conRef} · sin ref ${sinRef}` +
+      (APPLY ? ` · actualizados ${updated} · fallidos ${failed}` : " (dry-run: no escribió)")
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
 
 async function main() {
-  console.log(`Modo: ${APPLY ? "APPLY (escribe)" : "DRY-RUN"}${LINK ? " + LINK" : ""}`);
+  console.log(
+    `Modo: ${APPLY ? "APPLY (escribe)" : "DRY-RUN"}${REF_ONLY ? " + REF-ONLY" : ""}${LINK ? " + LINK" : ""}`
+  );
+
+  if (REF_ONLY) {
+    console.log(`Bajando catálogo: ${LIST_URL}`);
+    const catalog = parseCatalog(await fetchText(LIST_URL));
+    console.log(`Salmos en el catálogo: ${catalog.length}`);
+    await backfillRefs(catalog);
+    console.log(APPLY ? "Listo." : "\n(DRY-RUN: no escribió. Usá --apply para persistir ref.)");
+    return;
+  }
 
   if (!(LINK && !APPLY)) {
     console.log(`Bajando catálogo: ${LIST_URL}`);
@@ -323,7 +393,8 @@ async function main() {
         else if (await ensureFile(path, `${BASE}audio/${as}.mp3`)) audios.push({ label, path });
       }
 
-      // Partituras: de la página de detalle (Simple + SATB) — solo en --apply.
+      // Partituras + versículos: de la página de detalle — solo en --apply.
+      let ref: string | null = null;
       if (APPLY) {
         let detail: string | null = null;
         try {
@@ -332,6 +403,7 @@ async function main() {
           detail = null;
         }
         if (detail) {
+          ref = parseRefFromDetail(detail);
           for (const rel of parseScoresFromDetail(detail)) {
             const fname = sanitizeName(decodeURIComponent(rel.split("/").pop() ?? ""));
             const path = `salmos/${fname}`;
@@ -344,6 +416,7 @@ async function main() {
 
       rows.push({
         psalm_number: e.psalm_number,
+        ref,
         response: e.response,
         response_norm: normalizeResponse(e.response),
         source: "coro_san_clemente",

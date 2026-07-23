@@ -22,6 +22,7 @@ export type PsalmSection = {
 export type SalmoMini = {
   id: string;
   psalm_number: number;
+  ref: string | null;
   response: string;
   audios: SalmoMedia[];
   scores: SalmoMedia[];
@@ -49,7 +50,7 @@ export type ReadingRowFull = {
 const COLS =
   "id, event_date, reading_set, celebration, color, liturgical_time, day_label, " +
   "first_reading, psalm, second_reading, gospel_accl, gospel, source_url, locked, " +
-  "salmo_id, salmo:salmos(id, psalm_number, response, audios, scores)";
+  "salmo_id, salmo:salmos(id, psalm_number, ref, response, audios, scores)";
 
 /** Filas crudas (principal/memoria) de una fecha, con el salmo linkeado. */
 export async function getReadingRowsForDate(date: string): Promise<ReadingRowFull[]> {
@@ -67,7 +68,7 @@ export async function listSalmosMini(): Promise<SalmoMini[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("salmos")
-    .select("id, psalm_number, response, audios, scores")
+    .select("id, psalm_number, ref, response, audios, scores")
     .order("psalm_number", { ascending: true })
     .order("response", { ascending: true });
   return (data ?? []) as SalmoMini[];
