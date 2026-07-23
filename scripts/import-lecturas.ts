@@ -629,8 +629,12 @@ function toPsalm(slice: string): Psalm {
   const core = slice.replace(/<p[^>]*align="?right"?[^>]*>[\s\S]*?<\/p>/gi, "");
   const ref = refOf(slice);
   // Antífonas/respuestas: la primera es `response`; las que siguen a cada
-  // "O bien:" son alternativas.
-  const italics = ([...core.matchAll(/<i>([\s\S]*?)<\/i>/gi)].map((m) => clean(m[1])).filter(Boolean)) as string[];
+  // "O bien:" son alternativas. El estribillo es una sola línea: los <br>
+  // internos de la fuente (soft-wrap) se colapsan a espacio, si no quedaría
+  // un `\n` que el <input> del form elimina y pega las palabras.
+  const italics = ([...core.matchAll(/<i>([\s\S]*?)<\/i>/gi)]
+    .map((m) => clean(m[1])?.replace(/\s*\n\s*/g, " "))
+    .filter(Boolean)) as string[];
   const response = italics[0] ?? null;
   const obienCount = (core.match(/O\s*bien/gi) || []).length;
   const alt_responses = obienCount ? italics.slice(1, 1 + obienCount) : [];

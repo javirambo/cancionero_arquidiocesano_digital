@@ -85,11 +85,16 @@ function sectionToState(s: ReadingRowFull["first_reading"]): SectionState {
   };
 }
 
+// El estribillo (response) y sus alternativas son de una sola línea y se
+// editan en <input>, que descarta los "\n" y pega las palabras. Normalizamos
+// "\n" → espacio al cargar, por si algún dato viejo quedó con salto interno.
+const oneLine = (s: string) => s.replace(/\s*\n\s*/g, " ");
+
 function psalmToState(p: ReadingRowFull["psalm"]): PsalmState {
   return {
     ref: p?.ref ?? "",
-    response: p?.response ?? "",
-    alt_responses: p?.alt_responses ?? [],
+    response: oneLine(p?.response ?? ""),
+    alt_responses: (p?.alt_responses ?? []).map(oneLine),
     stanzas: (p?.stanzas ?? []).join("\n\n"),
   };
 }
