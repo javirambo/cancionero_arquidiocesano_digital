@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { PlayIcon } from "@/app/components/icons";
+import { getPublicImageUrl } from "@/lib/supabase/storage";
 import type { SalmoRow } from "@/lib/salmos-admin";
 
 export function SalmosList({ salmos }: { salmos: SalmoRow[] }) {
@@ -66,33 +68,101 @@ function SalmoRowItem({ salmo }: { salmo: SalmoRow }) {
   return (
     <Link
       href={`/admin/salmos/${salmo.id}`}
-      className="relative flex items-center gap-4 rounded-xl border border-border bg-card p-4 pr-10 transition-colors hover:border-primary"
+      className="flex flex-col gap-1 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary"
     >
-      <span className="w-16 shrink-0 text-sm uppercase tracking-wide text-secondary">
-        Sal {salmo.psalm_number}
-      </span>
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground normal-case">
-        {salmo.response}
-      </span>
-      <span className="flex shrink-0 items-center gap-2 text-primary">
-        {salmo.audios.length > 0 && <MiniIcon kind="audio" />}
-        {salmo.scores.length > 0 && <MiniIcon kind="score" />}
-      </span>
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        className="absolute bottom-3 right-3 text-muted-foreground"
-      >
-        <path d="M9 18l6-6-6-6" />
-      </svg>
+      {/* Línea 1: referencia (izq) + iconos audio/partitura (der). */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0 truncate text-sm uppercase tracking-wide text-secondary">
+          {salmo.ref?.trim() || `Sal ${salmo.psalm_number}`}
+        </span>
+        <span className="flex shrink-0 items-center gap-2 text-primary">
+          {salmo.audios.length > 0 && (
+            <PlayAudioButton url={getPublicImageUrl(salmo.audios[0].path)} />
+          )}
+          {salmo.scores.length > 0 && <MiniIcon kind="score" />}
+        </span>
+      </div>
+      {/* Línea 2: antífona (izq) + chevron (der). */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0 flex-1 truncate text-sm text-foreground normal-case">
+          {salmo.response}
+        </span>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="shrink-0 text-muted-foreground"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </div>
     </Link>
+  );
+}
+
+// Botón play/pausa dentro de la tarjeta (que es un <Link>): reproduce el primer
+// audio del salmo sin navegar. Detiene los demás audios al empezar.
+function PlayAudioButton({ url }: { url: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  if (!url) return null;
+  return (
+    <span className="inline-flex items-center">
+      <button
+        type="button"
+        aria-label={playing ? "Pausar" : "Escuchar"}
+        title={playing ? "Pausar" : "Escuchar"}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const el = audioRef.current;
+          if (!el) return;
+          if (playing) el.pause();
+          else void el.play();
+        }}
+        className="text-primary transition-opacity hover:opacity-70"
+      >
+        {playing ? <PauseCircleIcon /> : <PlayIcon />}
+      </button>
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="none"
+        onPlay={(e) => {
+          document.querySelectorAll("audio").forEach((a) => a !== e.currentTarget && a.pause());
+          setPlaying(true);
+        }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
+    </span>
+  );
+}
+
+// Pausa "en círculo", al tono del PlayIcon del design system (icons.tsx).
+function PauseCircleIcon() {
+  return (
+    <svg
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <rect x="9" y="8.5" width="2" height="7" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="13" y="8.5" width="2" height="7" rx="0.5" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
+import { HelpHint } from "@/app/components/help-hint";
 import { createClient } from "@/lib/supabase/client";
 import { STORAGE_BUCKETS, getPublicImageUrl } from "@/lib/supabase/storage";
 import { normalizeResponse, type SalmoMedia } from "@/lib/salmos";
@@ -12,30 +13,64 @@ const AUDIO_ACCEPT = ".mp3,.ogg,.oga,audio/mpeg,audio/ogg";
 const SCORE_ACCEPT = ".pdf,.gif,.png,.jpg,.jpeg,.webp,application/pdf,image/*";
 const MAX_BYTES = 15 * 1024 * 1024;
 
-export function SalmoForm({ salmo }: { salmo: SalmoRow }) {
+// Ayuda reutilizable: cómo escribir la referencia bíblica (salmos.ref).
+function RefHelp() {
+  return (
+    <HelpHint label="Cómo escribir la cita del salmo">
+      <p className="mb-1 font-semibold text-foreground">Referencia bíblica del salmo</p>
+      <p>
+        Ejemplo: <code className="rounded bg-sidebar px-1">Sal 80, 3-6.10-11</code>
+      </p>
+      <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
+        <li>Nº de salmo + coma + los versículos.</li>
+        <li>
+          <b>-</b> (guion): rango. <code className="rounded bg-sidebar px-1">3-6</code> = del 3 al 6.
+        </li>
+        <li>
+          <b>.</b> (punto): separa tramos.{" "}
+          <code className="rounded bg-sidebar px-1">3-6.10-11</code> = 3 a 6 y 10 a 11.
+        </li>
+      </ul>
+    </HelpHint>
+  );
+}
+
+// Ayuda reutilizable: qué es la antífona y para qué se usa.
+function ResponseHelp() {
+  return (
+    <HelpHint label="Qué es la antífona">
+      <p>
+        Es la respuesta o estribillo que repite la asamblea. Junto al nº de salmo, se usa para
+        vincular este salmo con las fechas de lecturas (vínculo <b>automágico</b>).
+      </p>
+    </HelpHint>
+  );
+}
+
+export function SalmoForm({ mode, salmo }: { mode: "create" | "edit"; salmo?: SalmoRow }) {
   const router = useRouter();
-  const [psalmNumber, setPsalmNumber] = useState(String(salmo.psalm_number));
-  const [response, setResponse] = useState(salmo.response);
-  const [ref, setRef] = useState(salmo.ref ?? "");
-  const [audios, setAudios] = useState<SalmoMedia[]>(salmo.audios ?? []);
-  const [scores, setScores] = useState<SalmoMedia[]>(salmo.scores ?? []);
+  const [psalmNumber, setPsalmNumber] = useState(salmo ? String(salmo.psalm_number) : "");
+  const [response, setResponse] = useState(salmo?.response ?? "");
+  const [ref, setRef] = useState(salmo?.ref ?? "");
+  const [audios, setAudios] = useState<SalmoMedia[]>(salmo?.audios ?? []);
+  const [scores, setScores] = useState<SalmoMedia[]>(salmo?.scores ?? []);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const initialPaths = useRef<string[]>(
-    [...(salmo.audios ?? []), ...(salmo.scores ?? [])].map((m) => m.path)
+    [...(salmo?.audios ?? []), ...(salmo?.scores ?? [])].map((m) => m.path)
   );
   const sessionUploaded = useRef<Set<string>>(new Set());
 
   const backHref = "/admin/salmos";
 
   const dirty =
-    psalmNumber !== String(salmo.psalm_number) ||
-    response !== salmo.response ||
-    ref !== (salmo.ref ?? "") ||
-    JSON.stringify(audios) !== JSON.stringify(salmo.audios ?? []) ||
-    JSON.stringify(scores) !== JSON.stringify(salmo.scores ?? []);
+    psalmNumber !== (salmo ? String(salmo.psalm_number) : "") ||
+    response !== (salmo?.response ?? "") ||
+    ref !== (salmo?.ref ?? "") ||
+    JSON.stringify(audios) !== JSON.stringify(salmo?.audios ?? []) ||
+    JSON.stringify(scores) !== JSON.stringify(salmo?.scores ?? []);
 
   // Reportar a la botonera si hay cambios sin guardar (para confirmar al salir).
   const { setDirty } = useUnsavedChanges();
@@ -109,20 +144,21 @@ export function SalmoForm({ salmo }: { salmo: SalmoRow }) {
     setSaving(true);
     setError(null);
     const supabase = createClient();
-    const { error: upErr } = await supabase
-      .from("salmos")
-      .update({
-        psalm_number: num,
-        response: response.trim(),
-        response_norm: normalizeResponse(response),
-        ref: ref.trim() || null,
-        audios,
-        scores,
-      })
-      .eq("id", salmo.id);
-    if (upErr) {
+    const values = {
+      psalm_number: num,
+      response: response.trim(),
+      response_norm: normalizeResponse(response),
+      ref: ref.trim() || null,
+      audios,
+      scores,
+    };
+    const { error: opErr } =
+      mode === "create"
+        ? await supabase.from("salmos").insert({ ...values, source: "manual" })
+        : await supabase.from("salmos").update(values).eq("id", salmo!.id);
+    if (opErr) {
       setError(
-        upErr.code === "23505" ? "Ya existe un salmo con ese número y antífona." : upErr.message
+        opErr.code === "23505" ? "Ya existe un salmo con ese número y antífona." : opErr.message
       );
       setSaving(false);
       return;
@@ -150,7 +186,7 @@ export function SalmoForm({ salmo }: { salmo: SalmoRow }) {
             className={inputClass}
           />
         </Field>
-        <Field label="Cita (ref)">
+        <Field label="Cita (ref)" help={<RefHelp />}>
           <input
             type="text"
             value={ref}
@@ -161,7 +197,7 @@ export function SalmoForm({ salmo }: { salmo: SalmoRow }) {
         </Field>
       </div>
 
-      <Field label="Antífona (respuesta)">
+      <Field label="Antífona (respuesta)" help={<ResponseHelp />}>
         <input
           type="text"
           value={response}
@@ -181,6 +217,7 @@ export function SalmoForm({ salmo }: { salmo: SalmoRow }) {
         onReplace={replaceScore}
         onRemove={removeScore}
         onLabel={labelScore}
+        hint="Imagen PNG/JPG/WEBP. Se muestra al ancho de la ficha, conviene buena resolución (ancho ≥ 1000 px). Máximo 15 MB."
       />
 
       <MediaList
@@ -221,10 +258,21 @@ export function SalmoForm({ salmo }: { salmo: SalmoRow }) {
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm normal-case";
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  help,
+  children,
+}: {
+  label: string;
+  help?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <label className="flex flex-col gap-1 normal-case">
-      <span className="text-xs uppercase tracking-[0.15em] text-secondary">{label}</span>
+      <span className="flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-secondary">
+        {label}
+        {help}
+      </span>
       {children}
     </label>
   );
@@ -241,6 +289,7 @@ function MediaList({
   onReplace,
   onRemove,
   onLabel,
+  hint,
 }: {
   title: string;
   kind: "audio" | "score";
@@ -252,6 +301,7 @@ function MediaList({
   onReplace: (i: number, file: File) => void;
   onRemove: (i: number) => void;
   onLabel: (i: number, label: string) => void;
+  hint?: ReactNode;
 }) {
   return (
     <section className="flex flex-col gap-3">
@@ -281,6 +331,7 @@ function MediaList({
         </div>
       ))}
       <UploadButton label={addLabel} accept={accept} uploading={uploading} onUpload={onAdd} />
+      {hint && <p className="text-[11px] normal-case text-muted-foreground">{hint}</p>}
     </section>
   );
 }

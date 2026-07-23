@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/app/components/unsaved-changes-context";
+import { HelpHint } from "@/app/components/help-hint";
+import { ExternalLinkIcon } from "@/app/components/icons";
 import { getPublicImageUrl } from "@/lib/supabase/storage";
-import { AudioButton } from "../../media-controls";
+import { AudioButton, PlayIcon, PauseIcon } from "../../media-controls";
 import type { ReadingRowFull, ReadingSet, SalmoMini } from "@/lib/lecturas-admin";
 import { LITURGICAL_COLORS, colorHex, splitColors } from "@/lib/liturgical-colors";
 import {
@@ -673,13 +676,32 @@ function SalmoTextFields({
   return (
     <>
       <div className="grid gap-2 sm:grid-cols-2">
-        <input
-          type="text"
-          placeholder="Cita (ej. Sal 66, 2-3)"
-          value={value.ref}
-          onChange={(e) => onChange({ ref: e.target.value })}
-          className={inputClass}
-        />
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            placeholder="Cita (ej. Sal 66, 2-3)"
+            value={value.ref}
+            onChange={(e) => onChange({ ref: e.target.value })}
+            className={inputClass}
+          />
+          <HelpHint label="Cómo escribir la cita del salmo">
+            <p className="mb-1 font-semibold text-foreground">Referencia bíblica del salmo</p>
+            <p>
+              Ejemplo: <code className="rounded bg-sidebar px-1">Sal 80, 3-6.10-11</code>
+            </p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
+              <li>Nº de salmo + coma + los versículos.</li>
+              <li>
+                <b>-</b> (guion): rango. <code className="rounded bg-sidebar px-1">3-6</code> = del 3
+                al 6.
+              </li>
+              <li>
+                <b>.</b> (punto): separa tramos.{" "}
+                <code className="rounded bg-sidebar px-1">3-6.10-11</code> = 3 a 6 y 10 a 11.
+              </li>
+            </ul>
+          </HelpHint>
+        </div>
         <input
           type="text"
           placeholder="Respuesta (estribillo)"
@@ -1046,20 +1068,76 @@ function CandidateList({
   return (
     <ul className="divide-y divide-border rounded-lg border border-border">
       {items.map((s) => (
-        <li key={s.id}>
+        <li key={s.id} className="flex items-center pr-3 hover:bg-sidebar">
           <button
             type="button"
             onClick={() => onPick(s)}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm normal-case hover:bg-sidebar"
+            className="flex min-w-0 flex-1 items-center gap-2 py-2 pl-3 text-left text-sm normal-case"
           >
-            <span className="shrink-0 text-secondary">Sal {s.psalm_number}</span>
+            <span className="shrink-0 whitespace-nowrap text-secondary">
+              {s.ref?.trim() || `Sal ${s.psalm_number}`}
+            </span>
             <span className="min-w-0 flex-1 truncate">{s.response}</span>
-            {s.audios.length > 0 && <span className="shrink-0 text-[10px] text-primary">audio</span>}
-            {s.scores.length > 0 && <span className="shrink-0 text-[10px] text-primary">part.</span>}
           </button>
+          <span className="flex shrink-0 items-center gap-3 pl-2">
+            {s.audios.length > 0 && (
+              <ItemPlayButton url={getPublicImageUrl(s.audios[0].path)} />
+            )}
+            <Link
+              href={`/admin/salmos/${s.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ver salmo"
+              title="Ver salmo"
+              onClick={(e) => e.stopPropagation()}
+              className="text-primary transition-opacity hover:opacity-70"
+            >
+              <ExternalLinkIcon />
+            </Link>
+          </span>
         </li>
       ))}
     </ul>
+  );
+}
+
+// Botón play/pausa compacto de un item de la lista de candidatos: reproduce el
+// primer audio del salmo sin seleccionarlo ni cerrar la lista (stopPropagation +
+// es hermano del botón de selección). Frena los demás audios al empezar.
+function ItemPlayButton({ url }: { url: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  if (!url) return null;
+  return (
+    <span className="inline-flex items-center">
+      <button
+        type="button"
+        aria-label={playing ? "Pausar" : "Escuchar"}
+        title={playing ? "Pausar" : "Escuchar"}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const el = audioRef.current;
+          if (!el) return;
+          if (playing) el.pause();
+          else void el.play();
+        }}
+        className="text-primary transition-opacity hover:opacity-70"
+      >
+        {playing ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
+      </button>
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="none"
+        onPlay={(e) => {
+          document.querySelectorAll("audio").forEach((a) => a !== e.currentTarget && a.pause());
+          setPlaying(true);
+        }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
+    </span>
   );
 }
 

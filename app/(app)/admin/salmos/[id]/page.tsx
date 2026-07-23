@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getAdminAccess } from "@/app/(app)/admin/access";
 import { getSalmo } from "@/lib/salmos-admin";
-import { SalmoForm } from "./salmo-form";
+import { SalmoForm } from "../salmo-form";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export default async function EditarSalmoPage({
         <p className="text-sm normal-case text-muted-foreground">{salmo.response}</p>
       </header>
 
-      <SalmoForm salmo={salmo} />
+      <SalmoForm mode="edit" salmo={salmo} />
     </main>
   );
 }
