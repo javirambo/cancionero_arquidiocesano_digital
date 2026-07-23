@@ -150,14 +150,23 @@ function DiaRow({ dia }: { dia: DiaLiturgico }) {
   const day = Number(dia.fecha.slice(8, 10));
   const hex = dia.color ? COLOR_HEX[dia.color] : null;
   const { hasAudio, hasScore } = psalmFiles(dia);
+  const isSunday = weekday(dia.fecha) === "dom";
   return (
     <Link
       href={`/admin/lecturas/${dia.fecha}`}
       className="flex gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary"
     >
       <div className="flex w-12 shrink-0 flex-col items-center">
-        <span className="text-lg text-page-title">{day}</span>
-        <span className="text-xs uppercase text-muted-foreground">{weekday(dia.fecha)}</span>
+        <span className={`text-2xl font-bold ${isSunday ? "text-song-title" : "text-page-title"}`}>
+          {day}
+        </span>
+        <span
+          className={`text-sm font-bold uppercase ${
+            isSunday ? "text-song-title" : "text-muted-foreground"
+          }`}
+        >
+          {weekday(dia.fecha)}
+        </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-start gap-2 text-sm text-foreground normal-case">
